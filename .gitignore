@@ -1,0 +1,25 @@
+# Secrets
+.env
+.env.local
+
+# Claude Code local overrides
+.claude/settings.local.json
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Model cache
+.cache/
+models/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

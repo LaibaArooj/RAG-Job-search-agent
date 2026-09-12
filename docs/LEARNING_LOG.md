@@ -1,0 +1,100 @@
+# Learning Log
+
+The code track and the understanding track are separate. Shipping a feature does not mean you
+can explain it. This file tracks the second one.
+
+## How to use this
+
+After finishing any component, run `/explain <component>` in Claude Code, answer the two
+questions it asks you at the end, then update your rating here. Be harsh — an inflated rating
+here becomes a silence in the viva.
+
+**Rating scale**
+
+| | Meaning |
+|---|---|
+| 🔴 | Don't know what this is |
+| 🟡 | Recognise it, can't explain it unprompted |
+| 🟢 | Can explain it out loud, without notes, to someone who doesn't know it |
+| ⭐ | Can also explain the alternatives and why this one was chosen |
+
+**Target before submission:** 🟢 minimum on everything in Tier 1, ⭐ on the six starred rows.
+
+---
+
+## Tier 1 — You will be asked about these
+
+### The AI/ML core
+
+| Concept | Rating | Last checked | Notes / gaps |
+|---|---|---|---|
+| ⭐ What RAG is — retrieve, augment, generate | | | Lewis et al. 2020. What problem does it solve that a bare LLM doesn't? |
+| ⭐ What an embedding is | | | Why is a 384-number vector a "meaning"? What makes two vectors close? |
+| ⭐ Cosine similarity | | | Why cosine and not Euclidean distance? What does `normalize_embeddings=True` change? |
+| Sentence transformers vs plain BERT | | | Reimers & Gurevych 2019. Why does BERT alone give bad sentence vectors? |
+| Symmetric vs asymmetric semantic search | | | Which is yours? Why does it matter for model choice? (See limitation 3) |
+| Semantic search vs keyword search | | | Give a concrete query where each wins |
+| What a transformer / attention is, roughly | | | You don't need the maths. You need one honest paragraph |
+| Tokens and the 256-token limit | | | What actually happens to text past the limit? |
+| LLM hallucination | | | Why can't you verify the AI's explanations? |
+| Prompt construction / context injection | | | What exactly goes into your RAG prompt, in what order? |
+
+### Your system's design
+
+| Concept | Rating | Last checked | Notes / gaps |
+|---|---|---|---|
+| ⭐ Why there is no vector database | | | The single most likely question. Rehearse this one |
+| ⭐ The recall ceiling | | | Re-ranking vs retrieval. Know it before they tell you |
+| The full search pipeline, in order | | | Be able to walk all 10 steps from memory |
+| Layered architecture / separation of concerns | | | Why is `DatabaseManager` the only PyMongo consumer? |
+| The 0.02 category boost | | | Where did the number come from? Honest answer required |
+| The fallback design | | | What happens when Groq fails, and why is that the right behaviour? |
+| Parallel fetch | | | What's actually running concurrently, and what does it save? |
+
+### Backend and data
+
+| Concept | Rating | Last checked | Notes / gaps |
+|---|---|---|---|
+| ⭐ Password hashing vs encryption | | | Why is hashing one-way, and why does that matter? What is a salt? |
+| PBKDF2 | | | Why deliberately slow? |
+| Flask sessions and signed cookies | | | Where is session state stored? What stops a user forging one? |
+| CSRF | | | What's the attack, and how does the token stop it? |
+| NoSQL vs relational | | | Why MongoDB here? What would you lose moving to Postgres? |
+| Denormalisation | | | Why is everything in one user document? |
+| Database indexes | | | What does the unique index on `username` actually do? |
+| Atomic operations — `$inc`, `$addToSet` | | | Why not read-modify-write? |
+| REST APIs and HTTP status codes | | | What is 429 and how do you handle it? |
+| Rate limiting | | | 250/day — how does your code respect it? |
+| TTL indexes | | | How does the job_cache expire? |
+
+### Evaluation
+
+| Concept | Rating | Last checked | Notes / gaps |
+|---|---|---|---|
+| precision@k | | | Define it. Why @5 and not @10? |
+| Precision vs recall | | | Which one can you measure here, and which can't you? Why? |
+| Why blind judging matters | | | What bias is it controlling for? |
+| Cold start problem | | | Why is a brand-new user's feed no better than search? |
+
+---
+
+## Tier 2 — Nice to have, ask only if time allows
+
+| Concept | Rating | Notes |
+|---|---|---|
+| Content-based vs collaborative filtering | | Which is yours? Why can't you do the other one? |
+| Vector databases (FAISS, Pinecone, pgvector) | | Know what they are, so "why no vector DB" has weight |
+| Chunking strategies for long documents | | How you'd handle the truncation problem properly |
+| Reranker models (cross-encoders) | | The proper fix for asymmetric search |
+| Hybrid search (BM25 + dense) | | The industry answer to your recall ceiling |
+
+---
+
+## Weekly self-check
+
+Every Friday, pick three rows at random and explain them out loud with the file closed. If you
+can't, drop the rating and note the gap.
+
+| Date | Rows tested | Result | Action taken |
+|---|---|---|---|
+| | | | |

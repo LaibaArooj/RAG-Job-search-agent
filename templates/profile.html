@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile — Job Search AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark px-4">
+    <span class="navbar-brand fw-bold">🔍 Job Search AI</span>
+    <div class="d-flex gap-3 align-items-center">
+        <a href="{{ url_for('home') }}" class="text-white text-decoration-none">Search</a>
+        <a href="{{ url_for('feed') }}"  class="text-white text-decoration-none">For You</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
+    </div>
+</nav>
+
+<div class="container py-4">
+    <h4 class="mb-4">👤 Your Profile</h4>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Account Info</h6>
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Experience:</strong> {{ user.experience }}</p>
+                    <p><strong>Location:</strong> {{ user.location }}</p>
+                    <p><strong>Work Type:</strong>
+                        {{ user.preferred_work | join(', ') if user.preferred_work else 'Not set' }}
+                    </p>
+                    <p><strong>Skills:</strong>
+                        {% for skill in user.skills %}
+                        <span class="badge bg-secondary me-1">{{ skill }}</span>
+                        {% endfor %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Preference Scores</h6>
+                    {% if user.category_scores %}
+                        {% for category, score in user.category_scores.items() | sort(attribute='1', reverse=True) %}
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>{{ category }}</span>
+                            <span class="badge {{ 'bg-success' if score > 0 else 'bg-danger' }}">
+                                {{ score }}
+                            </span>
+                        </div>
+                        <div class="progress mb-2" style="height: 6px;">
+                            <div class="progress-bar {{ 'bg-success' if score > 0 else 'bg-danger' }}"
+                                 style="width: {{ [score * 10, 100] | min }}%">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No preferences yet. Save and reject jobs to build your profile.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user.saved_jobs %}
+    <div class="card">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">Saved Jobs ({{ user.saved_jobs | length }})</h6>
+            {% for job in user.saved_jobs %}
+            <div class="d-flex justify-content-between border-bottom py-2">
+                <div>
+                    <strong>{{ job.title }}</strong>
+                    <span class="text-muted ms-2">{{ job.company }}</span>
+                </div>
+                <a href="{{ job.url }}" target="_blank"
+                   class="btn btn-outline-primary btn-sm">View</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>
