@@ -11,6 +11,45 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-13 — Restructured into the SDD Appendix B module layout
+
+### Added
+- `controllers/`, `core/`, `adapters/`, `models/`, `static/`, `tests/` packages. Every file
+  named in SDD Appendix B now exists. Unimplemented ones are stubs that
+  `raise NotImplementedError("M1"/"M2"/"M3")` with the covering TC ids in the docstring —
+  not `pass`, which returns `None` silently and is how a stub reaches a demo unnoticed.
+- `config.py` — all secrets read from `.env`, plus `validate()` which raises `ConfigError`
+  naming every missing required variable at startup. A missing key now fails with its own
+  name rather than as an opaque 401 from a provider later.
+- `README.md` — setup, run, layout, and an honest statement of what the system does
+  (re-ranks the keyword-search pool; does not retrieve past it).
+- `adapters/db_manager.py` stub records the three defects in the deleted `models.py` that
+  must not be reintroduced, and notes `datetime.utcnow()` is deprecated from Python 3.12.
+
+### Changed
+- `semantic_engine.py` → `core/semantic_engine.py`, `rag_pipeline.py` → `core/rag_pipeline.py`,
+  `job_fetcher.py` → `adapters/api_client.py`, all via `git mv` so `git log --follow` keeps
+  the debugging history these files carry. Contents unchanged.
+- `app.py` — import paths only. The search route stays inline rather than moving to
+  `controllers/ui_controller.py`; it is the one working code path, and the restructure was
+  done as a pure move so identical behaviour could be verified. Deferred to M2 and recorded
+  in `docs/ARCHITECTURE.md` § Module layout (as built).
+- `MONGODB_URI` settled as the single spelling across code and docs; `MONGO_URI` retired.
+
+### Removed
+- `models.py`. It could not coexist with the `models/` package — Python resolves the name to
+  one and the other silently vanishes — and was already dead code, imported by nothing. Its
+  functions are carried forward as named stubs in `adapters/db_manager.py`. Preserved in git
+  history at `5519a22` together with the auth routes M1 restores.
+- Stale `__pycache__/`, compiled by Python 3.14.6 for modules that have since moved.
+
+### Verified
+- Baseline query "remote python developer" returns **24 deduplicated jobs from both Adzuna
+  and Remotive**, ranks them (top: Python Developer / IB Talent Search, 0.674), and Groq
+  returns a populated recommendation panel — identical to the 2026-09-13 pre-move baseline.
+
+---
+
 ## 2026-09-13 — Search demo runs end to end
 
 ### Added

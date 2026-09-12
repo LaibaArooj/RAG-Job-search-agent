@@ -2,7 +2,7 @@
 
 Derived from SDD v1.0 §3–§5. Claude keeps this current as the code evolves.
 
-Last updated: 2026-09-11 (pre-implementation — reflects intended design, not built state)
+Last updated: 2026-09-13 (restructured to Appendix B; see § Module layout (as built))
 
 ## System overview
 
@@ -75,6 +75,50 @@ failure (fall back to keywords), no jobs returned, RAG failure (hide the AI pane
 **Groq is now called twice per search** — once for intent parsing, once for RAG generation.
 Both sit behind try/except with a working fallback, so FR-018 still holds. Watch the free-tier
 rate limit: two calls per search halves the number of searches you can demo per minute.
+
+## Module layout (as built)
+
+Matches SDD Appendix B. Every file named there exists; the ones not yet implemented are
+stubs that `raise NotImplementedError` with the milestone that fills them in, rather than
+`pass` — a stub that silently returns `None` is how an unimplemented function gets shipped.
+
+```
+app.py                          Flask app + the search route (see deferral below)
+config.py                       env-driven config, validate() fails loudly on a missing key
+controllers/
+    auth_controller.py          STUB M1 — register, login, logout, require_auth
+    ui_controller.py            STUB M2/M3 — search, feed, save, reject, profile
+core/
+    semantic_engine.py          BUILT — SemanticEngine
+    rag_pipeline.py             BUILT — RAGPipeline
+    agent.py                    STUB M2 — JobSearchAgent
+    intent_parser.py            STUB M2 — parse_intent, enrich_query
+adapters/
+    api_client.py               BUILT — Adzuna + Remotive fetch, normalise, dedupe
+    db_manager.py               STUB M1 — MongoDB facade
+models/
+    user.py                     STUB M1 — User dataclass
+    job_card.py                 STUB M2 — JobCard dataclass
+templates/                      index, register, profile, feed
+static/css/, static/js/
+tests/                          empty — pytest is not yet a dependency
+```
+
+**Deferral, recorded deliberately.** Appendix B describes `app.py` as an app factory whose
+search route lives in `controllers/ui_controller.py` as a blueprint. The route is still
+inline in `app.py` because it is the one fully working code path in the project, and the
+restructure was carried out as a pure move so that identical behaviour could be verified
+before and after. Moving it is M2 work.
+
+**Removed:** `models.py` (flat module). It collided with the `models/` package — Python
+resolves the name to one of them and the other silently disappears — and was already dead
+code. Its functions are carried forward as named stubs in `adapters/db_manager.py`, which
+also records the three defects in the original not to repeat: a NoSQL field-path injection
+in `update_category_score`, a module-level `MongoClient` connect with no try/except, and a
+bare `except` reporting every error as "Username already taken". Preserved at `5519a22`.
+
+**Environment variable naming settled:** `MONGODB_URI` everywhere — code, `.env.example`
+and docs. The earlier `MONGO_URI` spelling is retired.
 
 ## Data model
 

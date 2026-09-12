@@ -25,6 +25,10 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 - Remotive confirmed (no key required)
 - Groq API key obtained and stored in `.env`
 - PSB project scaffold in place
+- **Module layout restructured to SDD Appendix B (2026-09-13)** — `controllers/`, `core/`,
+  `adapters/`, `models/` created, working modules moved in with `git mv`, every remaining
+  Appendix B file present as a stub. Demo verified unchanged after the move: 24 deduplicated
+  jobs on the baseline query. `models.py` deleted (name collision with the `models/` package).
 
 ## In progress
 
@@ -60,11 +64,14 @@ rebuild the venv on 3.11 or record the version as a deviation — an examiner ma
 ## Next up
 
 1. **Reset the Atlas database user password** and confirm with a ping — everything else is blocked on this
-2. Decide `MONGO_URI` vs `MONGODB_URI` and use one name in code, `.env` and the docs
-3. Build `config.py` and `adapters/db_manager.py` (the only PyMongo consumer), replacing
-   `models.py` — it has a NoSQL field-path injection in `update_category_score`, connects at
-   import with no try/except, and reports "Username already taken" for any exception
-4. Restore the auth routes from `5519a22` on top of that
+2. ~~Decide `MONGO_URI` vs `MONGODB_URI`~~ — **settled 2026-09-13: `MONGODB_URI`**, matching
+   `.env.example`, `docs/ARCHITECTURE.md` and the SDD. **Action outstanding: rename the key in
+   your live `.env` from `MONGO_URI` to `MONGODB_URI`.** Claude does not edit `.env`.
+3. ~~Build `config.py`~~ — **done 2026-09-13**, with `validate()` failing loudly on a missing key.
+   Implement `adapters/db_manager.py`, which now exists as a stub listing the three defects in
+   the deleted `models.py` not to repeat (NoSQL field-path injection in `update_category_score`,
+   module-level connect with no try/except, every exception reported as "Username already taken")
+4. Restore the auth routes from `5519a22` into `controllers/auth_controller.py` on top of that
 5. Verify TC-001 to TC-005 by hand
 
 Then, when M4 arrives: write the 20 evaluation queries **before** looking at any results.
