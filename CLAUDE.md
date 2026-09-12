@@ -37,7 +37,7 @@ or cleverness. When you make a design decision, tell me why, so I can defend it.
 | Frontend | HTML5 + CSS + Bootstrap 5.3 — **no React, Vue or any JS framework** |
 | Database | MongoDB Atlas 7.0+ (free tier) via PyMongo 4.6+ |
 | Embeddings | sentence-transformers 2.7+, model `all-MiniLM-L6-v2`, runs locally, 384-dim |
-| LLM | Llama 3 8B-instant via **Groq** API (not Grok) |
+| LLM | **Groq** API (not Grok), model `groq/compound-mini` — Groq decommissioned Llama 3, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py` |
 | Auth | Werkzeug password hashing (ships with Flask) |
 | Job data | Adzuna API (250 req/day free) + Remotive API (no auth, no limit) |
 | Env | pip + venv, dependencies pinned in `requirements.txt` |

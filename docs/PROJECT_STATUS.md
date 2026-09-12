@@ -2,7 +2,7 @@
 
 > Read this first at the start of every session. Claude updates it at the end of each session.
 
-Last updated: 2026-09-11
+Last updated: 2026-09-13
 
 ## Deadline
 
@@ -13,7 +13,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 | # | Milestone | Status | Done when |
 |---|---|---|---|
-| M1 | Auth, profile, database | **In progress** | TC-001 to TC-005 pass |
+| M1 | Auth, profile, database | **Blocked** — Atlas credential | TC-001 to TC-005 pass |
 | M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | Not started | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | Not started | TC-008 to TC-014 pass |
 | M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
@@ -28,29 +28,44 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 ## In progress
 
-- **Currently working on:** M1 — MongoDB Atlas setup
-- **Branch:** none yet
+- **Currently working on:** M1 — blocked on the Atlas database user credential
+- **Branch:** `feat/auth`
 - **Related issue:** none yet
 
 ## Where we left off
 
-Attempting to set up the database and got stuck. Clarified: MongoDB Atlas stores **user profiles
-only** — no vectors, no job listings. The design uses live retrieval with in-memory embeddings,
-so no vector database is required. What's needed is one free-tier Atlas cluster, one `users`
-collection, and a unique index on `username`.
+**The search demo now runs end to end without a database.** Verified 2026-09-13: a query for
+"remote python developer" returns 24 deduplicated jobs from Adzuna *and* Remotive, ranks them
+semantically, and Groq returns three explained picks. FR-018 verified by pointing the client at
+a non-existent model: the error is caught, the AI panel hides, ranked results still render.
 
-Everything built so far has been assembled by following AI instructions step by step rather than
-from a working understanding of the design. Going forward, each component should be explained
-as it is built, since the design must be defended in a viva.
+`app.py` was deliberately kept in its simplified form — no auth, no session, no MongoDB. The
+full version with `/register`, `/login`, `/logout`, `/save_job`, `/reject_job`, `/feed` and
+`/profile` is preserved in commit `5519a22` and is the starting point when M1 resumes.
+
+**Two blockers found while debugging Atlas, one fixed:**
+
+1. *Fixed.* The username in `MONGO_URI` contained a Cyrillic `а` (U+0430) instead of Latin `a`.
+   It is visually identical in every editor, and Atlas answered `bad auth`. Worth remembering:
+   an Atlas error response rather than a timeout proves the cluster, DNS, TLS and IP allowlist
+   are all fine, and isolates the fault to the credential.
+2. *Outstanding.* Auth still fails after that fix. The database user's password must be reset
+   from the Atlas UI (Database Access → Edit → Autogenerate Secure Password) and pasted into
+   `.env`. Claude does not handle database credentials.
+
+Also noted: the venv is **Python 3.14.6**, but the SRS and `CLAUDE.md` specify 3.11. Either
+rebuild the venv on 3.11 or record the version as a deviation — an examiner may ask, and
+`datetime.utcnow()` (used in the old `models.py`) is deprecated from 3.12 onward.
 
 ## Next up
 
-1. Create the MongoDB Atlas free cluster; add `MONGODB_URI` to `.env`
-2. Create the unique index on `users.username`
-3. Build `config.py` and `adapters/db_manager.py` (the only PyMongo consumer)
-4. Build `controllers/auth_controller.py` — register, login, logout, require_auth
-5. Build the base Jinja template, navbar, login and profile-setup pages
-6. Verify TC-001 to TC-005 by hand
+1. **Reset the Atlas database user password** and confirm with a ping — everything else is blocked on this
+2. Decide `MONGO_URI` vs `MONGODB_URI` and use one name in code, `.env` and the docs
+3. Build `config.py` and `adapters/db_manager.py` (the only PyMongo consumer), replacing
+   `models.py` — it has a NoSQL field-path injection in `update_category_score`, connects at
+   import with no try/except, and reports "Username already taken" for any exception
+4. Restore the auth routes from `5519a22` on top of that
+5. Verify TC-001 to TC-005 by hand
 
 Then, when M4 arrives: write the 20 evaluation queries **before** looking at any results.
 
@@ -96,3 +111,8 @@ Weekly self-check every Friday — three random rows, explained out loud, file c
 - Ask the supervisor about the embedding model swap (see design changes above).
 - The 0.02 category-boost coefficient is a hand-picked number with no justification.
   Either tune it during evaluation or state it plainly as a heuristic.
+- **Tell the supervisor Groq retired Llama 3.** The SRS names it; the model is gone. The
+  substitution is recorded in `docs/PROJECT_SPEC.md` § Deviations and needs sign-off.
+- Python version: venv is 3.14.6, SRS says 3.11. Rebuild or record as a deviation.
+- The template renders `ai_recommendations` as one preformatted block. If the report wants
+  three discrete cards, `RAGPipeline` has to return structured data, not prose.

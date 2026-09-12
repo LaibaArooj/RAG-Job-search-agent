@@ -212,15 +212,35 @@ parsed keywords. A production system with its own crawled corpus would use a rea
 
 ## Deviations from the SRS — declare these in the final report
 
-The SRS is v1.0 and authoritative. Three intentional changes have been made since. Each needs
-a one-line justification in the report; supervisors generally accept documented deviations and
-penalise undocumented ones.
+The SRS is v1.0 and authoritative. Four changes have been made since — three intentional, one
+forced. Each needs a one-line justification in the report; supervisors generally accept
+documented deviations and penalise undocumented ones.
 
 | Change | SRS said | Now | Why |
 |---|---|---|---|
 | Intent parsing | `parse_intent` matches keywords with if-statements (SDD §5.1) | Groq call returning structured JSON, keyword matching as fallback | The SRS defines an Agent as something that "autonomously decides what steps to take". Keyword matching doesn't meet that definition. This makes the claim true. |
 | Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped | Directly addresses the recall ceiling described below |
 | Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claims semantic ranking is better; that claim needs evidence |
+| **LLM model** | **Llama 3 8B-instant via Groq** | **`groq/compound-mini` via Groq** | **Forced, not chosen — see below** |
+
+### The LLM substitution is forced, not a preference
+
+Verified against the live Groq model list on 2026-09-13:
+
+- `llama3-8b-8192` → `400 ... has been decommissioned and is no longer supported`
+- `llama-3.1-8b-instant` → `404 ... does not exist or you do not have access to it`
+- No Llama **chat** model remains on the account's model list at all. The only `llama` entries
+  are `llama-prompt-guard-2-22m/86m`, which are safety classifiers, not generative models.
+
+Everything else about the design is unchanged: same provider (Groq), same free tier, no credit
+card, same two-calls-per-search pattern, same try/except and fallback. The model id lives in a
+single constant `GROQ_MODEL` in `rag_pipeline.py`, so if a Llama model returns to Groq this is
+a one-line revert.
+
+**Action required:** tell the supervisor. The honest viva answer is "the SRS named a model the
+provider retired during implementation; the architecture isolates that choice to one constant,
+so the substitution cost one line." Do **not** claim the system runs Llama 3 anywhere in the
+report, the code comments or the demo.
 
 Both new Groq calls sit behind the same try/except and fallback pattern as the RAG call, so
 FR-018's "never crash if the LLM is unavailable" still holds.

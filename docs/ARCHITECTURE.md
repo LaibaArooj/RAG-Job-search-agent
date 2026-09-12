@@ -87,7 +87,7 @@ Unique index on `username`. Optional `job_cache` with a 60-minute TTL index on `
 |---|---|---|---|
 | Adzuna | Live job listings | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | 250 requests/day |
 | Remotive | Remote job listings | none — no auth | none |
-| Groq | Llama 3 8B-instant inference | `GROQ_API_KEY` | free-tier rate limits |
+| Groq | LLM inference — `groq/compound-mini` (Llama 3 was decommissioned by Groq; see `docs/PROJECT_SPEC.md` § Deviations) | `GROQ_API_KEY` | free-tier rate limits |
 | MongoDB Atlas | User profiles | `MONGODB_URI` | 512 MB |
 | HuggingFace | One-time model download | none | — |
 

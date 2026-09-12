@@ -48,7 +48,8 @@ here becomes a silence in the viva.
 | The full search pipeline, in order | | | Be able to walk all 10 steps from memory |
 | Layered architecture / separation of concerns | | | Why is `DatabaseManager` the only PyMongo consumer? |
 | The 0.02 category boost | | | Where did the number come from? Honest answer required |
-| The fallback design | | | What happens when Groq fails, and why is that the right behaviour? |
+| The fallback design | | | What happens when Groq fails, and why is that the right behaviour? Verified working 2026-09-13 — be able to describe how it was tested |
+| Isolating a vendor choice to one constant | | | Added 2026-09-13. Groq retired Llama 3 mid-project. Why did that cost one line instead of a rewrite? This is the layering argument paying off — use it as the concrete example |
 | Parallel fetch | | | What's actually running concurrently, and what does it save? |
 
 ### Backend and data
@@ -63,6 +64,10 @@ here becomes a silence in the viva.
 | Denormalisation | | | Why is everything in one user document? |
 | Database indexes | | | What does the unique index on `username` actually do? |
 | Atomic operations — `$inc`, `$addToSet` | | | Why not read-modify-write? |
+| NoSQL injection via **field paths** | | | Added 2026-09-13. `models.py` builds `f"category_scores.{category}"` from API data. A value containing `.` or `$` writes to the wrong place. Why is a field path more dangerous than a value? |
+| Data normalisation across two APIs | | | Added 2026-09-13. Adzuna nests `company.display_name`, Remotive uses a flat `company_name`. What breaks if the route layer sees raw shapes? (It did — dicts rendered into the page.) |
+| Reading a connection error | | | Added 2026-09-13. `bad auth` from Atlas vs a `ServerSelectionTimeoutError` — what does each one rule out? This is how the Cyrillic-homoglyph bug was found. |
+| Unicode homoglyphs in credentials | | | Added 2026-09-13. Cyrillic `а` U+0430 vs Latin `a` U+0061 are visually identical. Why can't you spot this by reading the file? |
 | REST APIs and HTTP status codes | | | What is 429 and how do you handle it? |
 | Rate limiting | | | 250/day — how does your code respect it? |
 | TTL indexes | | | How does the job_cache expire? |
