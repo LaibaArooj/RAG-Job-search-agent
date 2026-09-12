@@ -1,0 +1,21 @@
+# Direct dependencies only. Transitive packages (torch, numpy, transformers,
+# huggingface-hub, ...) are resolved by pip from these.
+
+# Web framework — Werkzeug ships with Flask and provides password hashing
+Flask==3.1.3
+Werkzeug==3.1.8
+
+# Configuration — API keys and the Mongo URI are read from .env, never hardcoded
+python-dotenv==1.2.2
+
+# Database — MongoDB Atlas driver, imported only by the database layer
+pymongo==4.17.0
+
+# External APIs — imported only by job_fetcher (the APIClient role)
+requests==2.34.2
+
+# Embeddings — all-MiniLM-L6-v2 runs locally, 384-dim, imported only by SemanticEngine
+sentence-transformers==5.5.1
+
+# LLM inference — free tier, no credit card
+groq==1.4.0
