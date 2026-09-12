@@ -1,9 +1,9 @@
 from flask import Flask, render_template, request
 import os
 from dotenv import load_dotenv
-from semantic_engine import SemanticEngine
-from rag_pipeline import RAGPipeline
-from job_fetcher import fetch_all_jobs
+from core.semantic_engine import SemanticEngine
+from core.rag_pipeline import RAGPipeline
+from adapters.api_client import fetch_all_jobs
 
 load_dotenv()
 
