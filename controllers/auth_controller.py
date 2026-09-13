@@ -23,10 +23,10 @@ def login():
 
 
 def logout():
-    """Clear the Flask session and redirect to the login page (TC-005)."""
+    """Clear the Flask session and redirect to the login page."""
     raise NotImplementedError("M1")
 
 
 def require_auth(view):
-    """Decorator redirecting unauthenticated requests to /login before the view runs."""
+    """Decorator redirecting unauthenticated requests to /login before the view runs (TC-005)."""
     raise NotImplementedError("M1")

@@ -11,6 +11,48 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-13 — M1 database layer built
+
+### Added
+- `adapters/db_manager.py` — `DatabaseManager`, the only PyMongo consumer in the project.
+  Lazy connection (an Atlas outage no longer crashes startup), unique `username` index,
+  `job_cache` TTL index, save/reject scoring, search history, top-category feed input.
+- `verify_db.py` — standalone pass/fail check of every method against a throwaway user,
+  asserting TC-001, TC-002, TC-010, TC-011, TC-012 and TC-013. Cleans up after itself.
+  Includes `diagnose_connection()`, which reports which layer a failed connection stops at
+  (DNS / TCP / TLS / auth) instead of blaming the credential by default.
+- `config.CATEGORIES` — one closed category vocabulary, shared by intent parsing and the
+  scoring loop, and the whitelist that makes the field-path injection impossible.
+- `config.JOB_CACHE_TTL_MINUTES = 60` — spec value, configurable without a code edit.
+- `docs/PROJECT_SPEC.md` now records TC-001 to TC-018 verbatim, extracted from
+  `SRS_FORMATTED.docx`. They were previously only in the Word document.
+
+### Changed
+- **Deviation 5** — `rejected_jobs` stores `job_id` rather than job titles. Titles are not
+  unique across employers, so title-keyed rejection would hide every job sharing a title.
+  Field type is unchanged (still `Array<String>`). **Needs supervisor sign-off.**
+- `save_job` / `reject_job` are a single atomic conditional update rather than read-then-write.
+  The filter requires the job not already be in the list, so a repeat click matches no
+  document and the score cannot move twice — TC-013 holds by construction, with no race.
+- `core/intent_parser.py` imports `CATEGORIES` from config instead of defining an empty tuple.
+
+### Fixed
+- **Test-case ids in the stubs were wrong.** They were written from memory last session rather
+  than from the SRS: save/reject were labelled TC-009/TC-011 when the real ids are TC-010/TC-011,
+  duplicate-save is TC-013, dedupe is TC-022 not TC-017, and TC-008 is the RAG response, not the
+  profile page. Corrected across `controllers/`, `core/agent.py` and `models/job_card.py`.
+- **The recorded M1 blocker was misdiagnosed.** `PROJECT_STATUS` said the Atlas password needed
+  resetting. A layer-by-layer probe shows DNS resolves, TCP connects in 0.1 s, but the TLS
+  handshake on port 27017 times out and resets on all three shards, while TLS on :443 completes
+  normally. Authentication happens after the handshake, so the credential was never reached.
+
+### Known blocker
+- No connection to Atlas from this machine on port 27017. The data layer is complete and every
+  offline check passes; nothing past the ping can be verified until the port is reachable.
+
+---
+
+
 ## 2026-09-13 — Restructured into the SDD Appendix B module layout
 
 ### Added

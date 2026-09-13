@@ -123,7 +123,14 @@ and docs. The earlier `MONGO_URI` spelling is retired.
 ## Data model
 
 See `docs/PROJECT_SPEC.md` § Data model. One denormalised document per user in `users`.
-Unique index on `username`. Optional `job_cache` with a 60-minute TTL index on `created_at`.
+Unique index on `username`. `job_cache` with a TTL index on `created_at`, expiry driven by
+`config.JOB_CACHE_TTL_MINUTES` (60, the spec value) rather than a hardcoded number.
+
+Both indexes are created by `DatabaseManager.ensure_indexes()`, which is safe to re-run.
+The unique index is what enforces TC-002: duplicate registration is rejected by the server,
+not by a read-then-write check in Python, which a concurrent signup could slip between.
+
+`rejected_jobs` holds `job_id` values, not titles — Deviation 5, see `docs/PROJECT_SPEC.md`.
 
 ## External services
 

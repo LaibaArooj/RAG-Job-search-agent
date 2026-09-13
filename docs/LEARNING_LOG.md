@@ -64,13 +64,14 @@ here becomes a silence in the viva.
 | Denormalisation | | | Why is everything in one user document? |
 | Database indexes | | | What does the unique index on `username` actually do? |
 | Atomic operations — `$inc`, `$addToSet` | | | Why not read-modify-write? |
+| **Idempotency via a conditional filter** | | | Added 2026-09-13. `save_job` filters on `{"saved_jobs.job_id": {"$ne": id}}` so a repeat save matches no document and the `$inc` never runs — TC-013 with no read first. Why is reading the document and then deciding unsafe? What is the race? |
 | NoSQL injection via **field paths** | | | Added 2026-09-13. `models.py` builds `f"category_scores.{category}"` from API data. A value containing `.` or `$` writes to the wrong place. Why is a field path more dangerous than a value? |
 | Data normalisation across two APIs | | | Added 2026-09-13. Adzuna nests `company.display_name`, Remotive uses a flat `company_name`. What breaks if the route layer sees raw shapes? (It did — dicts rendered into the page.) |
-| Reading a connection error | | | Added 2026-09-13. `bad auth` from Atlas vs a `ServerSelectionTimeoutError` — what does each one rule out? This is how the Cyrillic-homoglyph bug was found. |
+| Reading a connection error | | | Added 2026-09-13, extended same day. Three distinct failures now seen on this project: `bad auth` (reached Atlas, credential wrong), `ServerSelectionTimeout` (never reached it), and TCP connecting but the **TLS handshake** timing out on :27017 while :443 works (a middlebox on that port). Which layer does each one rule out, and why does the third mean the password is irrelevant? |
 | Unicode homoglyphs in credentials | | | Added 2026-09-13. Cyrillic `а` U+0430 vs Latin `a` U+0061 are visually identical. Why can't you spot this by reading the file? |
 | REST APIs and HTTP status codes | | | What is 429 and how do you handle it? |
 | Rate limiting | | | 250/day — how does your code respect it? |
-| TTL indexes | | | How does the job_cache expire? |
+| TTL indexes | | | Added detail 2026-09-13. `expireAfterSeconds` on `job_cache.created_at`. Who deletes the document — your code or the server? How often does the sweeper run, and why is expiry therefore approximate? Which direction does a *longer* TTL move your Adzuna quota use? |
 
 ### Evaluation
 

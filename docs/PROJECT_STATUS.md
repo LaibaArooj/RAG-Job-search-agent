@@ -2,7 +2,7 @@
 
 > Read this first at the start of every session. Claude updates it at the end of each session.
 
-Last updated: 2026-09-13
+Last updated: 2026-09-13 (data layer built)
 
 ## Deadline
 
@@ -13,7 +13,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 | # | Milestone | Status | Done when |
 |---|---|---|---|
-| M1 | Auth, profile, database | **Blocked** — Atlas credential | TC-001 to TC-005 pass |
+| M1 | Auth, profile, database | **In progress** — data layer built, blocked on network reaching Atlas :27017 | TC-001 to TC-005 pass |
 | M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | Not started | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | Not started | TC-008 to TC-014 pass |
 | M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
@@ -53,9 +53,21 @@ full version with `/register`, `/login`, `/logout`, `/save_job`, `/reject_job`, 
    It is visually identical in every editor, and Atlas answered `bad auth`. Worth remembering:
    an Atlas error response rather than a timeout proves the cluster, DNS, TLS and IP allowlist
    are all fine, and isolates the fault to the credential.
-2. *Outstanding.* Auth still fails after that fix. The database user's password must be reset
-   from the Atlas UI (Database Access → Edit → Autogenerate Secure Password) and pasted into
-   `.env`. Claude does not handle database credentials.
+2. *Superseded 2026-09-13 — the password is not the problem.* `verify_db.py` and a layer-by-layer
+   probe show the connection never reaches authentication at all:
+
+   | Layer | Result |
+   |---|---|
+   | DNS SRV lookup | resolves to 3 shards |
+   | TCP to shard:27017 | connects in 0.1 s |
+   | **TLS handshake on 27017** | **times out, then connection reset — all 3 shards** |
+   | TLS on :443 (`api.groq.com`, `cloud.mongodb.com`) | completes in 0.7 s, TLSv1.3 |
+
+   Ordinary TLS works; TLS on port 27017 specifically does not. Something between this machine
+   and Atlas is interfering with that port — typically a campus/ISP firewall or TLS-inspecting
+   antivirus. **Authentication happens after the TLS handshake, so the credential is not
+   implicated and resetting it will not help.** Test on a phone hotspot: if it connects, the
+   fault is the network, not the cluster and not the password.
 
 Also noted: the venv is **Python 3.14.6**, but the SRS and `CLAUDE.md` specify 3.11. Either
 rebuild the venv on 3.11 or record the version as a deviation — an examiner may ask, and
@@ -63,14 +75,15 @@ rebuild the venv on 3.11 or record the version as a deviation — an examiner ma
 
 ## Next up
 
-1. **Reset the Atlas database user password** and confirm with a ping — everything else is blocked on this
+1. **Get a connection to Atlas on port 27017.** Run `python verify_db.py` on a phone hotspot.
+   If it passes there, the home/campus network is blocking the port and the whole data layer is
+   already correct. Not a credential problem — see "Where we left off" below.
 2. ~~Decide `MONGO_URI` vs `MONGODB_URI`~~ — **settled 2026-09-13: `MONGODB_URI`**, matching
    `.env.example`, `docs/ARCHITECTURE.md` and the SDD. **Action outstanding: rename the key in
    your live `.env` from `MONGO_URI` to `MONGODB_URI`.** Claude does not edit `.env`.
-3. ~~Build `config.py`~~ — **done 2026-09-13**, with `validate()` failing loudly on a missing key.
-   Implement `adapters/db_manager.py`, which now exists as a stub listing the three defects in
-   the deleted `models.py` not to repeat (NoSQL field-path injection in `update_category_score`,
-   module-level connect with no try/except, every exception reported as "Username already taken")
+3. ~~Build `config.py` and `adapters/db_manager.py`~~ — **done 2026-09-13.** Both implemented,
+   all three `models.py` defects fixed, `verify_db.py` written to prove it. Every check that does
+   not need a connection passes; everything from the ping onward is blocked on item 1.
 4. Restore the auth routes from `5519a22` into `controllers/auth_controller.py` on top of that
 5. Verify TC-001 to TC-005 by hand
 

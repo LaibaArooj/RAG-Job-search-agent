@@ -12,11 +12,13 @@ This is the FIRST of the two Groq calls per search. FR-018 applies here too: if 
 unavailable, parse_intent must fall back to keywords, not raise.
 """
 
-# The closed set of categories. Shared with the scoring loop in adapters/db_manager.py —
-# a job's category must come from this list or the save/reject scores fragment.
-# TODO(M3): this is also the answer to the open question in docs/PROJECT_STATUS.md about
-# how a job's category is derived. Decide before M3.
-CATEGORIES = ()
+# The closed set of categories, defined once in config.py and shared with the scoring loop
+# in adapters/db_manager.py. Intent parsing and score-keeping must name a category
+# identically or the save/reject loop silently fragments across spellings.
+#
+# TODO(M3): mapping Adzuna's and Remotive's differing taxonomies onto this set is still the
+# open question in docs/PROJECT_STATUS.md. Decide before M3.
+from config import CATEGORIES  # noqa: F401  (re-exported for callers of this module)
 
 
 def parse_intent(query):

@@ -1,6 +1,6 @@
 """JobSearchAgent — orchestrates the search pipeline end to end.
 
-STUB — filled in during M2. Covers TC-006, TC-016 to TC-022.
+STUB — filled in during M2. Covers TC-006, TC-016 to TC-018 and TC-019 to TC-022.
 
 The steps, per docs/ARCHITECTURE.md § Search request flow:
 
@@ -46,5 +46,5 @@ class JobSearchAgent:
 
     @staticmethod
     def deduplicate(jobs):
-        """Collapse listings syndicated across both APIs, keyed on job_id (TC-017)."""
+        """Collapse listings syndicated across both APIs, keyed on job_id (TC-022)."""
         raise NotImplementedError("M2")

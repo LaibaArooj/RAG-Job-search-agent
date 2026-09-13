@@ -1,6 +1,6 @@
 """JobCard — normalises Adzuna and Remotive responses into one field shape.
 
-STUB — filled in during M2. Covers TC-016, TC-017.
+STUB — filled in during M2. Covers TC-022.
 
 The two APIs disagree about shape, and that has already caused a real bug (Adzuna returns
 company and location as nested objects; passing them to the template raw rendered Python
@@ -41,5 +41,5 @@ class JobCard:
 
     @staticmethod
     def make_job_id(title, company):
-        """Return the SHA hash of title + company used for deduplication (TC-017)."""
+        """Return the SHA hash of title + company used for deduplication (TC-022)."""
         raise NotImplementedError("M2")

@@ -94,6 +94,31 @@ limit hit), and don't gold-plate anything else.
 - Sort dropdown: Relevance (default) / Date posted
 - **Done when:** TC-015 passes
 
+### Test cases from SRS v1.0 §4 (extracted 2026-09-13, verbatim)
+
+Recorded here so the SRS document does not have to be opened to check one.
+
+| TC ID | Test case | Input | Expected output |
+|---|---|---|---|
+| TC-001 | User Registration — Valid | Valid username, strong password | Account created, profile setup page shown, document stored in MongoDB |
+| TC-002 | Registration — Duplicate Username | Existing username | Error: "Username taken", no account created |
+| TC-003 | Login — Correct Credentials | Valid username and password | Session created, redirect to home feed |
+| TC-004 | Login — Incorrect Password | Valid username, wrong password | Error: "Invalid username or password" displayed |
+| TC-005 | Unauthenticated Access | Visit `/feed` without login | Redirect to `/login` page |
+| TC-006 | Semantic Search — Intent Match | "remote job writing no experience" | Results ranked by semantic similarity — writing/remote jobs ranked highest |
+| TC-007 | Autocomplete — Partial Match | Type "tec" in search bar | Dropdown shows "Technology", "Tech Support" |
+| TC-008 | RAG LLM Response | Complete semantic search results | AI Recommendations section displays top 3 picks with plain-English explanation |
+| TC-009 | LLM API Unavailable Fallback | Groq API down (mocked) | Raw ranked results shown, no crash, AI section hidden gracefully |
+| TC-010 | Save Job — Score Update | Click Save on a writing job | `writing` score in MongoDB incremented by +1 |
+| TC-011 | Reject Job — Score Update | Click Reject on a tech job | `tech` score in MongoDB decremented by −1 |
+| TC-012 | For You Feed — Personalized | User with writing=5, tech=−2 | For You feed shows writing jobs prominently, tech jobs absent |
+| TC-013 | Same Job Saved Twice | Save same job card twice | Score only incremented once, no duplicate in `saved_jobs` |
+| TC-014 | Two Users — Different Feeds | User A likes writing; User B likes tech | A and B see completely different For You feeds |
+| TC-015 | Filter by Remote | Apply Remote filter on results | Only remote-tagged jobs shown |
+| TC-016 | Context Injection | User profile has "Python" skill | Results for "developer job" rank Python roles higher |
+| TC-017 | Empty Search | Submit empty search bar | "Please enter a search term" — no API call made |
+| TC-018 | API Rate Limit Reached | Adzuna returns 429 | Friendly banner: "Job data temporarily unavailable" |
+
 ### New test cases (not in SRS v1.0 — add to the final test table)
 
 | TC ID | Test case | Input | Expected output |
@@ -212,7 +237,7 @@ parsed keywords. A production system with its own crawled corpus would use a rea
 
 ## Deviations from the SRS — declare these in the final report
 
-The SRS is v1.0 and authoritative. Four changes have been made since — three intentional, one
+The SRS is v1.0 and authoritative. Five changes have been made since — four intentional, one
 forced. Each needs a one-line justification in the report; supervisors generally accept
 documented deviations and penalise undocumented ones.
 
@@ -222,6 +247,7 @@ documented deviations and penalise undocumented ones.
 | Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped | Directly addresses the recall ceiling described below |
 | Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claims semantic ranking is better; that claim needs evidence |
 | **LLM model** | **Llama 3 8B-instant via Groq** | **`groq/compound-mini` via Groq** | **Forced, not chosen — see below** |
+| `rejected_jobs` contents | `Array<String>` of job **titles** (§ Data model) | `Array<String>` of **`job_id`** | Titles are not unique across employers. TC-012 requires rejected jobs to be *absent* from the feed; keyed on title, rejecting one "Software Engineer" hides every job with that title from every company. `saved_jobs` already keys on `job_id` for the same reason (TC-013). Field type is unchanged — still an array of strings. |
 
 ### The LLM substitution is forced, not a preference
 
