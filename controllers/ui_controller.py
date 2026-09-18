@@ -25,15 +25,10 @@ from flask import (
     url_for,
 )
 
+from config import EXPERIENCE_LEVELS, WORK_TYPES
 from controllers.auth_controller import check_csrf, current_username, require_auth
 
 ui_bp = Blueprint("ui", __name__)
-
-# The work types offered at registration and on the profile form. A closed set, so a crafted
-# POST cannot store arbitrary values in preferred_work.
-WORK_TYPES = ("remote", "full-time", "part-time", "freelance")
-
-EXPERIENCE_LEVELS = ("entry level", "mid level", "senior")
 
 
 def _db():

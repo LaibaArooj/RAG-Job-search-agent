@@ -41,6 +41,20 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # do the opposite.
 JOB_CACHE_TTL_MINUTES = 60
 
+# --- Profile vocabularies ---
+# The work types and experience levels offered at registration and on the profile form.
+# Closed sets, so a crafted POST cannot store arbitrary values in the user document.
+#
+# These live here rather than in controllers/ui_controller.py, where they started, because
+# core/intent_parser.py must validate Groq's output against the same sets. An AI-layer module
+# importing from a controller inverts the SDD layering, and it also deadlocks: ui_controller
+# imports core.agent, which imports core.intent_parser, which would import ui_controller --
+# a cycle that fails with "partially initialized module". config.py imports nothing from the
+# project, so nothing can cycle through it.
+WORK_TYPES = ("remote", "full-time", "part-time", "freelance")
+
+EXPERIENCE_LEVELS = ("entry level", "mid level", "senior")
+
 # --- Category vocabulary ---
 # A closed set, shared by intent parsing and by the save/reject scoring loop, which
 # only works if both name a category identically.
