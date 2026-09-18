@@ -59,8 +59,18 @@ Swapping any dependency should mean editing one file.
 3. `parse_intent(query)` — Groq call returning structured JSON: work type, experience,
    category, and 2–3 alternative query phrasings. Falls back to keyword matching on failure
 4. `enrich_query(query, context)` — profile injected into the query text
-5. **Parallel fork:** query encoding ‖ Adzuna fetch ‖ Remotive fetch, once per query variant
-   (~800 ms saved)
+5. Query encoding, then Adzuna + Remotive fetched once per query variant.
+   **Deferred, deliberately:** the SDD specifies a parallel fork here (query encoding ‖ Adzuna
+   ‖ Remotive, ~800 ms saved). `core/agent.py` fetches *sequentially* as of 2026-09-19. With
+   three variants that is six sequential HTTP calls and the demo is correspondingly slow. The
+   trade: a threading bug that intermittently drops one variant's results is far harder to
+   notice, and far harder to defend in a viva, than a search that takes a few seconds. Revisit
+   only if demo latency becomes the binding problem.
+   Each variant is read through the 60-minute `job_cache` first and written back on a clean
+   fetch, keyed on a SHA-256 of the **variant** string rather than the user's query — two
+   different searches that expand onto a shared phrasing then reuse one fetch. This is what
+   keeps three variants from costing three Adzuna quota units on every repeat search. A
+   *partial* fetch is never cached, or an outage would outlive the API's recovery by an hour.
 6. Join, union all variants' results, deduplicate on `job_id` (SHA of title + company).
    If no jobs from any variant → friendly error banner, retry offered
 7. `batch_encode` all job descriptions → cosine similarity vs query vector
@@ -95,20 +105,31 @@ controllers/
 core/
     semantic_engine.py          BUILT — SemanticEngine
     rag_pipeline.py             BUILT — RAGPipeline
-    agent.py                    STUB M2 — JobSearchAgent
+    agent.py                    BUILT — JobSearchAgent; the pipeline orchestrator.
+                                TC-006, TC-016 to TC-018, TC-021, TC-022
     intent_parser.py            BUILT — parse_intent (Groq + keyword fallback),
                                 enrich_query; TC-019, TC-020
 adapters/
-    api_client.py               BUILT — Adzuna + Remotive fetch, normalise, dedupe
+    api_client.py               BUILT — Adzuna + Remotive fetch. fetch_variant() returns
+                                jobs and failed_sources separately (TC-018); normalising
+                                now delegated to JobCard. fetch_all_jobs is legacy, used
+                                only by the inline route and retired with it
     db_manager.py               BUILT — MongoDB facade
 models/
     user.py                     BUILT — User dataclass
-    job_card.py                 STUB M2 — JobCard dataclass
+    job_card.py                 BUILT — JobCard dataclass; the single place an Adzuna/
+                                Remotive field-shape difference is resolved. make_job_id
+                                (SHA-256 of title|company) is the dedupe key (TC-022)
 templates/                      index, register, login, profile, feed
 static/css/, static/js/
 tests/                          empty — pytest is not yet a dependency
 verify_db.py                    standalone pass/fail check of the data layer
 verify_auth.py                  standalone pass/fail check of the auth routes (TC-001..005)
+verify_intent.py                standalone check of intent parsing (TC-019, TC-020); makes
+                                one live Groq call
+verify_agent.py                 standalone check of the pipeline (TC-006, TC-016..018,
+                                TC-021, TC-022). Entirely offline: every collaborator is a
+                                double, which is why JobSearchAgent takes them as arguments
 ```
 
 **Deferral, recorded deliberately.** Appendix B describes `app.py` as an app factory whose
@@ -116,6 +137,13 @@ search route lives in `controllers/ui_controller.py` as a blueprint. The route i
 inline in `app.py` because it is the one fully working code path in the project, and the
 restructure was carried out as a pure move so that identical behaviour could be verified
 before and after. Moving it is M2 work.
+
+As of 2026-09-19 `JobSearchAgent` exists and is proven, but the inline route still does not
+use it: the agent was built and verified *beside* the working route rather than in place of
+it, so there was never a point where the app was broken. The two coexist until the route is
+swapped over, which is the last piece of M2. `api_client.fetch_all_jobs` is retired at the
+same time — it is the legacy path's only remaining caller, and two fetch paths left standing
+is how the two drift apart.
 
 **Removed:** `models.py` (flat module). It collided with the `models/` package — Python
 resolves the name to one of them and the other silently disappears — and was already dead

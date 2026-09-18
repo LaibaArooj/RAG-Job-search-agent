@@ -54,6 +54,8 @@ pip install -r requirements.txt
 python app.py                                    # dev server
 python verify_db.py                              # prove the data layer against Atlas
 python verify_auth.py                            # prove the auth routes, TC-001 to TC-005
+python verify_intent.py                          # prove intent parsing, TC-019/TC-020 (live Groq call)
+python verify_agent.py                           # prove the search pipeline, TC-006/016/017/018/021/022 (offline)
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.

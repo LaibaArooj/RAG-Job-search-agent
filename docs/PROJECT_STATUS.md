@@ -2,7 +2,7 @@
 
 > Read this first at the start of every session. Claude updates it at the end of each session.
 
-Last updated: 2026-09-19 (M2 started — intent parsing built and verified)
+Last updated: 2026-09-19 (M2 — search pipeline assembled; only the route move remains)
 
 ## Deadline
 
@@ -14,7 +14,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 | # | Milestone | Status | Done when |
 |---|---|---|---|
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
-| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **In progress** — intent parsing done (TC-019, TC-020); agent and route outstanding | TC-006, TC-016 to TC-022 pass |
+| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **In progress** — intent parsing and `JobSearchAgent` done (TC-006, TC-016 to TC-022 all pass offline); only the route move outstanding | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | Not started | TC-008 to TC-014 pass |
 | M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
 
@@ -32,34 +32,49 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 ## In progress
 
-- **Currently working on:** M2 — `core/agent.py` next, then moving the search route
+- **Currently working on:** M2 — `core/agent.py` is done; moving the search route out of `app.py` is next
 - **Branch:** `feat/search-pipeline`
 - **Related issue:** none yet
 
 ## Where we left off
 
-**M1 is done and M2 has started.** `core/intent_parser.py` is built and verified:
-`verify_intent.py` passes 76/76, including a **live** Groq call for TC-019 and a stubbed
-failure for TC-020. `verify_auth.py` (31/31) and `verify_db.py` (27/27) still pass after
-the change.
+**The M2 pipeline is assembled.** `core/agent.py` (`JobSearchAgent`) and `models/job_card.py`
+are built and `verify_agent.py` passes **57/57** — entirely offline, no live Groq, no Adzuna
+quota, no Atlas. `verify_intent.py` (76), `verify_auth.py` (31) and `verify_db.py` (27) all
+still pass: **191 checks green**.
 
-The live TC-019 run on the SRS query — *"something creative I can do from home, I'm just
-starting out"* — returned `work_type=remote`, `experience=entry level`, `category=design`,
-three variants. TC-019's expected category is "creative", which is deliberately **not** in
-`CATEGORIES`; the prompt asks for the single closest member instead, because that tuple is
-shared with the M3 scoring loop and widening it there would be the wrong lever.
+TC-006, TC-016, TC-017, TC-018, TC-021 and TC-022 are now covered. TC-021 in particular was
+untestable before this: `parse_intent` had been returning query variants since the previous
+session and **nothing consumed them**, so query expansion was not actually happening in the
+running app. It is now.
 
-**Design point to be able to defend:** parsing and validation are separate steps in
-`parse_intent`. The allowed values are listed in the prompt *and* re-checked for membership
-on the way out. A prompt is a request; a membership test is a guarantee. Four hostile
-categories are in the verify script and all collapse to `"other"`.
+**The search route in `app.py` is untouched and still serves.** That was deliberate — the
+agent was built and proven beside the working route rather than in place of it, so there was
+never a point where the app was broken. Swapping the route over is the next task and is the
+only build work left in M2.
 
-**`WORK_TYPES` and `EXPERIENCE_LEVELS` moved to `config.py`** from `ui_controller.py`. This
-was tested, not assumed: `ui_controller` → `core.agent` → `core.intent_parser` →
-`ui_controller` raises "cannot import name ... from partially initialized module". The
-sharp detail worth having ready — the cycle **passed** with the import at the bottom of the
-file and **failed** at the top, where PEP 8 puts it. An order-dependent cycle is worse than
-one that always fails, because it survives until someone runs `isort`.
+**Four design points to be able to defend:**
+
+1. **`JobSearchAgent.__init__` takes `db`, `semantic_engine` and `rag_pipeline` as arguments.**
+   That single choice is why `verify_agent.py` runs offline in about a second. The sharp
+   follow-up to have ready: *which assertions could not be written without doubles?* The TC-017
+   ones — proving a call did **not** happen needs a call counter, not a return value.
+2. **Dedupe keeps the FIRST occurrence, not the last.** `parse_intent` guarantees the user's own
+   phrasing is `variants[0]`, so expansion can only ever widen the pool and can never reorder
+   what the user would have seen without it. Last-wins would have inverted what TC-021 measures.
+3. **A rate-limited source and an empty result set are different events.** Every existing fetch
+   function returned `[]` for both, so TC-018's banner was unimplementable until
+   `fetch_variant` started reporting `failed_sources` separately from what it returned.
+4. **The parallel fork in the SDD is not built.** Fetching is sequential: three variants across
+   two APIs is six sequential HTTP calls and the demo is correspondingly slow. Recorded as a
+   deferral in `docs/ARCHITECTURE.md` § Search request flow with the trade written down — a
+   threading bug that intermittently drops one variant's results is harder to notice and harder
+   to defend than a slow search. Do not claim the fork works in the viva.
+
+**The Adzuna quota risk is now mitigated, not eliminated.** The 60-minute `job_cache` was dead
+code and is now wired in, keyed on a SHA-256 of the **variant** string rather than the user's
+query, so overlapping searches share a fetch. A partial fetch is never cached. A *cold* search
+still costs up to three Adzuna calls, so watch it during demo rehearsal.
 
 ---
 
@@ -100,19 +115,26 @@ rebuild the venv on 3.11 or record the version as a deviation — an examiner ma
 
 ## Next up
 
-1. **`core/agent.py`** — `JobSearchAgent`, the next M2 component. It is what makes TC-021
-   testable: `parse_intent` already returns 2–3 variants, but **nothing consumes them yet**,
-   so query expansion is not actually happening in the running app.
-2. Then move the search route out of `app.py` into `ui_controller.search`, which closes the
-   deferral recorded in `docs/ARCHITECTURE.md`.
+1. **Move the search route out of `app.py` into `ui_controller.search`**, wiring it to
+   `JobSearchAgent`. This closes the deferral recorded in `docs/ARCHITECTURE.md` and finishes
+   M2's build work. The route becomes thin: call `agent.run(username, query)` and render the
+   dict it returns. Note it has to render `warning` as well as `error` — a partially failed
+   fetch shows a banner *alongside* results, not instead of them.
+2. **Drive the pipeline once end to end in a real browser** against live Adzuna, Remotive and
+   Groq. `verify_agent.py` is entirely offline by design, which means it proves the logic and
+   proves nothing about the real API shapes. That gap is deliberate but it is a gap.
 3. Drive TC-001 to TC-005 once in a real browser as well. `verify_auth.py` exercises the routes
    and the session cookie, not the rendered forms. Still outstanding from M1.
-4. The save/reject buttons in `feed.html` post to `/save_job` and `/reject_job`, which do not
+4. Retire `fetch_all_jobs` from `adapters/api_client.py` once the old route is gone. It is the
+   last caller; leaving two fetch paths around is how the two diverge.
+5. The save/reject buttons in `feed.html` post to `/save_job` and `/reject_job`, which do not
    exist as routes yet. They are unreachable today because the feed renders no jobs, but they
    must be wired in M3 or removed.
-5. Watch the Adzuna quota once expansion lands. Three variants means **three** Adzuna calls per
-   search against a 250/day budget, and Groq is called twice per search on top of that. This is
-   the practical cost of Deviations 1 and 2 and it will bite during demo rehearsal.
+6. `JobCard.category` is left as `""` deliberately — deriving it from the two taxonomies is the
+   open question below, and guessing would poison the M3 scoring loop. The category boost in
+   `rank()` is therefore **inert until that is settled**: every job scores 0 on it today. The
+   verify script proves the mechanism works by passing categories in directly. Say this plainly
+   if asked; do not demo it as if it were live.
 
 Then, when M4 arrives: write the 20 evaluation queries **before** looking at any results.
 

@@ -11,6 +11,68 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-19 — M2 search pipeline (`JobSearchAgent` + `JobCard`)
+
+The pipeline is assembled. `core/agent.py` and `models/job_card.py` are implemented and
+`verify_agent.py` passes 57/57 with no live calls at all. TC-021 is now genuinely covered:
+`parse_intent` has been producing query variants since the previous entry, and as of this one
+something finally consumes them. `verify_intent.py` (76), `verify_auth.py` (31) and
+`verify_db.py` (27) all still pass — 191 checks green in total.
+
+The search route in `app.py` is deliberately untouched and still serves. Moving it into
+`ui_controller.search` is the next task.
+
+### Added
+- `core/agent.py` — `JobSearchAgent`, the orchestrator. Reads the profile, parses intent,
+  enriches and encodes the query, fetches once per variant, unions and deduplicates, re-ranks,
+  and hands the top 5 to `RAGPipeline`. Returns one dict with the same keys on every exit
+  path, so the route never has to work out which branch produced its result.
+- `models/job_card.py` — one place where an Adzuna/Remotive field-shape difference is resolved.
+  `make_job_id` is a SHA-256 of lowercased, stripped `title|company`, truncated to 16 hex
+  characters. Lowercasing is what makes TC-022 work: a syndicated listing arrives at the two
+  APIs with different casing, and a byte-exact comparison would call the copies different jobs.
+  The `|` separator stops `("Data", "Xco")` and `("DataX", "co")` hashing alike.
+- `adapters/api_client.fetch_variant` — returns `{"jobs": [...], "failed_sources": [...]}`.
+  This is the signal TC-018 needed and did not have: every existing fetch function returns
+  `[]` for a 429 and `[]` for a genuine zero-result search, so the caller could not tell
+  "come back later" from "search for something else". The two now give different messages.
+- The 60-minute job cache is in use for the first time. `cache_get`/`cache_put` existed and
+  were dead code. Keyed on a SHA-256 of the **variant** string rather than the user's query,
+  so two searches that expand onto a shared phrasing reuse one fetch. Three variants against a
+  250/day Adzuna budget is the quota risk `PROJECT_STATUS.md` has been flagging. A *partial*
+  fetch is never cached, or an outage would outlive the API's recovery by an hour.
+- `verify_agent.py` — 57 checks, entirely offline. Every collaborator is a double, which is
+  the whole reason `JobSearchAgent.__init__` takes them as arguments. Covers TC-006, TC-016,
+  TC-017, TC-018, TC-021, TC-022, the RAG fallback, both cache paths, and JobCard against
+  missing nested objects. Three of the cases are only provable with doubles: TC-017 asserts
+  that **no** call happened, which needs a counter rather than a return value; TC-018 needs
+  Adzuna to fail on demand; TC-006 needs similarity scores fixed in advance so the expected
+  order is known.
+
+### Changed
+- Deduplication now keys on `job_id` instead of a concatenated `title + company` string, and
+  keeps the **first** occurrence. That is a decision, not an accident: `parse_intent`
+  guarantees the user's own phrasing is `variants[0]`, so query expansion can only ever add to
+  the candidate pool and never reorder what the user would have seen without it.
+- Ranking sorts on a new `final_score` (similarity + category boost) rather than on
+  `similarity_score`, which is retained for display and for the M4 evaluation. `normalized_score`
+  is unchanged in meaning — a percentage relative to the best match in that result set, not an
+  absolute quality score.
+- `docs/ARCHITECTURE.md` step 5 rewritten. The SDD's parallel fork is **not built**; fetching
+  is sequential. Recorded as a deliberate deferral with its reasoning rather than left as a
+  spec the code silently contradicts. The `Parallel fetch` row in `docs/LEARNING_LOG.md` now
+  says the same thing — claiming it works in a viva when the code loops is the worst answer.
+- `docs/LEARNING_LOG.md` — two rows added: **dependency injection / test doubles**, and
+  **hashing as an identity, not as a secret** (SHA-256 does two unrelated jobs in this project
+  and neither is security, which is the contrast with the password-hashing row).
+
+### Fixed
+- `JobCard.from_adzuna` tolerates a missing `company` or `location` object. The old inline
+  normalising chained `.get` on the nested object and would raise when Adzuna omitted it —
+  this is the descendant of the bug that once rendered Python dicts into the page.
+
+---
+
 ## 2026-09-19 — M2 intent parsing (first M2 component)
 
 `core/intent_parser.py` implemented. TC-019 and TC-020 pass; `verify_intent.py` runs 76 checks
