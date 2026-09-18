@@ -52,7 +52,11 @@ in memory per request and discarded by design.
 python -m venv venv && venv\Scripts\activate    # Windows
 pip install -r requirements.txt
 python app.py                                    # dev server
+python verify_db.py                              # prove the data layer against Atlas
+python verify_auth.py                            # prove the auth routes, TC-001 to TC-005
 ```
+
+`verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
 ## Constraints
 

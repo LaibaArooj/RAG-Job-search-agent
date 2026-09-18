@@ -1,7 +1,7 @@
 # Project Summary — RAG-Based Intelligent Job Search Agent
 
 **Laiba Arooj** · Dept. of Computer Science · Supervisor: Dr Ali Sammad
-Final Year Project · Summary as at **2026-09-13**
+Final Year Project · Summary as at **2026-09-19**
 
 > A standing overview for supervision and viva preparation. For session-level working notes
 > (blockers, next actions, where we stopped) see `PROJECT_STATUS.md`; for the full requirement
@@ -83,8 +83,8 @@ The test of whether this is real: swapping any one of them should mean editing o
 
 | # | Milestone | Status |
 |---|---|---|
-| M1 | Auth, profile, database | **In progress** — data layer built, auth routes outstanding |
-| M2 | Search pipeline: intent, expansion, dedupe, ranking | Not started (a working prototype of the ranking path exists) |
+| M1 | Auth, profile, database | **Complete (2026-09-19)** — TC-001 to TC-005 pass against live Atlas |
+| M2 | Search pipeline: intent, expansion, dedupe, ranking | **Next** (a working prototype of the ranking path exists) |
 | M3 | RAG, save/reject learning, For You feed | Not started |
 | M4 | Evaluation (precision@5), filters, full test pass, demo | Not started |
 
@@ -96,12 +96,14 @@ The test of whether this is real: swapping any one of them should mean editing o
 | `adapters/api_client.py` | **Built** | Adzuna + Remotive, normalisation, dedupe |
 | `core/semantic_engine.py` | **Built** | Loads from local cache; startup no longer needs the network |
 | `core/rag_pipeline.py` | **Built** | Groq call with a working fallback |
-| `adapters/db_manager.py` | **Built, unverified** | Complete; cannot be run — see §6 |
-| `verify_db.py` | **Built, blocked** | Proves the data layer once Atlas is reachable |
-| `controllers/auth_controller.py` | Stub | M1 — next task |
-| `controllers/ui_controller.py` | Stub | M2/M3 |
+| `adapters/db_manager.py` | **Built, verified** | 27/27 checks pass against the live cluster |
+| `verify_db.py` | **Built, passing** | 27 pass / 0 fail |
+| `controllers/auth_controller.py` | **Built** | `auth` blueprint: register, login, logout, `require_auth`, CSRF |
+| `verify_auth.py` | **Built, passing** | 31 pass / 0 fail, covering TC-001 to TC-005 |
+| `controllers/ui_controller.py` | **Part built** | `profile` (M1) and a protected `feed` placeholder; `search`/`save_job`/`reject_job` still stubs |
 | `core/agent.py`, `core/intent_parser.py` | Stub | M2 |
-| `models/user.py`, `models/job_card.py` | Stub | M1 / M2 |
+| `models/user.py` | **Built** | `from_document` / `to_document` |
+| `models/job_card.py` | Stub | M2 |
 
 Stubs raise `NotImplementedError` with their milestone rather than `pass`, so an unimplemented
 function cannot silently return `None` and reach a demo unnoticed.
@@ -118,6 +120,11 @@ Verified by running it, not by inspection:
 - **Injection guard works.** A category of `writing.$ne` is rejected before it can reach a
   MongoDB field path.
 - **Nothing connects at import.** A database outage cannot crash application startup.
+- **The full auth cycle works against live Atlas (2026-09-19).** Register, log in, edit the
+  profile, log out, log back in. `verify_auth.py` asserts 31 properties over the real routes,
+  the real signed session cookie and the real database, including all of TC-001 to TC-005.
+- **Passwords are never stored in plain text.** The stored value is asserted to be a Werkzeug
+  hash and to not contain the submitted password.
 
 ---
 
@@ -131,37 +138,40 @@ Verified by running it, not by inspection:
 | One denormalised user document | A single read returns the whole search context — no joins |
 | LLM intent parsing over if-statements | The SRS defines an Agent as autonomously deciding its steps; keyword matching does not meet that definition |
 | Duplicate username enforced by a unique index | A read-then-write check can be beaten by a concurrent signup; the index cannot |
+| One login-failure message for both causes | Distinct messages for "no such user" and "wrong password" turn the login form into a username oracle |
+| No fallback secret key — startup fails without one | A known session-signing key lets any visitor forge a session cookie for any username, which makes the auth decorative |
+| CSRF hand-rolled, not Flask-WTF | No new dependency, and a per-session token compared with `hmac.compare_digest` can be explained line by line in the viva |
 | Save/reject as one atomic conditional update | The filter requires the job not already be saved, so a repeat click cannot increment the score twice — TC-013 holds with no race |
 
 ---
 
 ## 6. Blockers
 
-### Blocking — no connection to MongoDB Atlas
+### Resolved — the Atlas connection
 
-The data layer is written and cannot be tested. A layer-by-layer probe:
+The data layer was untestable from 2026-09-13 to 2026-09-19 because TLS on port 27017 timed out
+against all three shards while TLS on :443 completed normally — a middlebox on that port, not a
+credential fault. The layer-by-layer probe (DNS → TCP → TLS → auth) is what ruled the password
+out: authentication happens *after* the TLS handshake, so a handshake that never completes
+cannot be a password problem.
 
-| Layer | Result |
-|---|---|
-| DNS SRV lookup | resolves to 3 shards |
-| TCP to shard:27017 | connects in 0.1 s |
-| **TLS handshake on :27017** | **times out and resets — all 3 shards** |
-| TLS on :443 (Groq, `cloud.mongodb.com`) | completes in 0.7 s, TLSv1.3 |
+The network path now works and nothing in the code was changed to fix it. If it recurs on
+campus, the symptom is a TLS timeout on :27017 only, and a phone hotspot is the test.
 
-Ordinary TLS works; TLS on port 27017 specifically does not. Something between this machine and
-Atlas is interfering with that port — typically a campus/ISP firewall or TLS-inspecting
-antivirus. **Authentication happens after the TLS handshake, so the credential is not
-implicated.** An earlier note recording this as a password problem was a misdiagnosis and has
-been corrected.
+### Blocking — `FLASK_SECRET_KEY` absent from `.env`
 
-Next test: run `verify_db.py` on a phone hotspot. If it passes, the fault is the network and
-the data layer is already correct.
+The app now refuses to start without it, deliberately: a known signing key makes the session
+cookie forgeable. Generate one with
+`python -c "import secrets; print(secrets.token_urlsafe(32))"` and add it to `.env`.
+`verify_auth.py` injects a throwaway key into its own process, which is why the checks run today.
 
 ### Non-blocking
 
-- `FLASK_SECRET_KEY` absent from `.env` — sessions will not work until it is set.
 - The venv is **Python 3.14.6**; the SRS specifies **3.11**. Either rebuild or record as a
   deviation. An examiner may ask.
+- The save/reject buttons in `feed.html` post to `/save_job` and `/reject_job`, which are not
+  yet routes. They are unreachable today because the feed renders no jobs, but they must be
+  wired in M3 or removed.
 
 ---
 
@@ -197,13 +207,12 @@ sign-off.** Full justifications in `PROJECT_SPEC.md` § Deviations.
 
 ## 9. Immediate next steps
 
-1. **Get a connection to Atlas on :27017** — run `verify_db.py` on a hotspot. Everything in M1
-   is gated on this.
-2. Add `FLASK_SECRET_KEY` to `.env`.
-3. Implement `controllers/auth_controller.py` — register, login, logout, `require_auth`. A
-   working version exists in git history at `5519a22` and needs rewiring onto `DatabaseManager`.
-4. Verify TC-001 to TC-005.
-5. Decide the category taxonomy before M3 work begins.
+1. Add `FLASK_SECRET_KEY` to `.env` — the app will not start without it.
+2. Drive TC-001 to TC-005 once in a real browser. `verify_auth.py` exercises the routes and the
+   session cookie, not the rendered forms.
+3. Begin M2 on a `feat/search-pipeline` branch: `core/intent_parser.py`, then `core/agent.py`,
+   then move the search route out of `app.py` into `ui_controller.search`.
+4. Decide the category taxonomy before M3 work begins.
 
 **Highest-value remaining single day of work:** the precision@5 evaluation (M4). It is what
 converts "semantic ranking is better" from an assertion into a measured result. The 20
