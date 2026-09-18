@@ -11,6 +11,52 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-19 — M2 intent parsing (first M2 component)
+
+`core/intent_parser.py` implemented. TC-019 and TC-020 pass; `verify_intent.py` runs 76 checks
+with 0 failures, including a live Groq call. TC-021 (query expansion) is **not** covered yet —
+`parse_intent` produces the variants but nothing consumes them until `JobSearchAgent` lands.
+
+### Added
+- `core/intent_parser.py` — `parse_intent` asks Groq for work type, experience, category and
+  2–3 query variants as JSON; `_parse_intent_keywords` is the FR-018 fallback. Both paths
+  return the identical dict shape, so `JobSearchAgent` never branches on which one ran; the
+  `source` field records it for the report only.
+- Validation separated from parsing. Groq's reply is treated as untrusted input: every field is
+  checked for membership in a closed set on the way out, unrecognised values become `None` and
+  an unrecognised category becomes `"other"`. The prompt steers the model; the membership test
+  is what actually guarantees the closed set.
+- `enrich_query` relocated from the inline search route in `app.py`, wording unchanged — that
+  route is the code path already demonstrated to satisfy TC-016, so a rewrite would have
+  invalidated the evidence.
+- `verify_intent.py` — 76 standalone checks: canonical shape on both paths, TC-020 with the
+  Groq client stubbed to raise, non-JSON and markdown-fenced replies, four hostile categories
+  (`technology.$ne`, `$where`, `technology.admin`, `a.b.c`) all collapsing to `"other"`,
+  variant capping and deduplication, TC-017's no-call-on-empty-query, and a live TC-019 call.
+- `config.WORK_TYPES` and `config.EXPERIENCE_LEVELS`.
+
+### Changed
+- `WORK_TYPES` and `EXPERIENCE_LEVELS` moved from `controllers/ui_controller.py` to `config.py`;
+  the controller now imports them. `intent_parser` must validate against the same sets, and an
+  AI-layer module importing from a controller both inverts the SDD layering and deadlocks:
+  `ui_controller` → `core.agent` → `core.intent_parser` → `ui_controller` fails with
+  "partially initialized module". Reproduced before fixing. **The cycle was order-dependent** —
+  it passed with the import at the bottom of the file and failed at the top, where PEP 8 puts
+  it, which is why it needed fixing rather than avoiding. No behaviour change; `verify_auth.py`
+  still passes 31/31.
+- `docs/LEARNING_LOG.md` — two rows added: circular imports / partially initialized modules,
+  and validating LLM output against a closed set.
+
+### Known gaps
+- TC-019's expected category is "creative", which is not in `CATEGORIES`. The prompt asks for
+  the single closest member instead, and the check accepts `writing` or `design`; the live run
+  returned `design`. Recorded here rather than widening the vocabulary, which is shared with
+  the M3 scoring loop.
+- The keyword fallback's synonym lists are hand-written and English-only. They are the crude
+  path by design, but the coverage is not measured.
+
+---
+
 ## 2026-09-19 — M1 auth, session and profile
 
 The Atlas blocker cleared: `verify_db.py` now reaches the cluster and passes 27/27, so the

@@ -2,7 +2,7 @@
 
 > Read this first at the start of every session. Claude updates it at the end of each session.
 
-Last updated: 2026-09-19 (M1 complete — auth, session and profile)
+Last updated: 2026-09-19 (M2 started — intent parsing built and verified)
 
 ## Deadline
 
@@ -14,7 +14,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 | # | Milestone | Status | Done when |
 |---|---|---|---|
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
-| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Next** | TC-006, TC-016 to TC-022 pass |
+| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **In progress** — intent parsing done (TC-019, TC-020); agent and route outstanding | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | Not started | TC-008 to TC-014 pass |
 | M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
 
@@ -32,11 +32,36 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 ## In progress
 
-- **Currently working on:** M2 — search pipeline (intent parsing, query expansion, ranking)
-- **Branch:** `feat/auth` (M1 work; branch `feat/search-pipeline` for M2)
+- **Currently working on:** M2 — `core/agent.py` next, then moving the search route
+- **Branch:** `feat/search-pipeline`
 - **Related issue:** none yet
 
 ## Where we left off
+
+**M1 is done and M2 has started.** `core/intent_parser.py` is built and verified:
+`verify_intent.py` passes 76/76, including a **live** Groq call for TC-019 and a stubbed
+failure for TC-020. `verify_auth.py` (31/31) and `verify_db.py` (27/27) still pass after
+the change.
+
+The live TC-019 run on the SRS query — *"something creative I can do from home, I'm just
+starting out"* — returned `work_type=remote`, `experience=entry level`, `category=design`,
+three variants. TC-019's expected category is "creative", which is deliberately **not** in
+`CATEGORIES`; the prompt asks for the single closest member instead, because that tuple is
+shared with the M3 scoring loop and widening it there would be the wrong lever.
+
+**Design point to be able to defend:** parsing and validation are separate steps in
+`parse_intent`. The allowed values are listed in the prompt *and* re-checked for membership
+on the way out. A prompt is a request; a membership test is a guarantee. Four hostile
+categories are in the verify script and all collapse to `"other"`.
+
+**`WORK_TYPES` and `EXPERIENCE_LEVELS` moved to `config.py`** from `ui_controller.py`. This
+was tested, not assumed: `ui_controller` → `core.agent` → `core.intent_parser` →
+`ui_controller` raises "cannot import name ... from partially initialized module". The
+sharp detail worth having ready — the cycle **passed** with the import at the bottom of the
+file and **failed** at the top, where PEP 8 puts it. An order-dependent cycle is worse than
+one that always fails, because it survives until someone runs `isort`.
+
+---
 
 **M1 is done.** As of 2026-09-19 a user can register, log in, edit their profile, log out and
 log back in against live Atlas. `verify_auth.py` passes 31/31 including TC-001 to TC-005, and
@@ -75,17 +100,19 @@ rebuild the venv on 3.11 or record the version as a deviation — an examiner ma
 
 ## Next up
 
-1. **Add `FLASK_SECRET_KEY` to your live `.env`.** It is missing, and the app now refuses to
-   start without it. Claude does not edit `.env`. Generate one with:
-   `python -c "import secrets; print(secrets.token_urlsafe(32))"`
-   (`verify_auth.py` supplies a throwaway key to its own process, which is why it runs today.)
-2. Drive TC-001 to TC-005 once in a real browser as well. `verify_auth.py` exercises the routes
-   and the session cookie, not the rendered forms.
-3. Start M2 on a `feat/search-pipeline` branch: `core/intent_parser.py`, then `core/agent.py`,
-   then move the search route out of `app.py` into `ui_controller.search`.
+1. **`core/agent.py`** — `JobSearchAgent`, the next M2 component. It is what makes TC-021
+   testable: `parse_intent` already returns 2–3 variants, but **nothing consumes them yet**,
+   so query expansion is not actually happening in the running app.
+2. Then move the search route out of `app.py` into `ui_controller.search`, which closes the
+   deferral recorded in `docs/ARCHITECTURE.md`.
+3. Drive TC-001 to TC-005 once in a real browser as well. `verify_auth.py` exercises the routes
+   and the session cookie, not the rendered forms. Still outstanding from M1.
 4. The save/reject buttons in `feed.html` post to `/save_job` and `/reject_job`, which do not
    exist as routes yet. They are unreachable today because the feed renders no jobs, but they
    must be wired in M3 or removed.
+5. Watch the Adzuna quota once expansion lands. Three variants means **three** Adzuna calls per
+   search against a 250/day budget, and Groq is called twice per search on top of that. This is
+   the practical cost of Deviations 1 and 2 and it will bite during demo rehearsal.
 
 Then, when M4 arrives: write the 20 evaluation queries **before** looking at any results.
 

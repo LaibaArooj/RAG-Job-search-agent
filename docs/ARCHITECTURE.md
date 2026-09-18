@@ -84,7 +84,9 @@ stubs that `raise NotImplementedError` with the milestone that fills them in, ra
 
 ```
 app.py                          Flask app + the search route (see deferral below)
-config.py                       env-driven config, validate() fails loudly on a missing key
+config.py                       env-driven config, validate() fails loudly on a missing
+                                key; also the three closed vocabularies — CATEGORIES,
+                                WORK_TYPES, EXPERIENCE_LEVELS
 controllers/
     auth_controller.py          BUILT — auth blueprint: register, login, logout,
                                 require_auth, csrf_token/check_csrf
@@ -94,7 +96,8 @@ core/
     semantic_engine.py          BUILT — SemanticEngine
     rag_pipeline.py             BUILT — RAGPipeline
     agent.py                    STUB M2 — JobSearchAgent
-    intent_parser.py            STUB M2 — parse_intent, enrich_query
+    intent_parser.py            BUILT — parse_intent (Groq + keyword fallback),
+                                enrich_query; TC-019, TC-020
 adapters/
     api_client.py               BUILT — Adzuna + Remotive fetch, normalise, dedupe
     db_manager.py               BUILT — MongoDB facade
@@ -144,6 +147,23 @@ handler — `/register`, `/login`, `/profile` and the search route.
 
 Input is whitelisted twice on the profile path: `update_profile` fixes which *fields* may be
 written, and `ui_controller` fixes which *values* `experience` and `preferred_work` may take.
+
+The same discipline applies to the LLM. `parse_intent` treats Groq's reply as untrusted
+input: the allowed values are listed in the prompt *and* re-checked for membership on the
+way out. The prompt steers the model; the membership test is the guarantee. This matters
+most for `category`, which becomes part of a MongoDB field path in M3.
+
+### Why the vocabularies live in `config.py`
+
+`CATEGORIES`, `WORK_TYPES` and `EXPERIENCE_LEVELS` are all defined in `config.py`, which
+imports nothing from the project. `WORK_TYPES` and `EXPERIENCE_LEVELS` started in
+`controllers/ui_controller.py` and moved on 2026-09-19, because `core/intent_parser.py`
+validates against the same sets and an AI-layer module importing from a controller both
+inverts the layering above and creates a genuine import cycle:
+`ui_controller` → `core.agent` → `core.intent_parser` → `ui_controller`, which fails with
+"cannot import name ... from partially initialized module". The cycle is **order-dependent**
+— it only fails with the import at the top of the file, where PEP 8 puts it — which is why
+it was fixed rather than worked around.
 
 ## Data model
 
