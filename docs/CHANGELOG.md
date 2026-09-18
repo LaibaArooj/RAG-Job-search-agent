@@ -11,6 +11,51 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-19 — M1 auth, session and profile
+
+The Atlas blocker cleared: `verify_db.py` now reaches the cluster and passes 27/27, so the
+routes above the data layer could finally be built. TC-001 to TC-005 pass.
+
+### Added
+- `controllers/auth_controller.py` — `auth` blueprint: `/register`, `/login`, `/logout`,
+  the `require_auth` decorator, and hand-rolled CSRF (`csrf_token`, `check_csrf`). The only
+  module importing `werkzeug.security`. Passwords are hashed here; the database layer only
+  ever receives a hash.
+- `controllers/ui_controller.py` — `ui` blueprint with `/profile` (view **and** edit) and
+  `/feed`. The feed is registered and protected now so TC-005 is testable; its ranking is
+  still M3 and says so on the page rather than rendering a plausible-looking empty feed.
+- `templates/login.html` — **it never existed.** The version at `5519a22` rendered it, so
+  TC-003 and TC-004 would both have raised `TemplateNotFound`.
+- `verify_auth.py` — 31 pass/fail checks over the real routes, real session cookie and real
+  Atlas, via Flask's test client. No new dependency; mirrors `verify_db.py`.
+- Profile edit form, and a nav bar plus flash-message block on `index.html`, which the other
+  templates already assumed existed.
+- `models/user.py` — `from_document` / `to_document` implemented.
+
+### Changed
+- CSRF is a per-session random token compared with `hmac.compare_digest`, not Flask-WTF.
+  No new dependency, and the mechanism is explainable line by line.
+- Login reports one message for an unknown username and for a wrong password, so the form is
+  not a username oracle. `session.clear()` precedes granting a session, against fixation.
+- The search route is now `@require_auth` and re-injects the user's skills and experience
+  into the query text before encoding — restoring the TC-016 behaviour the simplified demo
+  `app.py` had dropped.
+- Minimum password length set at 8, enforced server-side and hinted in the form. The SRS says
+  "strong password" without quantifying it; this is the quantification.
+- `/profile` whitelists submitted **values** (experience level, work type) as well as the
+  fields `update_profile` already whitelisted.
+
+### Fixed
+- **No fallback secret key.** `5519a22` used `os.getenv("SECRET_KEY", "fallback_secret_key")`;
+  a known signing key lets anyone forge a session cookie for any username. A missing
+  `FLASK_SECRET_KEY` is now fatal at startup.
+- The env var name is `FLASK_SECRET_KEY`, matching `config.py` and `.env.example`. The old
+  code read `SECRET_KEY`, which was never defined anywhere.
+- `index.html` credited "Gemini AI" for the recommendations. It is Groq.
+- Template `url_for` targets now name blueprint endpoints (`auth.login`, `ui.profile`, …).
+
+---
+
 ## 2026-09-13 — M1 database layer built
 
 ### Added

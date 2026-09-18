@@ -59,7 +59,12 @@ here becomes a silence in the viva.
 | ⭐ Password hashing vs encryption | | | Why is hashing one-way, and why does that matter? What is a salt? |
 | PBKDF2 | | | Why deliberately slow? |
 | Flask sessions and signed cookies | | | Where is session state stored? What stops a user forging one? |
-| CSRF | | | What's the attack, and how does the token stop it? |
+| CSRF | | | What's the attack, and how does the token stop it? Yours is hand-rolled — why not Flask-WTF? |
+| **Session fixation** | | | Added 2026-09-19. `login()` calls `session.clear()` *before* setting `username`. What attack does that stop, and why isn't setting the key enough on its own? |
+| **Constant-time comparison** | | | Added 2026-09-19. `hmac.compare_digest` instead of `==` for the CSRF token. What does `==` leak, and why does it leak it? |
+| **Username enumeration** | | | Added 2026-09-19. Unknown user and wrong password produce the *same* message. What does an attacker learn from two different messages? |
+| **Flask blueprints** | | | Added 2026-09-19. Routes now live in `auth_bp` and `ui_bp`, and templates say `url_for('auth.login')`, not `url_for('login')`. What does a blueprint buy you over routes on `app`? |
+| **Decorators and `functools.wraps`** | | | Added 2026-09-19. `require_auth` wraps a view. What breaks in Flask if you omit `wraps` — and why is the symptom an endpoint-name collision? |
 | NoSQL vs relational | | | Why MongoDB here? What would you lose moving to Postgres? |
 | Denormalisation | | | Why is everything in one user document? |
 | Database indexes | | | What does the unique index on `username` actually do? |

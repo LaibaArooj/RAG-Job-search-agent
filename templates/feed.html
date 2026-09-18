@@ -11,8 +11,8 @@
     <span class="navbar-brand fw-bold">🔍 Job Search AI</span>
     <div class="d-flex gap-3 align-items-center">
         <a href="{{ url_for('home') }}" class="text-white text-decoration-none">Search</a>
-        <a href="{{ url_for('profile') }}" class="text-white text-decoration-none">Profile</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
+        <a href="{{ url_for('ui.profile') }}" class="text-white text-decoration-none">Profile</a>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
     </div>
 </nav>
 
@@ -69,8 +69,12 @@
         {% endfor %}
     {% else %}
         <div class="alert alert-info">
-            No personalised feed yet. Search for some jobs and save the ones you like —
-            your feed will appear here.
+            {% if pending_message %}
+                {{ pending_message }}
+            {% else %}
+                No personalised feed yet. Search for some jobs and save the ones you like —
+                your feed will appear here.
+            {% endif %}
         </div>
     {% endif %}
 </div>

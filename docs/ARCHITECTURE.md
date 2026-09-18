@@ -2,7 +2,7 @@
 
 Derived from SDD v1.0 §3–§5. Claude keeps this current as the code evolves.
 
-Last updated: 2026-09-13 (restructured to Appendix B; see § Module layout (as built))
+Last updated: 2026-09-19 (M1 auth blueprints built; see § Module layout (as built))
 
 ## System overview
 
@@ -86,8 +86,10 @@ stubs that `raise NotImplementedError` with the milestone that fills them in, ra
 app.py                          Flask app + the search route (see deferral below)
 config.py                       env-driven config, validate() fails loudly on a missing key
 controllers/
-    auth_controller.py          STUB M1 — register, login, logout, require_auth
-    ui_controller.py            STUB M2/M3 — search, feed, save, reject, profile
+    auth_controller.py          BUILT — auth blueprint: register, login, logout,
+                                require_auth, csrf_token/check_csrf
+    ui_controller.py            PART BUILT — ui blueprint: profile (M1), feed (placeholder
+                                until M3); search/save_job/reject_job still stubs
 core/
     semantic_engine.py          BUILT — SemanticEngine
     rag_pipeline.py             BUILT — RAGPipeline
@@ -95,13 +97,15 @@ core/
     intent_parser.py            STUB M2 — parse_intent, enrich_query
 adapters/
     api_client.py               BUILT — Adzuna + Remotive fetch, normalise, dedupe
-    db_manager.py               STUB M1 — MongoDB facade
+    db_manager.py               BUILT — MongoDB facade
 models/
-    user.py                     STUB M1 — User dataclass
+    user.py                     BUILT — User dataclass
     job_card.py                 STUB M2 — JobCard dataclass
-templates/                      index, register, profile, feed
+templates/                      index, register, login, profile, feed
 static/css/, static/js/
 tests/                          empty — pytest is not yet a dependency
+verify_db.py                    standalone pass/fail check of the data layer
+verify_auth.py                  standalone pass/fail check of the auth routes (TC-001..005)
 ```
 
 **Deferral, recorded deliberately.** Appendix B describes `app.py` as an app factory whose
@@ -119,6 +123,27 @@ bare `except` reporting every error as "Username already taken". Preserved at `5
 
 **Environment variable naming settled:** `MONGODB_URI` everywhere — code, `.env.example`
 and docs. The earlier `MONGO_URI` spelling is retired.
+
+## Authentication and session (M1)
+
+`AuthController` is the `auth` blueprint and the sole importer of `werkzeug.security`.
+Passwords are hashed there; `DatabaseManager.create_user` receives a hash and never a password.
+
+| Concern | Decision | Why |
+|---|---|---|
+| Session | Flask's signed cookie, key from `FLASK_SECRET_KEY` | No server-side session store to run; free-tier constraint |
+| Missing key | `ConfigError` at startup, **no fallback** | A known signing key lets anyone forge a session for any username |
+| Route protection | `require_auth` decorator, `functools.wraps` | TC-005; `wraps` keeps the endpoint name Flask derives from `__name__` |
+| Failed login | One message for unknown user and wrong password | Two messages turn the form into a username oracle (TC-004) |
+| Session fixation | `session.clear()` before granting a session | A cookie planted pre-login is not the one that ends up authenticated |
+| CSRF | Hand-rolled per-session token, `hmac.compare_digest` | No new dependency; mechanism is explainable line by line |
+
+The CSRF token reaches templates through a context processor in `app.py`, so a form cannot
+silently omit it by forgetting to pass a variable. `check_csrf()` is called by every POST
+handler — `/register`, `/login`, `/profile` and the search route.
+
+Input is whitelisted twice on the profile path: `update_profile` fixes which *fields* may be
+written, and `ui_controller` fixes which *values* `experience` and `preferred_work` may take.
 
 ## Data model
 
