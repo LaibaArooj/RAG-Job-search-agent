@@ -51,6 +51,8 @@ here becomes a silence in the viva.
 | The fallback design | | | What happens when Groq fails, and why is that the right behaviour? Verified working 2026-09-13 — be able to describe how it was tested |
 | Isolating a vendor choice to one constant | | | Added 2026-09-13. Groq retired Llama 3 mid-project. Why did that cost one line instead of a rewrite? This is the layering argument paying off — use it as the concrete example |
 | Parallel fetch | | | What's actually running concurrently, and what does it save? |
+| **Circular imports / partially initialized modules** | | | Added 2026-09-19. `ui_controller` -> `core.agent` -> `core.intent_parser` -> `ui_controller` raised "cannot import name ... from partially initialized module". Why does Python fail here rather than looping forever? And the sharp bit: the same three imports **passed** with the import at the bottom of the file and **failed** at the top, where PEP 8 puts it. Why does line order decide it? |
+| **Validating LLM output against a closed set** | | | Added 2026-09-19. `parse_intent` lists the allowed values in the prompt *and* re-checks membership on the way out. Why isn't the prompt enough? Tie it to the field-path injection row below — the category reaches `category_scores.<category>` in M3. |
 
 ### Backend and data
 
