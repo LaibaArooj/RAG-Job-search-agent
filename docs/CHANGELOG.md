@@ -11,6 +11,42 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-20 — A verification suite that can catch a live-API change
+
+Both defects found today were invisible to `verify_agent.py`, which passed 57/57 throughout
+because it is offline by design and stubs the fetch. A green suite said nothing about whether
+a live source was behaving. Two scripts close that gap and make the whole thing one command.
+
+### Added
+- `verify_live.py` — 28 checks against the **real** Adzuna, Remotive, Groq and Atlas, using
+  Flask's test client so it needs no running server and no new dependency, but renders the real
+  templates. It asserts the two API contracts the project now depends on (Adzuna returns results
+  for a work-type-laden query; Remotive still ignores `search`), then the behaviours that broke:
+  a beginner query returns no senior titles, a senior query still does, gibberish reaches
+  `MSG_NO_RESULTS`, and no cached pool was built from Remotive alone. If Remotive ever starts
+  honouring `search` again, the check fails loudly and says to revisit the local filter.
+- `verify_all.py` — runs all five in cost order, cheapest first, and prints one table and one
+  verdict. `--offline` skips `verify_live.py`, the only script that spends Adzuna quota. It
+  distinguishes a **crash** from a failed check and prints the traceback, because a script that
+  never reaches its summary would otherwise be counted as zero failures.
+- Both reconfigure stdout to UTF-8. The Windows console is cp1252 and cannot encode the em
+  dashes these scripts print; an encoding crash halfway through a check run is a uniquely
+  unhelpful failure.
+
+### Totals
+**249 assertions green**, in about 100 seconds: verify_db 27, verify_agent 87, verify_auth 31,
+verify_intent 76, verify_live 28.
+
+### Note
+One check in `verify_live.py` was wrong on first run and is worth remembering: it tried to prove
+Adzuna's raw AND behaviour by calling `_fetch_adzuna_raw`, which is the function that applies the
+work-type stripping — so it was testing the fix with the fix applied. Re-measuring that raw
+behaviour needs an unmodified HTTP call, and `adapters/api_client.py` is the only module allowed
+to import `requests`, so the check now asserts the fix's effect instead and the raw measurement
+stays recorded here.
+
+---
+
 ## 2026-09-20 — Search accuracy: candidate generation, not ranking
 
 Reported symptom: a beginner/entry-level software query, from a profile set to **mid level**,

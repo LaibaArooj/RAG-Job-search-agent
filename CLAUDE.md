@@ -56,9 +56,16 @@ python verify_db.py                              # prove the data layer against 
 python verify_auth.py                            # prove the auth routes, TC-001 to TC-005
 python verify_intent.py                          # prove intent parsing, TC-019/TC-020 (live Groq call)
 python verify_agent.py                           # prove the search pipeline, TC-006/016/017/018/021/022 (offline)
+python verify_live.py                            # prove it against the REAL Adzuna/Remotive/Groq + rendered pages
+python verify_all.py                             # run all five, one summary. --offline skips the quota-spending one
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
+
+**`python verify_all.py` is the pre-demo check.** 249 assertions, about 100 seconds. Use
+`--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
+Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
+rather than a regression; read which check failed before assuming the code broke.
 
 ## Constraints
 
