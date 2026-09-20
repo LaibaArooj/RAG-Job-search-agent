@@ -10,7 +10,7 @@
 <nav class="navbar navbar-dark bg-dark px-4">
     <span class="navbar-brand fw-bold">🔍 Job Search AI</span>
     <div class="d-flex gap-3 align-items-center">
-        <a href="{{ url_for('home') }}" class="text-white text-decoration-none">Search</a>
+        <a href="{{ url_for('ui.search') }}" class="text-white text-decoration-none">Search</a>
         <a href="{{ url_for('ui.feed') }}"  class="text-white text-decoration-none">For You</a>
         <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
     </div>

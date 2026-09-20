@@ -2,7 +2,8 @@
 
 Derived from SDD v1.0 §3–§5. Claude keeps this current as the code evolves.
 
-Last updated: 2026-09-19 (M1 auth blueprints built; see § Module layout (as built))
+Last updated: 2026-09-20 (search route moved into the ui blueprint; the inline-route deferral
+in § Module layout (as built) is now closed)
 
 ## System overview
 
@@ -93,15 +94,18 @@ stubs that `raise NotImplementedError` with the milestone that fills them in, ra
 `pass` — a stub that silently returns `None` is how an unimplemented function gets shipped.
 
 ```
-app.py                          Flask app + the search route (see deferral below)
+app.py                          Flask app wiring only — no routes. Constructs
+                                DatabaseManager, SemanticEngine and RAGPipeline, assembles
+                                JobSearchAgent from them, and publishes the agent and the
+                                database on app.config for the blueprints
 config.py                       env-driven config, validate() fails loudly on a missing
                                 key; also the three closed vocabularies — CATEGORIES,
                                 WORK_TYPES, EXPERIENCE_LEVELS
 controllers/
     auth_controller.py          BUILT — auth blueprint: register, login, logout,
                                 require_auth, csrf_token/check_csrf
-    ui_controller.py            PART BUILT — ui blueprint: profile (M1), feed (placeholder
-                                until M3); search/save_job/reject_job still stubs
+    ui_controller.py            PART BUILT — ui blueprint: search on "/" (M2), profile (M1),
+                                feed (placeholder until M3); save_job/reject_job still stubs
 core/
     semantic_engine.py          BUILT — SemanticEngine
     rag_pipeline.py             BUILT — RAGPipeline
@@ -110,10 +114,11 @@ core/
     intent_parser.py            BUILT — parse_intent (Groq + keyword fallback),
                                 enrich_query; TC-019, TC-020
 adapters/
-    api_client.py               BUILT — Adzuna + Remotive fetch. fetch_variant() returns
-                                jobs and failed_sources separately (TC-018); normalising
-                                now delegated to JobCard. fetch_all_jobs is legacy, used
-                                only by the inline route and retired with it
+    api_client.py               BUILT — Adzuna + Remotive fetch, one path only.
+                                fetch_variant() returns jobs and failed_sources separately
+                                (TC-018); normalising is delegated to JobCard. The legacy
+                                fetch_all_jobs / fetch_adzuna_jobs / fetch_remotive_jobs
+                                trio was deleted on 2026-09-20 with the inline route
     db_manager.py               BUILT — MongoDB facade
 models/
     user.py                     BUILT — User dataclass
@@ -132,18 +137,25 @@ verify_agent.py                 standalone check of the pipeline (TC-006, TC-016
                                 double, which is why JobSearchAgent takes them as arguments
 ```
 
-**Deferral, recorded deliberately.** Appendix B describes `app.py` as an app factory whose
-search route lives in `controllers/ui_controller.py` as a blueprint. The route is still
-inline in `app.py` because it is the one fully working code path in the project, and the
-restructure was carried out as a pure move so that identical behaviour could be verified
-before and after. Moving it is M2 work.
+**Deferral closed, 2026-09-20.** Appendix B describes `app.py` as an app factory whose search
+route lives in `controllers/ui_controller.py` as a blueprint. The route was inline in `app.py`
+from the 2026-09-13 restructure until now, because it was the one fully working code path and
+the restructure was carried out as a pure move so identical behaviour could be verified before
+and after.
 
-As of 2026-09-19 `JobSearchAgent` exists and is proven, but the inline route still does not
-use it: the agent was built and verified *beside* the working route rather than in place of
-it, so there was never a point where the app was broken. The two coexist until the route is
-swapped over, which is the last piece of M2. `api_client.fetch_all_jobs` is retired at the
-same time — it is the legacy path's only remaining caller, and two fetch paths left standing
-is how the two drift apart.
+`ui_controller.search` now serves `/` and calls `JobSearchAgent.run()`. The agent was built and
+verified *beside* the working route rather than in place of it, so there was never a point
+where the app was broken; this commit is the swap. The legacy `fetch_all_jobs` path went with
+it — two fetch paths left standing is how the two drift apart.
+
+The route stays on `/` rather than moving to `/search`: `verify_auth.py` measures TC-003 and
+TC-005 on that URL, asserting 200 to a logged-in user and 302 to an anonymous one, and a
+redirect hop would turn those 200s into 302s.
+
+**Still deferred:** the `create_app()` factory itself. `app` is still a module-level object,
+which `verify_auth.py` imports directly. The agent reaches the blueprint through
+`app.config["AGENT"]`, the same indirection `app.config["DB"]` already used, so no controller
+imports `app`. Converting to a factory is a refactor with nothing in M2 depending on it.
 
 **Removed:** `models.py` (flat module). It collided with the `models/` package — Python
 resolves the name to one of them and the other silently disappears — and was already dead

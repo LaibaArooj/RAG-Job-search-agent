@@ -1,12 +1,13 @@
 """Search, feed, save, reject and profile routes.
 
-Covers TC-005 to TC-018. Only profile() is implemented — it belongs to M1. The rest stay as
-stubs tagged with the milestone that fills them in; a stub that silently returns None is how
-an unimplemented function gets shipped.
+Covers TC-005 to TC-018. profile() (M1) and search() (M2) are implemented; save_job and
+reject_job stay as stubs tagged with the milestone that fills them in, because a stub that
+silently returns None is how an unimplemented function gets shipped.
 
-The search route is still inline in app.py. It is the one fully working code path in the
-project and moving it here is M2 work, recorded as a deliberate deferral in
-docs/ARCHITECTURE.md.
+search() serves "/" and replaced the inline route in app.py on 2026-09-20, closing the
+deferral recorded in docs/ARCHITECTURE.md § Module layout. It stays on "/" rather than moving
+to "/search" because verify_auth.py asserts that "/" returns 200 to a logged-in user and 302
+to an anonymous one — TC-003 and TC-005 are both measured on that URL.
 
 Route handlers stay thin: they capture input, call JobSearchAgent or DatabaseManager, and
 render a template. No requests, no PyMongo and no sentence-transformers imports here —
@@ -34,6 +35,14 @@ ui_bp = Blueprint("ui", __name__)
 def _db():
     """Return the application's DatabaseManager, the only route into MongoDB."""
     return current_app.config["DB"]
+
+
+def _agent():
+    """Return the application's JobSearchAgent, built once at startup in app.py."""
+    # Same indirection as _db(): reached through current_app.config rather than by importing
+    # app, which would be a circular import. It also means the agent's collaborators are
+    # constructed in exactly one place that owns process lifetime.
+    return current_app.config["AGENT"]
 
 
 @ui_bp.route("/profile", methods=["GET", "POST"])
@@ -105,10 +114,41 @@ def feed():
     )
 
 
+def _blank_page(error=None):
+    """Return the same key set JobSearchAgent.run() returns, for a page with nothing to show."""
+    # Mirrors JobSearchAgent._empty_result deliberately. A GET and a rejected POST hand the
+    # template the identical variables a completed search does, so index.html never has to
+    # test which branch produced them.
+    return {
+        "jobs": [],
+        "query": "",
+        "intent": None,
+        "ai_recommendations": None,
+        "error": error,
+        "warning": None,
+    }
+
+
+@ui_bp.route("/", methods=["GET", "POST"])
+@require_auth
 def search():
     """Handle the search form, run JobSearchAgent and render ranked results (TC-006, TC-007,
     TC-017 empty query, TC-018 rate-limit banner)."""
-    raise NotImplementedError("M2")
+    if request.method == "POST":
+        if not check_csrf():
+            flash("Your session expired. Please search again.", "error")
+            return render_template("index.html", **_blank_page())
+
+        # The whole pipeline lives behind one call. The route does not read the profile, does
+        # not strip the query and does not decide what an empty result means — the agent owns
+        # every one of those and returns the same keys on every exit path.
+        result = _agent().run(current_username(), request.form.get("query", ""))
+        return render_template("index.html", **result)
+
+    # GET. agent.run() is deliberately NOT called here: with an empty query it returns
+    # TC-017's "Please enter a search term", so every first visit to the search page would
+    # open with an error banner. That message belongs to an empty *submit*, not to arrival.
+    return render_template("index.html", **_blank_page())
 
 
 def save_job():

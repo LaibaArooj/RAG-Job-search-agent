@@ -11,6 +11,83 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-20 — M2 route move: the app finally runs the agent
+
+`JobSearchAgent` was proven on 2026-09-19 but nothing called it — the live route still ran the
+old inline pipeline, so query expansion (TC-021) and the partial-source banner (TC-018) passed
+in `verify_agent.py` and did not happen in the running app. `ui_controller.search` now serves
+`/` and calls `agent.run()`. This closes the inline-route deferral recorded in
+`docs/ARCHITECTURE.md` § Module layout and is the last build work in M2.
+
+**Verified.** All four verify scripts pass — `verify_db.py` 27, `verify_auth.py` 31,
+`verify_intent.py` 76 (live Groq call), `verify_agent.py` 57 — **191/191**. Then a live run
+against the running dev server with real Adzuna, Remotive, Groq and Atlas: 32 ranked cards with
+match badges and a populated AI panel, `GET /` with no error banner, TC-017 on an empty submit,
+no raw dicts in the page, and `job_cache` holding one document per query *variant*, which is the
+first direct evidence that query expansion runs in the live app.
+
+### Added
+- `controllers/ui_controller.search` — serves `/` for GET and POST. Thin by construction: check
+  CSRF, call `_agent().run(current_username(), query)`, render the dict. It does not read the
+  profile, strip the query or decide what an empty result means — the agent owns all three.
+- `_agent()` beside the existing `_db()`, reading `current_app.config["AGENT"]`. Same
+  indirection, same reason: a controller importing `app` is a circular import.
+- `_blank_page()` — returns the identical key set `JobSearchAgent.run()` returns, so a GET and
+  a CSRF-rejected POST hand the template exactly the variables a completed search does.
+- `app.config["AGENT"] = JobSearchAgent(db, engine, rag)` in `app.py`. The one place the three
+  collaborators are assembled, which is the point of taking them as constructor arguments.
+- `index.html` renders `error` and `warning`. The agent has returned both on every exit path
+  since 2026-09-19 and the template rendered neither. `warning` sits **above the result list,
+  not instead of it** — that is the TC-018 distinction between "come back later" and "search
+  for something else". They are template variables rather than flashed messages because
+  `flash()` exists to carry a message across a redirect and this renders in the same request;
+  it also avoids the flash block's category mapping, which renders anything that is not
+  `error` as `alert-success` and would have shown a warning in green.
+
+### Changed
+- `GET /` deliberately does **not** call `agent.run()`. With an empty query the agent returns
+  TC-017's "Please enter a search term", so calling it on arrival would open the search page
+  with an error banner on every visit. That message belongs to an empty *submit*.
+- The search route stays on `/` rather than moving to `/search`. `verify_auth.py` measures
+  TC-003 and TC-005 on that URL — 200 logged in, 302 anonymous — and a redirect hop would turn
+  those 200s into 302s.
+- The endpoint is now `ui.search`, so the six `url_for("home")` call sites moved with it:
+  `controllers/auth_controller.py` (register x2, login x2) and the nav bars in `feed.html` and
+  `profile.html`. Missing one would be a `BuildError`, i.e. a 500 on a page that renders today.
+- `app.py` is wiring only — no routes, and the unused `flash`, `render_template`, `request`,
+  `require_auth`, `current_username` and `fetch_all_jobs` imports are gone.
+- `requirements.txt` — the `requests` comment named `job_fetcher`, a module renamed to
+  `adapters/api_client.py` on 2026-09-13.
+
+### Removed
+- `fetch_all_jobs`, `fetch_adzuna_jobs` and `fetch_remotive_jobs` from
+  `adapters/api_client.py`. The inline route was their only caller. All three returned `[]` for
+  a rate limit and `[]` for a genuine zero-result search alike, which is exactly the ambiguity
+  `fetch_variant`'s `failed_sources` was added to resolve, and they still carried the
+  pre-`JobCard` inline normalising — the code that once rendered Python dicts into the page.
+  Preserved in git history.
+- The inline `home()` route from `app.py`.
+
+### Known gaps
+- **Remotive has stopped honouring `search`.** Found by the live run, which is exactly what an
+  offline verify script cannot find. The endpoint returns the same fixed 17-job list for every
+  query — confirmed with `nurse`, `accountant`, `qwertyuiop` and with no parameters at all — and
+  ignores `limit` too. Consequences: one of the two sources contributes a constant,
+  query-independent 17 jobs to every search; `MSG_NO_RESULTS` is unreachable in production
+  because the pool is never empty; a gibberish query renders 17 irrelevant cards with high match
+  badges; and M4's precision@5 would be measured over polluted candidate pools. Not fixed — the
+  SRS names Remotive as a source and the options are design decisions. Written up with three
+  options in `docs/PROJECT_STATUS.md`.
+- The old route flashed *"Could not load your profile; showing unpersonalised results."* when
+  `get_user_context` failed. `JobSearchAgent.run` catches that, prints, and continues
+  unpersonalised — correct, but now silent to the user. Surfacing it means adding a key to the
+  agent's return dict, which breaks the "same keys on every exit path" invariant
+  `verify_agent.py` asserts. Left as a gap rather than widening M2.
+- The agent logs with `print`, not `current_app.logger`, because `core/` must not import Flask.
+  That is a layering consequence, not an oversight — be ready to say so.
+
+---
+
 ## 2026-09-19 — M2 search pipeline (`JobSearchAgent` + `JobCard`)
 
 The pipeline is assembled. `core/agent.py` and `models/job_card.py` are implemented and

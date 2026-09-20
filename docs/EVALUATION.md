@@ -6,6 +6,24 @@ This document is how that claim gets evidence. Budget one day in M4.
 Report the numbers whatever they are. A measured null result written up honestly scores
 better than an unmeasured claim.
 
+## ⚠ Read before writing the queries — the baseline is compromised
+
+Found 2026-09-20: **Remotive ignores the `search` parameter and returns the same fixed 17-job
+list for every query.** See the finding at the top of `docs/PROJECT_STATUS.md`. This hits the
+evaluation harder than it hits the app:
+
+- The **baseline** below is "the raw order Adzuna and Remotive return". For Remotive that order
+  is now query-independent, so the baseline is partly a constant list. Comparing against it
+  flatters the system for the wrong reason — re-ranking a fixed list will beat it on nearly any
+  query, and that says nothing about semantic vs keyword ranking.
+- Every candidate pool contains the same 17 jobs, so the 20 queries are far less independent
+  than they look.
+
+**Decide the Remotive question before running the evaluation, not after.** Whatever is decided,
+the honest options for this document are to measure Adzuna-only (a real keyword baseline), or to
+report Adzuna-only and both-sources separately and explain the difference. Measuring the
+polluted pool and reporting one number would be the indefensible choice.
+
 ## What is being measured
 
 **precision@5** — of the top 5 results, how many are relevant?

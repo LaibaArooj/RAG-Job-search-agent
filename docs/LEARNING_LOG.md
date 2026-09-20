@@ -69,6 +69,8 @@ here becomes a silence in the viva.
 | **Username enumeration** | | | Added 2026-09-19. Unknown user and wrong password produce the *same* message. What does an attacker learn from two different messages? |
 | **Flask blueprints** | | | Added 2026-09-19. Routes now live in `auth_bp` and `ui_bp`, and templates say `url_for('auth.login')`, not `url_for('login')`. What does a blueprint buy you over routes on `app`? |
 | **Decorators and `functools.wraps`** | | | Added 2026-09-19. `require_auth` wraps a view. What breaks in Flask if you omit `wraps` — and why is the symptom an endpoint-name collision? |
+| **Endpoint names vs URLs** | | | Added 2026-09-20. Moving the search route changed the *endpoint* from `home` to `ui.search` while the *URL* stayed `/`. Six `url_for("home")` calls had to move with it. Two questions: why is a `BuildError` raised at render time rather than at startup, and what does that imply about how much a test suite that only checks status codes can catch? |
+| **`app.config` as the wiring seam** | | | Added 2026-09-20. Controllers read `current_app.config["DB"]` and `["AGENT"]` rather than importing `app`. Why would importing `app` be a circular import, and what does this buy over a module-level global? Related: the SDD wants a `create_app()` factory — what does a factory give you that this does not? Pairs with the dependency-injection row. |
 | NoSQL vs relational | | | Why MongoDB here? What would you lose moving to Postgres? |
 | Denormalisation | | | Why is everything in one user document? |
 | Database indexes | | | What does the unique index on `username` actually do? |

@@ -2,7 +2,46 @@
 
 > Read this first at the start of every session. Claude updates it at the end of each session.
 
-Last updated: 2026-09-19 (M2 — search pipeline assembled; only the route move remains)
+Last updated: 2026-09-20 (M2 route move **verified**, 191/191 + a live end-to-end run;
+**Remotive has stopped honouring search — read the finding below**)
+
+## 🚨 Read this first — Remotive is no longer a searchable source
+
+Found on 2026-09-20 during the first live end-to-end run. **Remotive's API ignores the `search`
+parameter completely and returns the same fixed 17-job list for every query.** Verified by
+calling it with `search=nurse`, `search=accountant`, `search=qwertyuiop`, and with **no
+parameters at all** — identical results every time, always led by "Senior .NET Full-stack
+Developer". It ignores `limit` too: the code asks for 15 and gets 17.
+
+Adzuna is fine and behaves correctly; it returned 0 for gibberish, as it should.
+
+What this actually means:
+
+- One of the project's two job sources contributes a **constant, query-independent 17 jobs to
+  every search**. Search "nurse" and the candidate pool contains no nursing jobs from Remotive.
+- **`MSG_NO_RESULTS` ("No jobs matched that search.") is unreachable in production** while
+  Remotive is up, because the pool is never empty. TC-018's no-results branch passes in
+  `verify_agent.py` against a double and cannot fire against the live API.
+- **This is the biggest demo risk in the project.** A gibberish query renders 17 irrelevant
+  senior-developer cards, and because `normalized_score` is relative to the best match *in that
+  result set*, the top one still shows a high match percentage. "You searched nonsense and it
+  says 94% match" is exactly the question that damages a viva.
+- **It contaminates the M4 evaluation.** Precision@5 over 20 queries would be measured on
+  candidate pools that each contain the same 17 fixed jobs. See `docs/EVALUATION.md`.
+
+Not fixed, deliberately — the SRS names Remotive as a source and the options are design
+decisions that need a call (and possibly supervisor sign-off):
+
+1. **Drop Remotive, run on Adzuna alone.** Honest and simple; costs the "two sources" claim and
+   the genuinely-global remote listings, and puts the whole demo on a 250/day quota.
+2. **Keep Remotive but filter it locally** — fetch its list once and keyword-filter client side.
+   Preserves two sources, but it is no longer an API search and the write-up must say so.
+3. **Add a minimum-similarity floor** so irrelevant jobs are dropped rather than ranked. This
+   fixes the demo risk for *both* sources but is a new ranking parameter that has to be
+   justified and tuned during evaluation — it cannot be a hand-picked number like the existing
+   `CATEGORY_BOOST`.
+
+Whichever is chosen, the SRS claim of two live searchable sources needs a line in the report.
 
 ## Deadline
 
@@ -14,7 +53,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 | # | Milestone | Status | Done when |
 |---|---|---|---|
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
-| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **In progress** — intent parsing and `JobSearchAgent` done (TC-006, TC-016 to TC-022 all pass offline); only the route move outstanding | TC-006, TC-016 to TC-022 pass |
+| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 191/191 across the four verify scripts, plus a live end-to-end run through the browser stack | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | Not started | TC-008 to TC-014 pass |
 | M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
 
@@ -32,11 +71,76 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 ## In progress
 
-- **Currently working on:** M2 — `core/agent.py` is done; moving the search route out of `app.py` is next
+- **Currently working on:** M2 is closed. Next decision is the Remotive finding above, then M3.
 - **Branch:** `feat/search-pipeline`
 - **Related issue:** none yet
 
-## Where we left off
+## Environment — rebuilt 2026-09-20
+
+The project was copied from another machine (user `BEST BUY COMPUTERS`, drive `L:`) and arrived
+with a dead venv and no interpreter. Now working:
+
+- **Python 3.12.10** at `C:\Users\laiba\AppData\Local\Programs\Python\Python312`, venv rebuilt.
+  Note this is **neither** the SRS's 3.11 nor the old 3.14.6 — still a deviation to record.
+- `python` on PATH is only the Microsoft Store stub; an App Execution Alias shadows the real
+  one. Use `venv\Scripts\python.exe` explicitly.
+- **`git` is not on PATH** — it lives at `C:\Program Files\Git\cmd\git.exe`. The repo also
+  needed `git config --global --add safe.directory E:/RAG-Job-search-agent`, because the working
+  tree is still owned by the old machine's SID.
+- **torch is installed CPU-only** (`torch-2.14.0+cpu`) from `download.pytorch.org/whl/cpu`.
+  PyPI's default Windows wheel bundles CUDA and is ~2.5 GB, which failed twice on this
+  connection. CPU-only is ~200 MB and is the right build regardless: `all-MiniLM-L6-v2` runs on
+  CPU here and no part of the project uses a GPU. `requirements.txt` is unchanged, since torch
+  is a transitive dependency of sentence-transformers and was never pinned — but the CPU index
+  URL is a setup step that belongs in the README and in the report's reproducibility section.
+
+## Where we left off — 2026-09-20
+
+**The app now runs the agent, and it is verified.** `ui_controller.search` serves `/`, calls
+`JobSearchAgent.run(username, query)` and renders the dict. `app.py` is wiring only. The legacy
+`fetch_all_jobs` / `fetch_adzuna_jobs` / `fetch_remotive_jobs` trio is deleted, so there is one
+fetch path. This closes the inline-route deferral in `docs/ARCHITECTURE.md`.
+
+Until this commit, TC-021 (query expansion) and TC-018 (the partial-source banner) passed in
+`verify_agent.py` and **did not happen in the running app**. The tests and the demo now agree.
+
+**Verified two ways.** All four verify scripts: `verify_db.py` 27, `verify_auth.py` 31,
+`verify_intent.py` 76 (live Groq call), `verify_agent.py` 57 — **191/191**. Then a live run
+against the running server with real Adzuna, Remotive, Groq and Atlas: a real search rendered
+32 ranked cards with match badges and a populated AI Recommendations panel, `GET /` opened with
+no error banner, an empty submit produced TC-017's message and no job cards, and no raw Python
+dict leaked into the page.
+
+**Query expansion is provably live, not just wired.** After the run, `job_cache` held multiple
+documents per search, keyed per *variant*. That is the evidence to show in the viva: one search,
+several cache entries, one per LLM-generated phrasing.
+
+The live run is also what surfaced the Remotive finding at the top of this file. That is the
+value of it — `verify_agent.py` is offline by design and could never have found it.
+
+**Four things to be able to defend:**
+
+1. **`GET /` deliberately does not call `agent.run()`.** With an empty query the agent returns
+   TC-017's "Please enter a search term", so calling it on arrival would greet every visitor
+   with an error banner. TC-017 is about an empty *submit*.
+2. **The route stayed on `/` instead of moving to `/search`.** `verify_auth.py` measures TC-003
+   and TC-005 on that URL — 200 logged in, 302 anonymous. A `/search` route with `/` redirecting
+   would turn those 200s into 302s and break a green M1 suite to satisfy a URL preference.
+3. **Renaming the endpoint to `ui.search` moved six `url_for("home")` call sites** — four in
+   `auth_controller.py`, plus the nav bars in `feed.html` and `profile.html`. A missed one is a
+   `BuildError`, which reaches the user as a 500 on a page that works today. This is the cost
+   of endpoint renames and it is worth being able to state.
+4. **`error` and `warning` are template variables, not flashed messages.** `flash()` carries a
+   message across a redirect; this renders in the same request. It also avoids a real bug — the
+   flash block maps any category that is not `error` to `alert-success`, so a flashed warning
+   would have rendered green.
+
+**Still deferred:** the `create_app()` factory from SDD Appendix B. `app` is a module-level
+object that `verify_auth.py` imports directly. The agent reaches the blueprint through
+`app.config["AGENT"]`, so no controller imports `app` and the layering holds; the factory is a
+refactor with nothing in M2 depending on it.
+
+## Where we left off — 2026-09-19
 
 **The M2 pipeline is assembled.** `core/agent.py` (`JobSearchAgent`) and `models/job_card.py`
 are built and `verify_agent.py` passes **57/57** — entirely offline, no live Groq, no Adzuna
@@ -51,7 +155,8 @@ running app. It is now.
 **The search route in `app.py` is untouched and still serves.** That was deliberate — the
 agent was built and proven beside the working route rather than in place of it, so there was
 never a point where the app was broken. Swapping the route over is the next task and is the
-only build work left in M2.
+only build work left in M2. *(Superseded 2026-09-20: the route was moved into
+`ui_controller.search` and the inline one deleted. See the 2026-09-20 section above.)*
 
 **Four design points to be able to defend:**
 
@@ -115,18 +220,13 @@ rebuild the venv on 3.11 or record the version as a deviation — an examiner ma
 
 ## Next up
 
-1. **Move the search route out of `app.py` into `ui_controller.search`**, wiring it to
-   `JobSearchAgent`. This closes the deferral recorded in `docs/ARCHITECTURE.md` and finishes
-   M2's build work. The route becomes thin: call `agent.run(username, query)` and render the
-   dict it returns. Note it has to render `warning` as well as `error` — a partially failed
-   fetch shows a banner *alongside* results, not instead of them.
-2. **Drive the pipeline once end to end in a real browser** against live Adzuna, Remotive and
-   Groq. `verify_agent.py` is entirely offline by design, which means it proves the logic and
-   proves nothing about the real API shapes. That gap is deliberate but it is a gap.
-3. Drive TC-001 to TC-005 once in a real browser as well. `verify_auth.py` exercises the routes
-   and the session cookie, not the rendered forms. Still outstanding from M1.
-4. Retire `fetch_all_jobs` from `adapters/api_client.py` once the old route is gone. It is the
-   last caller; leaving two fetch paths around is how the two diverge.
+1. **Decide what to do about Remotive** — see the finding at the top. This blocks honest M4
+   evaluation and it is the demo's weakest point. Take it to the supervisor.
+2. **Click through the app yourself in a real browser.** The 2026-09-20 live run drove the
+   running server over HTTP and asserted on the returned HTML, which proves the routes, the
+   pipeline, the real API shapes and the template output — but **not** the visual layout, the
+   Bootstrap rendering or the form controls. That is demo rehearsal and it is still outstanding,
+   along with TC-001 to TC-005 through the rendered forms rather than the test client.
 5. The save/reject buttons in `feed.html` post to `/save_job` and `/reject_job`, which do not
    exist as routes yet. They are unreachable today because the feed renders no jobs, but they
    must be wired in M3 or removed.
@@ -182,6 +282,8 @@ Weekly self-check every Friday — three random rows, explained out loud, file c
   Either tune it during evaluation or state it plainly as a heuristic.
 - **Tell the supervisor Groq retired Llama 3.** The SRS names it; the model is gone. The
   substitution is recorded in `docs/PROJECT_SPEC.md` § Deviations and needs sign-off.
-- Python version: venv is 3.14.6, SRS says 3.11. Rebuild or record as a deviation.
+- Python version: the venv was built on 3.14.6, SRS says 3.11. This is no longer just a
+  paperwork question — the venv is unusable and has to be rebuilt anyway, so rebuilding on 3.11
+  closes the deviation at no extra cost beyond the download. See the note at the top.
 - The template renders `ai_recommendations` as one preformatted block. If the report wants
   three discrete cards, `RAGPipeline` has to return structured data, not prose.

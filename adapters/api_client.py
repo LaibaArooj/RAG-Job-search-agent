@@ -1,119 +1,22 @@
+"""Adzuna and Remotive HTTP access. The only module in the project that imports requests.
+
+One fetch path, used by JobSearchAgent: fetch_variant() fetches a single query variant from
+both sources and returns {"jobs": [JobCard], "failed_sources": [str]}.
+
+The failed_sources list is the signal TC-018 needs. The earlier fetch_adzuna_jobs /
+fetch_remotive_jobs / fetch_all_jobs trio returned [] for a rate limit and [] for a genuine
+zero-result search alike, so the caller could not tell "come back later" from "search for
+something else". All three were deleted on 2026-09-20 once the inline route in app.py stopped
+calling them — they also still carried the pre-JobCard inline normalising, which is the code
+that once rendered Python dicts into the page. They are preserved in git history; keeping two
+fetch paths alive is how the two diverge.
+"""
+
 import requests
 
 # JobCard imports nothing from this package, so this cannot cycle. Kept at the top where
 # PEP 8 puts it: an import that only works lower down is hiding a cycle, not avoiding one.
 from models.job_card import JobCard
-
-
-def fetch_adzuna_jobs(query, app_id, app_key, count=10):
-    """
-    Fetch jobs from Adzuna API.
-    Returns a list of normalized job objects.
-    """
-    try:
-        url = "https://api.adzuna.com/v1/api/jobs/gb/search/1"
-        params = {
-            "app_id": app_id,
-            "app_key": app_key,
-            "results_per_page": count,
-            "what": query,
-            "content-type": "application/json"
-        }
-        response = requests.get(url, params=params, timeout=10)
-
-        if response.status_code != 200:
-            return []
-
-        jobs = response.json().get("results", [])
-
-        # Normalize to common format
-        normalized = []
-        for job in jobs:
-            normalized.append({
-                "title":       job.get("title", "Unknown Title"),
-                "company":     job.get("company", {}).get("display_name", "Unknown"),
-                "location":    job.get("location", {}).get("display_name", "Unknown"),
-                "description": job.get("description", ""),
-                "url":         job.get("redirect_url", "#"),
-                "salary":      job.get("salary_min", None),
-                "source":      "Adzuna"
-            })
-        return normalized
-
-    except Exception as e:
-        print(f"Adzuna API error: {e}")
-        return []
-
-
-def fetch_remotive_jobs(query, count=10):
-    """
-    Fetch genuinely global remote jobs from Remotive API.
-    No API key required. Companies hire from anywhere worldwide.
-    Returns a list of normalized job objects.
-    """
-    try:
-        url = "https://remotive.com/api/remote-jobs"
-        params = {
-            "search": query,
-            "limit": count
-        }
-        response = requests.get(url, params=params, timeout=10)
-
-        if response.status_code != 200:
-            return []
-
-        jobs = response.json().get("jobs", [])
-
-        # Normalize to common format
-        normalized = []
-        for job in jobs:
-            normalized.append({
-                "title":       job.get("title", "Unknown Title"),
-                "company":     job.get("company_name", "Unknown"),
-                "location":    job.get("candidate_required_location", "Remote — Worldwide"),
-                "description": job.get("description", "")[:500],
-                "url":         job.get("url", "#"),
-                "salary":      job.get("salary", None),
-                "source":      "Remotive"
-            })
-        return normalized
-
-    except Exception as e:
-        print(f"Remotive API error: {e}")
-        return []
-
-
-def fetch_all_jobs(query, app_id, app_key):
-    """
-    Fetch from both APIs and combine results.
-    Remotive first since those are genuinely accessible globally.
-    """
-    remotive_jobs = fetch_remotive_jobs(query, count=15)
-    adzuna_jobs   = fetch_adzuna_jobs(query, app_id, app_key, count=10)
-
-    all_jobs = remotive_jobs + adzuna_jobs
-
-    # Deduplicate by title + company
-    seen = set()
-    unique = []
-    for job in all_jobs:
-        key = job['title'].lower() + job['company'].lower()
-        if key not in seen:
-            seen.add(key)
-            unique.append(job)
-
-    return unique
-
-# --- variant fetch used by JobSearchAgent -----------------------------------------
-#
-# Everything above returns [] for a rate limit and [] for a genuine zero-result search
-# alike, so a caller cannot tell them apart. TC-018 needs exactly that distinction: Adzuna
-# returning 429 must produce "Job data temporarily unavailable", not "no jobs matched".
-# fetch_variant is that missing signal. It reports which sources FAILED separately from
-# what they returned.
-#
-# fetch_all_jobs above is deliberately left untouched: the live search route in app.py
-# still calls it, and it is retired when that route moves into ui_controller.
 
 ADZUNA_PER_VARIANT = 10
 REMOTIVE_PER_VARIANT = 15
@@ -163,9 +66,9 @@ def fetch_variant(query, app_id, app_key):
     jobs = []
     failed_sources = []
 
-    # Remotive first, matching fetch_all_jobs: those listings are genuinely global, and the
-    # agent keeps the first occurrence of a duplicate, so ordering here decides which copy
-    # of a syndicated listing the user sees.
+    # Remotive first. Those listings are genuinely global, and the agent keeps the FIRST
+    # occurrence of a duplicate, so the order here decides which copy of a syndicated
+    # listing the user ends up seeing.
     remotive_raw, remotive_ok = _fetch_remotive_raw(query, REMOTIVE_PER_VARIANT)
     if not remotive_ok:
         failed_sources.append("Remotive")

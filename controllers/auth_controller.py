@@ -105,7 +105,7 @@ def _db():
 def register():
     """Validate the signup form, hash the password and create the user (TC-001, TC-002)."""
     if is_logged_in():
-        return redirect(url_for("home"))
+        return redirect(url_for("ui.search"))
 
     if request.method == "POST":
         if not check_csrf():
@@ -150,7 +150,7 @@ def register():
             session.clear()
             session["username"] = username
             flash("Account created. Welcome.", "success")
-            return redirect(url_for("home"))
+            return redirect(url_for("ui.search"))
 
         # TC-002 — the unique index rejected the insert, not an if-statement here.
         flash(message, "error")
@@ -162,7 +162,7 @@ def register():
 def login():
     """Check submitted credentials against the stored hash and open a session (TC-003, TC-004)."""
     if is_logged_in():
-        return redirect(url_for("home"))
+        return redirect(url_for("ui.search"))
 
     if request.method == "POST":
         if not check_csrf():
@@ -185,7 +185,7 @@ def login():
             # they planted is not the one that ends up authenticated.
             session.clear()
             session["username"] = username
-            return redirect(url_for("home"))
+            return redirect(url_for("ui.search"))
 
         # TC-004 — same message whether the user is absent or the password is wrong.
         flash(INVALID_CREDENTIALS, "error")

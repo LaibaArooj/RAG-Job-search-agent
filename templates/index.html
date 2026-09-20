@@ -29,6 +29,19 @@
         {% endfor %}
     {% endwith %}
 
+    {# error and warning come from JobSearchAgent.run() as template variables, not as flashed
+       messages: flash() exists to carry a message across a redirect, and this renders in the
+       same request. They are also mutually exclusive in meaning — error means there is
+       nothing to show, warning means these results are incomplete — so warning sits ABOVE
+       the result list rather than replacing it (TC-018). #}
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    {% if warning %}
+        <div class="alert alert-warning">{{ warning }}</div>
+    {% endif %}
+
     <form method="POST" class="d-flex mb-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="query" value="{{ query }}"
@@ -92,7 +105,9 @@
     </div>
     {% endfor %}
 
-    {% elif query %}
+    {% elif query and not error %}
+    {# Guarded on `not error` so this does not repeat the agent's own MSG_NO_RESULTS or
+       MSG_SOURCE_DOWN, which are already rendered as a banner above. #}
     <p class="text-muted">No jobs found. Try a different search term.</p>
     {% endif %}
 
