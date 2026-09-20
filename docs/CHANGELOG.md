@@ -11,6 +11,95 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-20 — Search accuracy: candidate generation, not ranking
+
+Reported symptom: a beginner/entry-level software query, from a profile set to **mid level**,
+returned **senior** jobs. The ranker was not at fault — it ordered correctly a pool that
+contained nothing else. Diagnosed from the user's own six cached `job_cache` entries.
+
+Root cause chain, all four links now covered by checks:
+
+1. Groq expanded the query into three variants and **all three kept the word "remote"**.
+2. Adzuna's `what=` is an AND keyword match. Measured: `junior software engineer` → 77 results;
+   `remote junior software engineer` → **0**. One work-type word empties the search.
+3. Adzuna reports that as **HTTP 200 with zero results** — not a failure — so `failed_sources`
+   stayed empty and **no warning banner was shown**. The page looked healthy.
+4. Remotive ignores `search` and contributed its constant ~20-job feed, 11 of them senior. The
+   pool was therefore 100% Remotive senior jobs, and was then **cached for 60 minutes**.
+
+`verify_agent.py` goes 57 → 87 checks; the suite total is **221/221**, plus 20 live checks
+against the running server.
+
+### Added
+- `config.WORK_TYPE_HINTS` and `config.QUERY_STOPWORDS`. `WORK_TYPE_HINTS` moved out of
+  `_parse_intent_keywords`, because `adapters/api_client.py` now strips the same terms and the
+  two must not drift. Same precedent as `WORK_TYPES`/`EXPERIENCE_LEVELS` on 2026-09-19:
+  `config.py` imports nothing from the project, so an adapter reading it cannot cycle.
+- `api_client._adzuna_keywords` — strips work-type words from the keyword string, longest term
+  first so "work from home" goes before "from". Falls back to the original if stripping empties
+  it, so "remote work" cannot become an empty search.
+- `api_client.ADZUNA_WORK_TYPE_PARAMS` — `full-time → full_time=1`, `part-time → part_time=1`,
+  `freelance → contract=1`, all verified live against a control: a made-up parameter returns
+  HTTP 400, which is what proves these three are honoured rather than ignored. **"remote" maps
+  to nothing on purpose** — Adzuna has no remote filter (`where=remote` returns 0), so remote
+  intent is served by removing the word and by Remotive, which is an all-remote board.
+- `api_client._filter_remotive` — Remotive is now **fetched then filtered locally**. A job is
+  kept only if a query word matches its **title**, allowing an inflected ending so "engineer"
+  matches "Engineering" while "car" does not match "Cardiac" (a bare prefix match was tried
+  first and did exactly that). Title only, not description: it scored the same (7 kept vs 8)
+  and a description is a long HTML advert whose boilerplate matches nearly anything.
+- `api_client._wrong_level` — when `parse_intent` found a level, Remotive titles contradicting
+  it are dropped in both directions. Needed on top of the title filter because "Senior Golang
+  Developer" matches the token "developer" from an expanded variant, so it passes the topic
+  test at exactly the wrong level. **Keyword-based because the embedding cannot do this**:
+  cosine similarity rates "junior developer" against "senior developer" at **0.806**.
+  Applied to Remotive only — Adzuna ran a real search, so its results are earned.
+- `empty_sources` in `fetch_variant`'s return. A source that **failed** and one that succeeded
+  but returned **nothing** are different events, and collapsing them is what hid this bug.
+
+### Changed
+- `JobSearchAgent` passes `intent["work_type"]` and `intent["experience"]` down to the fetch.
+  Groq has been extracting both correctly and the pipeline discarded them.
+- `enrich_query(query, context, experience=None)` — a level stated in the query overrides the
+  profile's. A profile saying "mid level" against a query saying "beginner" put two conflicting
+  levels in one vector; measured, that narrowed the junior-vs-senior similarity gap by about a
+  third. The **two-argument call is byte-identical**, so the TC-016 wording is untouched.
+- **A pool built without Adzuna is no longer cached.** Adzuna is the only source that genuinely
+  searches, so a pool without it is the degraded state, and pinning it for an hour is what made
+  this bug survive every retry. A Remotive-filtered-to-zero pool *is* still cached — that is the
+  filter working, and refusing it would spend Adzuna quota needlessly.
+- `FetchRecorder` in `verify_agent.py` tracks the real `fetch_variant` signature and return
+  shape. A double that keeps an older interface than the code it stands in for stops testing
+  anything and starts hiding the difference.
+
+### Fixed
+- **`MSG_NO_RESULTS` is reachable again.** "No jobs matched that search." had been dead code in
+  production since Remotive broke, because the pool was never empty. A gibberish query now
+  renders zero cards and the message; it previously rendered 17 senior jobs.
+- The six poisoned `job_cache` entries were cleared. They held Remotive-only pools for the
+  user's variants and would have outlived the fix by an hour.
+
+### Measured after
+- `beginner level software engineer` → top 5 all *Junior Software Engineer / Software Developer
+  (Entry Level)*, **0/5 senior**, through the real rendered page.
+- `senior python developer` → **5/5 senior**, so this is a level filter and not a junior bias.
+- An entry-level query keeps **0 of the 11** senior-titled jobs in the live Remotive feed.
+- `nurse` and `graphic designer` keep **0** Remotive jobs; `freelance copywriter` keeps exactly
+  "Freelance Copywriter".
+
+### Honest limitations
+- Remotive is **fetched then filtered locally**. It is not an API keyword search any more, and
+  the report and any viva answer must say so.
+- This improves the candidate pool; it does not improve *retrieval*. The recall ceiling in
+  `README.md` is unchanged.
+- Experience-level accuracy is **not solved**. It rests on title keywords, not on the embedding,
+  which cannot separate the levels. FR-021's Entry/Mid filter chips (TC-015, M4) remain the
+  spec'd mechanism for explicit control.
+- The spec'd scoring formula `similarity + category_score × 0.02` is **untouched**. No new
+  coefficient was introduced, deliberately — there is already one hand-picked number to justify.
+
+---
+
 ## 2026-09-20 — M2 route move: the app finally runs the agent
 
 `JobSearchAgent` was proven on 2026-09-19 but nothing called it — the live route still ran the

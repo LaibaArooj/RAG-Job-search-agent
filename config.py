@@ -55,6 +55,38 @@ WORK_TYPES = ("remote", "full-time", "part-time", "freelance")
 
 EXPERIENCE_LEVELS = ("entry level", "mid level", "senior")
 
+# How people actually write each work type. Used in two places that must not disagree:
+# core/intent_parser.py's keyword fallback matches against these, and
+# adapters/api_client.py strips them out of the keyword string it sends to Adzuna.
+#
+# They live here for the same reason WORK_TYPES and EXPERIENCE_LEVELS do (2026-09-19): two
+# layers need the same vocabulary, and an adapter importing from core/ would invert the SDD
+# layering. config.py imports nothing from the project, so nothing can cycle through it.
+#
+# Why api_client strips them at all: Adzuna's `what=` is an AND keyword match against the job
+# text. Measured 2026-09-20 -- "junior software engineer" returns 77 results, "remote junior
+# software engineer" returns 0. A work-type word in the keyword field silently empties the
+# search, and Adzuna reports that as HTTP 200 with no results, not as a failure.
+WORK_TYPE_HINTS = {
+    "remote": ("work from home", "from home", "remote", "wfh", "anywhere"),
+    "freelance": ("self employed", "freelance", "contract", "gig"),
+    "part-time": ("part time", "part-time", "casual"),
+    "full-time": ("full time", "full-time", "permanent"),
+}
+
+# Words carrying no signal when deciding whether a Remotive job matches the query. Remotive
+# ignores its own search parameter (see adapters/api_client.py), so the filtering is done
+# locally against the job title, and without this list every query would match on "job".
+QUERY_STOPWORDS = frozenset(
+    {
+        "level", "job", "jobs", "work", "working", "position", "positions", "role", "roles",
+        "vacancy", "vacancies", "career", "careers", "experience", "experienced", "need",
+        "needed", "want", "wanted", "looking", "seeking", "hiring", "please", "some",
+        "something", "anything", "with", "without", "that", "this", "from", "into", "about",
+        "and", "the", "for", "any", "can", "you", "your", "our",
+    }
+)
+
 # --- Category vocabulary ---
 # A closed set, shared by intent parsing and by the save/reject scoring loop, which
 # only works if both name a category identically.

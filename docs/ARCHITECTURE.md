@@ -2,8 +2,8 @@
 
 Derived from SDD v1.0 §3–§5. Claude keeps this current as the code evolves.
 
-Last updated: 2026-09-20 (search route moved into the ui blueprint; the inline-route deferral
-in § Module layout (as built) is now closed)
+Last updated: 2026-09-20 (search route moved into the ui blueprint; per-source fetch
+compensation added to api_client after Remotive stopped honouring its search parameter)
 
 ## System overview
 
@@ -60,7 +60,12 @@ Swapping any dependency should mean editing one file.
 3. `parse_intent(query)` — Groq call returning structured JSON: work type, experience,
    category, and 2–3 alternative query phrasings. Falls back to keyword matching on failure
 4. `enrich_query(query, context)` — profile injected into the query text
-5. Query encoding, then Adzuna + Remotive fetched once per query variant.
+5. Query encoding, then Adzuna + Remotive fetched once per query variant. Each source is
+   compensated for inside `api_client`: work-type words are stripped from Adzuna's keyword
+   query (its `what=` is an AND match, so one such word returns nothing) and passed as
+   Adzuna's own parameters, while Remotive — which ignores its search parameter and returns a
+   fixed list — is filtered locally on the job title, and on the requested level when one was
+   parsed.
    **Deferred, deliberately:** the SDD specifies a parallel fork here (query encoding ‖ Adzuna
    ‖ Remotive, ~800 ms saved). `core/agent.py` fetches *sequentially* as of 2026-09-19. With
    three variants that is six sequential HTTP calls and the demo is correspondingly slow. The
@@ -99,8 +104,9 @@ app.py                          Flask app wiring only — no routes. Constructs
                                 JobSearchAgent from them, and publishes the agent and the
                                 database on app.config for the blueprints
 config.py                       env-driven config, validate() fails loudly on a missing
-                                key; also the three closed vocabularies — CATEGORIES,
-                                WORK_TYPES, EXPERIENCE_LEVELS
+                                key; also the closed vocabularies — CATEGORIES, WORK_TYPES,
+                                EXPERIENCE_LEVELS — plus WORK_TYPE_HINTS and
+                                QUERY_STOPWORDS, shared by intent_parser and api_client
 controllers/
     auth_controller.py          BUILT — auth blueprint: register, login, logout,
                                 require_auth, csrf_token/check_csrf
@@ -115,10 +121,14 @@ core/
                                 enrich_query; TC-019, TC-020
 adapters/
     api_client.py               BUILT — Adzuna + Remotive fetch, one path only.
-                                fetch_variant() returns jobs and failed_sources separately
-                                (TC-018); normalising is delegated to JobCard. The legacy
-                                fetch_all_jobs / fetch_adzuna_jobs / fetch_remotive_jobs
-                                trio was deleted on 2026-09-20 with the inline route
+                                fetch_variant() returns jobs, failed_sources and
+                                empty_sources separately; normalising is delegated to
+                                JobCard. Also carries the per-source compensation, because
+                                nothing above should know how either API misbehaves:
+                                work-type words are stripped from Adzuna's keyword query
+                                and passed as its own parameters instead, and Remotive --
+                                which ignores its search parameter entirely -- is fetched
+                                then FILTERED LOCALLY on the job title
     db_manager.py               BUILT — MongoDB facade
 models/
     user.py                     BUILT — User dataclass

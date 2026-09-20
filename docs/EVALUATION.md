@@ -6,23 +6,25 @@ This document is how that claim gets evidence. Budget one day in M4.
 Report the numbers whatever they are. A measured null result written up honestly scores
 better than an unmeasured claim.
 
-## ⚠ Read before writing the queries — the baseline is compromised
+## ⚠ Read before writing the queries — what the baseline now means
 
-Found 2026-09-20: **Remotive ignores the `search` parameter and returns the same fixed 17-job
-list for every query.** See the finding at the top of `docs/PROJECT_STATUS.md`. This hits the
-evaluation harder than it hits the app:
+Remotive ignores its `search` parameter and returns the same fixed list for every query (found
+2026-09-20). Since 2026-09-20 it is **fetched then filtered locally** — see
+`docs/PROJECT_STATUS.md`. That changes what the "raw API order" baseline below actually is, and
+the distinction has to be stated when the numbers are reported:
 
-- The **baseline** below is "the raw order Adzuna and Remotive return". For Remotive that order
-  is now query-independent, so the baseline is partly a constant list. Comparing against it
-  flatters the system for the wrong reason — re-ranking a fixed list will beat it on nearly any
-  query, and that says nothing about semantic vs keyword ranking.
-- Every candidate pool contains the same 17 jobs, so the 20 queries are far less independent
-  than they look.
+- **Adzuna's** contribution to the baseline is a genuine keyword-search ranking.
+- **Remotive's** is not. Its order is query-independent; only *which* of its jobs appear is
+  ours, via the local title filter. So the baseline is a real keyword baseline for one source
+  and a filtered constant list for the other.
 
-**Decide the Remotive question before running the evaluation, not after.** Whatever is decided,
-the honest options for this document are to measure Adzuna-only (a real keyword baseline), or to
-report Adzuna-only and both-sources separately and explain the difference. Measuring the
-polluted pool and reporting one number would be the indefensible choice.
+The safest reading, and the one to write up: report **precision@5 over Adzuna-only** as the
+headline comparison, since that is the only honest keyword-vs-semantic contrast available, and
+report the two-source numbers separately with this caveat attached. Do not present a single
+blended number as "keyword baseline vs semantic ranking" without saying which source is which.
+
+One thing that improved for the evaluation: pools are no longer padded with the same ~20 jobs
+on every query, so the 20 test queries are genuinely more independent than they would have been.
 
 ## What is being measured
 

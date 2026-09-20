@@ -20,6 +20,7 @@ sign-off. This mirrors verify_db.py, verify_auth.py and verify_intent.py.
 
 import sys
 
+from adapters import api_client
 from core import agent as agent_module
 from core import intent_parser
 from core.agent import CATEGORY_BOOST, JobSearchAgent
@@ -112,18 +113,27 @@ class StubRAG:
 class FetchRecorder:
     """Replaces api_client.fetch_variant, serving canned jobs per variant and counting calls."""
 
-    def __init__(self, by_variant=None, failed_sources=None):
-        """Store the per-variant canned job lists and any sources scripted to fail."""
+    def __init__(self, by_variant=None, failed_sources=None, empty_sources=None):
+        """Store the per-variant canned job lists and any sources scripted to fail or be empty."""
         self.by_variant = by_variant or {}
         self.failed_sources = failed_sources or []
+        self.empty_sources = empty_sources or []
         self.calls = []
+        self.work_types = []
+        self.experiences = []
 
-    def __call__(self, query, app_id, app_key):
-        """Mimic fetch_variant, recording the variant asked for."""
+    def __call__(self, query, app_id, app_key, work_type=None, experience=None):
+        """Mimic fetch_variant, recording the variant, work type and experience asked for."""
+        # The signature tracks the real fetch_variant deliberately. A double that keeps an
+        # older interface than the code it stands in for stops testing anything and starts
+        # hiding the difference.
         self.calls.append(query)
+        self.work_types.append(work_type)
+        self.experiences.append(experience)
         return {
             "jobs": list(self.by_variant.get(query, [])),
             "failed_sources": list(self.failed_sources),
+            "empty_sources": list(self.empty_sources),
         }
 
 
@@ -475,6 +485,154 @@ def test_enrich_query_unchanged():
     check("a missing profile does not raise", "job search: x." in intent_parser.enrich_query("x", None))
 
 
+# --- candidate generation: the 2026-09-20 senior-results bug -----------------------
+#
+# Root cause chain, all four links covered below: Groq expanded a query into variants that
+# every one kept the word "remote"; Adzuna's AND keyword match returned nothing for them;
+# Adzuna reports that as HTTP 200 with no results, which is not a failure, so no banner
+# showed; Remotive ignores its search parameter and filled the pool with a fixed, senior
+# heavy list; and the whole degraded pool was then cached for an hour.
+
+
+def test_adzuna_keywords():
+    """Work-type words are stripped from the Adzuna keyword query, never passed through."""
+    print("\nAdzuna keyword cleaning")
+    check("'remote' is removed", api_client._adzuna_keywords("remote junior software engineer")
+          == "junior software engineer")
+    check("multi-word terms go before their parts",
+          api_client._adzuna_keywords("work from home writing gig") == "writing")
+    check("an ordinary query is left alone",
+          api_client._adzuna_keywords("beginner level software engineer")
+          == "beginner level software engineer")
+    # "remote work" would otherwise become an empty keyword search, which Adzuna answers
+    # with everything or nothing depending on the day. Falling back is no worse than before.
+    check("a query of nothing but work-type words does not become empty",
+          api_client._adzuna_keywords("remote") == "remote")
+
+
+def test_adzuna_work_type_params():
+    """Only the three work types Adzuna actually supports become parameters."""
+    print("\nAdzuna work-type parameters")
+    p = api_client.ADZUNA_WORK_TYPE_PARAMS
+    check("full-time maps to full_time=1", p.get("full-time") == {"full_time": 1})
+    check("part-time maps to part_time=1", p.get("part-time") == {"part_time": 1})
+    check("freelance maps to contract=1", p.get("freelance") == {"contract": 1})
+    # Verified live: Adzuna has no remote filter and where=remote returns 0. Sending an
+    # unknown parameter is worse than sending none -- Adzuna answers HTTP 400.
+    check("remote maps to NO parameter (Adzuna has no remote filter)", "remote" not in p)
+
+    # The parsed work_type has to actually REACH the fetch, or the mapping above is dead
+    # code. FetchRecorder records what it was handed, which is the only way to show it.
+    fetch = FetchRecorder(by_variant={"q": [card("Writer")]})
+
+    def intent_with_work_type(query):
+        """A parse_intent double that reports a work type alongside one variant."""
+        return {"work_type": "part-time", "experience": "entry level",
+                "category": "other", "variants": ["q"], "source": "stub"}
+
+    install(fetch, intent_with_work_type)
+    JobSearchAgent(StubDB(), StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("the agent passes the parsed work_type down to the fetch",
+          fetch.work_types == ["part-time"])
+    check("the agent passes the parsed experience down to the fetch",
+          fetch.experiences == ["entry level"])
+
+
+def test_remotive_filtering():
+    """Remotive's fixed feed is filtered locally, because it ignores its own search param."""
+    print("\nRemotive local filtering")
+    feed = [{"title": t} for t in
+            ["Senior Data Scientist", "Freelance Copywriter", "Engineering Lead",
+             "Cardiac Nurse", "Smart Home Installer"]]
+    titles = lambda q: [j["title"] for j in api_client._filter_remotive(q, feed)]
+
+    check("an unrelated query keeps nothing", titles("graphic designer") == [])
+    check("a matching job survives", titles("freelance copywriter") == ["Freelance Copywriter"])
+    check("an inflected title still matches", titles("engineer role") == ["Engineering Lead"])
+    # A bare prefix match was tried first and matched "car" against "Cardiac Nurse".
+    check("a word is not matched inside a longer one", titles("car sales") == [])
+    check("nor at the start of one", titles("art director") == [])
+    check("a query with no meaningful words leaves the feed alone", len(titles("a job")) == len(feed))
+
+
+def test_remotive_level_filtering():
+    """A stated level stops Remotive injecting jobs at the wrong seniority."""
+    print("\nRemotive level filtering")
+    # The reported 2026-09-20 bug in miniature: "Senior Golang Developer" passes the topic
+    # test because an expanded variant contained "developer", so the title token filter alone
+    # keeps it and a beginner search shows senior roles.
+    feed = [{"title": t} for t in
+            ["Senior Golang Developer", "Junior Developer", "Software Developer",
+             "Graduate Engineer", "Tech Lead Rails Engineer"]]
+    kept = lambda exp: [j["title"] for j in
+                        api_client._filter_remotive("software developer engineer", feed, exp)]
+
+    entry = kept("entry level")
+    check("an entry-level query drops senior titles",
+          "Senior Golang Developer" not in entry and "Tech Lead Rails Engineer" not in entry)
+    check("it keeps the junior and unmarked ones",
+          entry == ["Junior Developer", "Software Developer", "Graduate Engineer"])
+
+    # Both directions, or this is a junior bias rather than a level filter.
+    senior = kept("senior")
+    check("a senior query drops junior titles",
+          "Junior Developer" not in senior and "Graduate Engineer" not in senior)
+    check("a senior query keeps the senior ones", "Senior Golang Developer" in senior)
+
+    check("with no level stated nothing is dropped for level", len(kept(None)) == len(feed))
+
+    # Adzuna is never level-filtered: it ran the real search, so its answers are earned.
+    check("the level filter is Remotive-only, by construction",
+          "_filter_remotive" in api_client.fetch_variant.__code__.co_names
+          and "_wrong_level" not in api_client._fetch_adzuna_raw.__code__.co_names)
+
+
+def test_empty_source_is_not_failure():
+    """A source that returned nothing is reported separately from one that failed."""
+    print("\nempty_sources vs failed_sources")
+    empty = FetchRecorder(by_variant={"q": [card("Writer")]}, empty_sources=["Adzuna"])
+    install(empty, fixed_intent("q"))
+    result = JobSearchAgent(StubDB(), StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    # This is the distinction whose absence hid the bug: Adzuna answering "200, nothing
+    # here" is not an outage, so it must not raise TC-018's outage banner...
+    check("an empty source is not reported as a failure", result["warning"] is None)
+    check("the results it did find are still returned", len(result["jobs"]) == 1)
+
+
+def test_degraded_pool_is_not_cached():
+    """A pool built without Adzuna is never cached (the 2026-09-20 regression)."""
+    print("\nno cache write for a degraded pool")
+    # ...but it MUST stop the pool being cached. Adzuna is the only source that genuinely
+    # searches, so a pool without it is the weak state, and pinning it for 60 minutes is
+    # what made the senior-results bug survive every retry the user made.
+    db = StubDB()
+    empty = FetchRecorder(by_variant={"q": [card("Writer")]}, empty_sources=["Adzuna"])
+    install(empty, fixed_intent("q"))
+    JobSearchAgent(db, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("an Adzuna-empty pool is NOT cached", db.cache_writes == {})
+
+    # Remotive filtering to nothing is the filter working, not a degraded fetch. Refusing to
+    # cache these too would spend Adzuna quota on every repeat of a Remotive-less search.
+    db2 = StubDB()
+    rem = FetchRecorder(by_variant={"q": [card("Writer")]}, empty_sources=["Remotive"])
+    install(rem, fixed_intent("q"))
+    JobSearchAgent(db2, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("a Remotive-empty pool IS still cached", len(db2.cache_writes) == 1)
+
+
+def test_experience_override():
+    """A level stated in the query beats the one on the profile."""
+    print("\nexperience override")
+    profile = {"skills": ["Python"], "experience": "mid level"}
+    stated = intent_parser.enrich_query("beginner software engineer", profile, "entry level")
+    check("the query's level is used", "Level: entry level." in stated)
+    check("the profile's level is not also embedded", "mid level" not in stated)
+    unstated = intent_parser.enrich_query("software engineer", profile, None)
+    check("with no level in the query the profile is still used",
+          "Level: mid level." in unstated)
+    check("skills are unaffected either way", "Skills: Python" in stated)
+
+
 def main():
     """Run every case and exit non-zero if any assertion failed."""
     print("=" * 70)
@@ -495,6 +653,13 @@ def main():
         test_rag_fallback()
         test_cache()
         test_enrich_query_unchanged()
+        test_adzuna_keywords()
+        test_adzuna_work_type_params()
+        test_remotive_filtering()
+        test_remotive_level_filtering()
+        test_empty_source_is_not_failure()
+        test_degraded_pool_is_not_cached()
+        test_experience_override()
     finally:
         # Restore the real functions, so importing this module cannot leave the agent
         # permanently stubbed for anything that imports it afterwards.

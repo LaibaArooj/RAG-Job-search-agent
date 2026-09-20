@@ -78,7 +78,7 @@ class JobSearchAgent:
 
     # --- fetching -----------------------------------------------------------------
 
-    def _fetch_cached_variant(self, variant):
+    def _fetch_cached_variant(self, variant, work_type=None, experience=None):
         """Fetch one variant, reading and writing the 60-minute job cache around the call."""
         key = _cache_key(variant)
 
@@ -93,27 +93,44 @@ class JobSearchAgent:
             # Cached entries are already plain dicts, having been through to_dict() before
             # storage. The TTL index on the collection is what expires them; nothing here
             # checks an age, because a document Mongo has deleted simply is not returned.
-            return {"jobs": list(cached["results"]), "failed_sources": []}
+            return {"jobs": list(cached["results"]), "failed_sources": [], "empty_sources": []}
 
-        result = fetch_variant(variant, config.ADZUNA_APP_ID, config.ADZUNA_APP_KEY)
+        result = fetch_variant(
+            variant, config.ADZUNA_APP_ID, config.ADZUNA_APP_KEY, work_type, experience
+        )
         jobs = [card.to_dict() for card in result["jobs"]]
+        empty_sources = result.get("empty_sources", [])
 
         # Only cache a clean fetch. Caching a partial result set would pin an outage in
         # place for an hour after the API recovered.
-        if jobs and not result["failed_sources"]:
+        #
+        # An Adzuna that returned NOTHING counts as degraded here, even though it did not
+        # fail. Adzuna is the only source that genuinely searches -- Remotive ignores its
+        # search parameter and is filtered locally -- so a pool built without it is the
+        # weak state, and pinning it for an hour is exactly what made the senior-results
+        # bug persist across retries on 2026-09-20.
+        #
+        # Remotive filtering down to nothing is NOT degraded; it is the filter working, and
+        # it must stay cacheable or every such search costs Adzuna quota it need not.
+        degraded = bool(result["failed_sources"]) or "Adzuna" in empty_sources
+        if jobs and not degraded:
             try:
                 self.db.cache_put(key, variant, jobs)
             except Exception as e:
                 print(f"job cache write failed for {variant!r}: {e}")
 
-        return {"jobs": jobs, "failed_sources": result["failed_sources"]}
+        return {
+            "jobs": jobs,
+            "failed_sources": result["failed_sources"],
+            "empty_sources": empty_sources,
+        }
 
-    def _fetch_all_variants(self, variants):
+    def _fetch_all_variants(self, variants, work_type=None, experience=None):
         """Fetch every variant in turn and return the un-deduplicated union plus failed sources."""
         jobs = []
         failed_sources = []
         for variant in variants:
-            result = self._fetch_cached_variant(variant)
+            result = self._fetch_cached_variant(variant, work_type, experience)
             jobs.extend(result["jobs"])
             for source in result["failed_sources"]:
                 if source not in failed_sources:
@@ -225,11 +242,22 @@ class JobSearchAgent:
         # profile lists Python has their query pulled towards Python in embedding space, so
         # Python roles rank higher FOR THEM. Editing the job text instead would change what
         # every user sees.
-        query_vector = self.semantic_engine.encode(enrich_query(query, context))
+        # The experience the user stated IN THE QUERY wins over the one on their profile.
+        # Without this, a profile saying "mid level" is embedded alongside a query saying
+        # "beginner" and the two fight: measured on 2026-09-20, that narrowed the gap
+        # between a junior and a senior job by about a third.
+        query_vector = self.semantic_engine.encode(
+            enrich_query(query, context, intent.get("experience"))
+        )
 
         # TC-021. This is where expansion actually happens — parse_intent has been returning
         # variants since the last milestone, and until now nothing consumed them.
-        raw_jobs, failed_sources = self._fetch_all_variants(intent["variants"])
+        # work_type is passed down rather than left in the query text. Adzuna's `what` is an
+        # AND keyword match, so a word like "remote" in it returns nothing at all; it becomes
+        # one of Adzuna's own parameters instead. See adapters/api_client.py.
+        raw_jobs, failed_sources = self._fetch_all_variants(
+            intent["variants"], intent.get("work_type"), intent.get("experience")
+        )
         jobs = self.deduplicate(raw_jobs)
 
         if not jobs:

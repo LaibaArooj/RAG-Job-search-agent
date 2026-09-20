@@ -1,47 +1,31 @@
-# Project Status — RAG-Based Intelligent Job Search Agent
+Last updated: 2026-09-20 (M2 done and verified; **Remotive resolved** — fetched then filtered
+locally after it caused a second visible defect. 221/221 checks green)
 
-> Read this first at the start of every session. Claude updates it at the end of each session.
+## Remotive — resolved 2026-09-20, and it must be stated in the report
 
-Last updated: 2026-09-20 (M2 route move **verified**, 191/191 + a live end-to-end run;
-**Remotive has stopped honouring search — read the finding below**)
+Remotive's API ignores `search` and `limit` entirely and returns the same fixed ~20-job list for
+every request, verified with no parameters at all. It is now **fetched once and filtered locally**
+in `adapters/api_client.py`:
 
-## 🚨 Read this first — Remotive is no longer a searchable source
+- a job is kept only if a meaningful word from the query appears in its **title** (word match
+  tolerating an inflected ending, so "engineer" matches "Engineering" but "car" does not match
+  "Cardiac");
+- and, when `parse_intent` found a level in the query, jobs whose title contradicts it are
+  dropped — an entry-level search never keeps a "Senior …" title, and vice versa.
 
-Found on 2026-09-20 during the first live end-to-end run. **Remotive's API ignores the `search`
-parameter completely and returns the same fixed 17-job list for every query.** Verified by
-calling it with `search=nurse`, `search=accountant`, `search=qwertyuiop`, and with **no
-parameters at all** — identical results every time, always led by "Senior .NET Full-stack
-Developer". It ignores `limit` too: the code asks for 15 and gets 17.
+**Say this plainly in the write-up and in the viva: Remotive is fetched then filtered locally. It
+is no longer an API keyword search.** That is the honest cost of keeping a second source, and it
+is a smaller cost than a source that returns the same 20 jobs for "nurse" and "qwertyuiop".
 
-Adzuna is fine and behaves correctly; it returned 0 for gibberish, as it should.
+Adzuna is untouched by the level filter on purpose: it ran a real keyword search, so its results
+are earned and overruling them would be second-guessing a genuine match.
 
-What this actually means:
+What this bought, measured:
 
-- One of the project's two job sources contributes a **constant, query-independent 17 jobs to
-  every search**. Search "nurse" and the candidate pool contains no nursing jobs from Remotive.
-- **`MSG_NO_RESULTS` ("No jobs matched that search.") is unreachable in production** while
-  Remotive is up, because the pool is never empty. TC-018's no-results branch passes in
-  `verify_agent.py` against a double and cannot fire against the live API.
-- **This is the biggest demo risk in the project.** A gibberish query renders 17 irrelevant
-  senior-developer cards, and because `normalized_score` is relative to the best match *in that
-  result set*, the top one still shows a high match percentage. "You searched nonsense and it
-  says 94% match" is exactly the question that damages a viva.
-- **It contaminates the M4 evaluation.** Precision@5 over 20 queries would be measured on
-  candidate pools that each contain the same 17 fixed jobs. See `docs/EVALUATION.md`.
-
-Not fixed, deliberately — the SRS names Remotive as a source and the options are design
-decisions that need a call (and possibly supervisor sign-off):
-
-1. **Drop Remotive, run on Adzuna alone.** Honest and simple; costs the "two sources" claim and
-   the genuinely-global remote listings, and puts the whole demo on a 250/day quota.
-2. **Keep Remotive but filter it locally** — fetch its list once and keyword-filter client side.
-   Preserves two sources, but it is no longer an API search and the write-up must say so.
-3. **Add a minimum-similarity floor** so irrelevant jobs are dropped rather than ranked. This
-   fixes the demo risk for *both* sources but is a new ranking parameter that has to be
-   justified and tuned during evaluation — it cannot be a hand-picked number like the existing
-   `CATEGORY_BOOST`.
-
-Whichever is chosen, the SRS claim of two live searchable sources needs a line in the report.
+- `MSG_NO_RESULTS` ("No jobs matched that search.") is **reachable again**. It had been dead code
+  in production since Remotive broke, because the pool was never empty. A gibberish query now
+  renders zero cards and the message, where it previously rendered 17 senior jobs.
+- An entry-level query keeps **0 of the 11 senior-titled** jobs in the live feed.
 
 ## Deadline
 
@@ -53,7 +37,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 | # | Milestone | Status | Done when |
 |---|---|---|---|
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
-| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 191/191 across the four verify scripts, plus a live end-to-end run through the browser stack | TC-006, TC-016 to TC-022 pass |
+| M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 221/221 across the four verify scripts, plus a live end-to-end run against the running server | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | Not started | TC-008 to TC-014 pass |
 | M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
 
@@ -71,7 +55,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 ## In progress
 
-- **Currently working on:** M2 is closed. Next decision is the Remotive finding above, then M3.
+- **Currently working on:** M2 is closed and the Remotive question is settled. Next is M3.
 - **Branch:** `feat/search-pipeline`
 - **Related issue:** none yet
 

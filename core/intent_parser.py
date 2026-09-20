@@ -35,7 +35,7 @@ from groq import Groq
 #
 # TODO(M3): mapping Adzuna's and Remotive's differing taxonomies onto CATEGORIES is still the
 # open question in docs/PROJECT_STATUS.md. Decide before M3.
-from config import CATEGORIES, EXPERIENCE_LEVELS, WORK_TYPES
+from config import CATEGORIES, EXPERIENCE_LEVELS, WORK_TYPE_HINTS, WORK_TYPES
 from core.rag_pipeline import GROQ_MODEL
 
 # At most three variants including the original query, per docs/PROJECT_SPEC.md § M2.
@@ -200,13 +200,11 @@ def _parse_intent_keywords(query):
     # paths cannot disagree about what a category is called. Synonyms are listed explicitly
     # because "from home" is how people actually write "remote" and a bare membership test
     # would miss it. This is the crude path, and the code should look crude.
-    work_type_hints = {
-        "remote": ("remote", "from home", "work from home", "wfh", "anywhere"),
-        "freelance": ("freelance", "contract", "self employed", "gig"),
-        "part-time": ("part time", "part-time", "casual"),
-        "full-time": ("full time", "full-time", "permanent"),
-    }
-    for work_type, hints in work_type_hints.items():
+    # WORK_TYPE_HINTS moved to config.py on 2026-09-20: adapters/api_client.py strips the
+    # same terms out of the keyword string it sends to Adzuna, and the two must not drift.
+    # Same reasoning that moved WORK_TYPES and EXPERIENCE_LEVELS there, and config.py imports
+    # nothing from the project so an adapter reading it cannot cycle.
+    for work_type, hints in WORK_TYPE_HINTS.items():
         if any(h in text for h in hints):
             intent["work_type"] = work_type
             break
@@ -254,7 +252,7 @@ def _parse_intent_keywords(query):
     return intent
 
 
-def enrich_query(query, context):
+def enrich_query(query, context, experience=None):
     """Fold the user's profile into the query text before it is embedded."""
     # The profile moves the QUERY vector, not the job vectors. TC-016 expects Python roles to
     # rank higher for a user whose profile lists Python; that works by pulling the query point
@@ -264,7 +262,16 @@ def enrich_query(query, context):
     # The wording is carried over unchanged from the search route in app.py, which is the one
     # code path already demonstrated to satisfy TC-016. Moving it here is a relocation, not a
     # rewrite -- changing the phrasing would invalidate that evidence.
+    #
+    # `experience` overrides the profile's level when parse_intent found one stated in the
+    # query itself. A user whose profile says "mid level" searching for a "beginner" role
+    # means the query, not the profile: embedding both put two conflicting levels into one
+    # vector, and measurement on 2026-09-20 showed it narrowing the similarity gap between a
+    # junior and a senior job by roughly a third.
+    #
+    # The FORMAT is untouched, and the two-argument call still produces the byte-identical
+    # string TC-016 was proven against. Only which value fills "Level:" can change.
     context = context or {}
     skills = ", ".join(context.get("skills") or [])
-    experience = context.get("experience", "") or ""
-    return f"job search: {query}. Skills: {skills}. Level: {experience}."
+    level = experience or context.get("experience", "") or ""
+    return f"job search: {query}. Skills: {skills}. Level: {level}."
