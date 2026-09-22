@@ -96,9 +96,13 @@ QUERY_STOPWORDS = frozenset(
 # a "$" wrote to an arbitrary field, or ran an operator. Membership of this tuple is
 # checked before any category reaches a field path. A closed set, not escaping.
 #
-# TODO(M3): Adzuna and Remotive use different taxonomies and neither matches this list.
-# Mapping their categories onto these values is still an open question in
-# docs/PROJECT_STATUS.md and must be settled before the scoring loop is trusted.
+# Settled 2026-09-21 (this was the TODO(M3) open question): neither API taxonomy is
+# consulted. Adzuna tags jobs with its own categories, Remotive with a different set, and
+# reconciling them would mean two mapping tables at different granularities with no answer
+# for a job whose source omits the field. Instead every job -- whichever source it came from
+# -- is classified locally from its own title and description against CATEGORY_HINTS below,
+# by core.intent_parser.classify_category. One rule for both sources, so a user's score for
+# a category cannot fragment according to which API happened to return the job.
 CATEGORIES = (
     "technology",
     "writing",
@@ -114,6 +118,41 @@ CATEGORIES = (
     "legal",
     "other",
 )
+
+# How each category is recognised in free text. Used in two places that must agree, for the
+# same reason WORK_TYPE_HINTS above lives here: core/intent_parser.py matches a user's QUERY
+# against this table in its keyword fallback, and the same module's classify_category matches
+# a fetched JOB's title and description against it. If the two ever used separate tables, a
+# query parsed as "writing" and a job classified as "content" would score different keys and
+# the preference loop would silently fragment.
+#
+# Every key must be a member of CATEGORIES. That is what keeps this table and
+# DatabaseManager._score_path's whitelist in agreement -- a hint key outside CATEGORIES would
+# produce a category the database layer then refuses.
+#
+# Matching is substring, first key wins, and dict iteration is insertion order -- so the
+# ORDER of this table is the tie-break rule for a job that mentions two fields. It is a crude
+# matcher and the report must say so: a job whose text names no category word at all lands in
+# "other". This is keyword classification, not classification by meaning.
+CATEGORY_HINTS = {
+    "writing": ("writing", "writer", "content", "copywrit", "editor", "journalis"),
+    "design": ("design", "ux", "ui", "graphic", "illustrat", "creative"),
+    "technology": (
+        "developer", "software", "programm", "python", "data",
+        "web dev", "devops", "coding",
+    ),
+    "marketing": ("marketing", "seo", "social media", "brand", "advertis"),
+    "sales": ("sales", "account executive", "business development"),
+    "finance": ("finance", "account", "audit", "bookkeep", "financial"),
+    "healthcare": ("health", "nurse", "medical", "clinical", "care assistant"),
+    "education": ("teach", "tutor", "lectur", "education", "school"),
+    "customer_support": (
+        "customer support", "customer service", "help desk", "call centre",
+    ),
+    "hr": ("human resources", "recruit", "talent acquisition"),
+    "legal": ("legal", "lawyer", "solicitor", "paralegal", "compliance"),
+    "engineering": ("mechanical", "electrical", "civil engineer", "manufacturing"),
+}
 
 # Variables without which the app cannot do its job. Checked at startup rather than
 # left to surface later as an opaque 401 from a provider, which is far harder to

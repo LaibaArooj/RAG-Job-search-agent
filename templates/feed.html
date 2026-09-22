@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>For You — Job Search AI</title>
+    {# The CSRF token the fetch in decisions.js posts back. It lives in a meta tag rather than
+       a hidden input because the buttons are not inside a form. #}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -19,8 +22,20 @@
 <div class="container py-4">
     <h4 class="mb-1">✨ For You</h4>
     <p class="text-muted small mb-3">
-        Personalised based on your saved jobs and preferences
+        Ranked from the categories you have saved jobs in
     </p>
+
+    {# Same two-banner rule as index.html: error means there is nothing to show, warning
+       means the feed is incomplete because a source was down, so it sits ABOVE the cards
+       rather than replacing them (TC-018). Template variables, not flashed messages —
+       nothing here crosses a redirect. #}
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    {% if warning %}
+        <div class="alert alert-warning">{{ warning }}</div>
+    {% endif %}
 
     {% if top_categories %}
     <div class="mb-3">
@@ -37,7 +52,16 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-1">
                     <h5 class="card-title mb-0">{{ job.title }}</h5>
-                    <span class="badge bg-secondary ms-2">{{ job.source }}</span>
+                    <div class="d-flex gap-2 ms-2">
+                        {# FR-019's match-quality badge. The wording is decided by
+                           core.agent.match_band, NOT here -- the thresholds are a constant a
+                           verify script can assert on, which they would not be if they lived
+                           in markup. #}
+                        {% if job.match_band %}
+                        <span class="badge bg-success">{{ job.match_band }}</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">{{ job.source }}</span>
+                    </div>
                 </div>
                 <p class="card-subtitle text-muted mb-2">
                     {{ job.company }} — {{ job.location }}
@@ -45,38 +69,47 @@
                 <p class="card-text small">
                     {{ job.description[:200] | striptags }}...
                 </p>
-                <div class="d-flex gap-2 mt-2">
+                {# Save / Reject post with fetch (static/js/decisions.js) rather than submitting
+                   a form, because the ranked list only exists in this response -- a redirect
+                   would lose it and re-running the search would cost a second Groq call per
+                   click. The job's fields ride on the group's data-* attributes; category is
+                   the one the agent assigned from the job's own text, NOT the source name. #}
+                <div class="d-flex gap-2 align-items-center mt-2 js-decision-group"
+                     data-job-id="{{ job.job_id }}"
+                     data-title="{{ job.title }}"
+                     data-company="{{ job.company }}"
+                     data-location="{{ job.location }}"
+                     data-source="{{ job.source }}"
+                     data-url="{{ job.url }}"
+                     data-category="{{ job.category }}">
+
                     <a href="{{ job.url }}" target="_blank"
                        class="btn btn-outline-primary btn-sm">View Job</a>
 
-                    <form method="POST" action="/save_job" style="display:inline">
-                        <input type="hidden" name="title"    value="{{ job.title }}">
-                        <input type="hidden" name="company"  value="{{ job.company }}">
-                        <input type="hidden" name="url"      value="{{ job.url }}">
-                        <input type="hidden" name="source"   value="{{ job.source }}">
-                        <input type="hidden" name="category" value="{{ job.source | lower }}">
-                        <button type="submit" class="btn btn-success btn-sm">Save</button>
-                    </form>
+                    <button type="button" class="btn btn-success btn-sm js-decision"
+                            data-decision="save">Save</button>
 
-                    <form method="POST" action="/reject_job" style="display:inline">
-                        <input type="hidden" name="title"    value="{{ job.title }}">
-                        <input type="hidden" name="category" value="{{ job.source | lower }}">
-                        <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
-                    </form>
+                    <button type="button" class="btn btn-outline-danger btn-sm js-decision"
+                            data-decision="reject">Reject</button>
+
+                    <span class="small text-danger js-decision-error d-none"></span>
                 </div>
             </div>
         </div>
         {% endfor %}
     {% else %}
+        {# The M3 placeholder that used to live here is gone. An empty feed now means one of
+           two real things, both carried in `error` by JobSearchAgent.build_feed: the user has
+           no positive category scores yet, or their categories returned nothing this time. #}
+        {% if not error %}
         <div class="alert alert-info">
-            {% if pending_message %}
-                {{ pending_message }}
-            {% else %}
-                No personalised feed yet. Search for some jobs and save the ones you like —
-                your feed will appear here.
-            {% endif %}
+            No personalised feed yet. Search for some jobs and save the ones you like —
+            your feed will appear here.
         </div>
+        {% endif %}
     {% endif %}
 </div>
+
+<script src="{{ url_for('static', filename='js/decisions.js') }}"></script>
 </body>
 </html>

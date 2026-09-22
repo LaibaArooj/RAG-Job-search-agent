@@ -20,10 +20,12 @@ sign-off. This mirrors verify_db.py, verify_auth.py and verify_intent.py.
 
 import sys
 
+import config
 from adapters import api_client
 from core import agent as agent_module
 from core import intent_parser
 from core.agent import CATEGORY_BOOST, JobSearchAgent
+from core.intent_parser import classify_category
 from models.job_card import JobCard
 
 PASSED = []
@@ -42,13 +44,16 @@ def check(label, condition):
 class StubDB:
     """Stand-in for DatabaseManager, recording calls and serving a canned profile."""
 
-    def __init__(self, context=None, cached=None, raise_on_context=False):
-        """Store the canned profile and cache contents this double should serve."""
+    def __init__(self, context=None, cached=None, raise_on_context=False,
+                 top_categories=None):
+        """Store the canned profile, cache contents and feed categories this double serves."""
         self.context = context if context is not None else {}
         self.cached = cached or {}
         self.raise_on_context = raise_on_context
+        self.top_categories = top_categories or []
         self.history = []
         self.cache_writes = {}
+        self.top_category_calls = []
 
     def get_user_context(self, username):
         """Return the canned profile, or raise if this double is scripted to fail."""
@@ -67,6 +72,14 @@ class StubDB:
     def add_search_history(self, username, query):
         """Record a search-history write."""
         self.history.append((username, query))
+
+    def get_top_categories(self, username, n=3):
+        """Return the canned feed categories, recording that the feed asked for them."""
+        # The real method already filters to positive scores and is covered by verify_db.py.
+        # This double returns the result of that filter, so these cases test what build_feed
+        # does WITH the categories rather than re-testing how they are chosen.
+        self.top_category_calls.append((username, n))
+        return list(self.top_categories[:n])
 
 
 class StubEngine:
@@ -383,6 +396,128 @@ def test_category_boost():
           ranked_far[0]["title"] == "Tech Role")
 
 
+def test_classification():
+    """Every job leaves run() with a category, which is what makes the boost above live."""
+    print("\nJob categorisation")
+
+    # classify_category on its own. Substring matching, first key in CATEGORY_HINTS wins.
+    check("a writing title classifies as writing",
+          classify_category("Senior Technical Writer") == "writing")
+    check("a nursing title classifies as healthcare",
+          classify_category("Registered Nurse, ICU") == "healthcare")
+    check("unmatched text falls back to the intent's category",
+          classify_category("Zxqv Wibble Officer", "design") == "design")
+    check("unmatched text with no fallback lands in other",
+          classify_category("Zxqv Wibble Officer") == "other")
+    # The fallback reaches a MongoDB field path through save_job, so it is validated too.
+    check("a fallback outside CATEGORIES is refused, not passed through",
+          classify_category("Zxqv Wibble Officer", "writing.$ne") == "other")
+    check("every CATEGORY_HINTS key is a real category",
+          set(config.CATEGORY_HINTS).issubset(set(config.CATEGORIES)))
+
+    # --- Regression: the five jobs three real users actually saved -----------------------
+    #
+    # Found 2026-09-22 by reading the live user documents. FOUR of these five were stored as
+    # "design", which is why two accounts carry a design preference they never expressed --
+    # every one of these searches was for a software job.
+    #
+    # The cause has two halves and both are asserted below:
+    #
+    #   1. "ui" is a design hint and the matcher tested every hint as a bare SUBSTRING, so it
+    #      matched inside s-ui-ted, b-ui-lt and req-ui-rements. Almost every job advert in
+    #      existence contains one of those words.
+    #   2. design is listed before technology in CATEGORY_HINTS and the matcher returned the
+    #      FIRST key that matched, so design won on one incidental hint even where technology
+    #      matched four real ones (developer, software, python, data).
+    #
+    # The descriptions are the excerpts recorded around the winning keyword on 2026-09-22,
+    # read out of job_cache before its 60-minute TTL expired them. This is real advert text,
+    # not invented fixture text, and that is the point -- the bug only shows on real prose.
+    #
+    # Routed through JobSearchAgent.classify rather than classify_category directly so the
+    # assertion is independent of the classifier's signature and exercises the agent's call
+    # site too.
+    def cat(title, description="", fallback=None):
+        """Classify one job through the agent and return the category it was assigned."""
+        return JobSearchAgent.classify(
+            [{"title": title, "description": description}], fallback
+        )[0]["category"]
+
+    real_saved_jobs = (
+        ("Junior Software Engineers",
+         "lti-national project, you will actively design, build, and integrate the next ge"),
+        ("Software Developer (Entry Level)",
+         "lutions. our employees enjoy a culture built on innovation and a commitment to c"),
+        ("Junior Software Developer",
+         "junior software developer. i have a newly created vacanc"),
+        ("Junior Software Developer (Python)",
+         "ence. if our team feels you are better suited for another role, we will reach ou"),
+        ("Junior Software Developer - Front-end",
+         "ence. if our team feels you are better suited for another role, we will reach ou"),
+    )
+    for title, description in real_saved_jobs:
+        check(f"real saved job {title!r} classifies as technology",
+              cat(title, description) == "technology")
+
+    # Rule 1 -- the TITLE decides. The description is consulted only when the title names no
+    # category at all. Every one of the five above says "Software" or "Developer" in its
+    # title, so title-first alone would have filed all five correctly.
+    check("the title beats the description",
+          cat("Graphic Designer", "python software developer") == "design")
+    check("the description is used when the title names nothing",
+          cat("Specialist", "python software developer") == "technology")
+
+    # Rule 2a -- hints shorter than four characters match WHOLE WORDS only. This is the half
+    # of the fix that stops "ui" matching inside "suited" and "built".
+    check("'ui' does not match inside 'suited'",
+          cat("Analyst", "better suited for another role", "other") == "other")
+    check("'seo' does not match inside 'seoul'",
+          cat("Analyst", "based in seoul", "other") == "other")
+    check("'ui' still matches as a whole word", cat("UI Engineer") == "design")
+    check("'ux' still matches as a whole word", cat("UX Researcher") == "design")
+
+    # Rule 2b -- longer hints match at a word START, so the deliberate stems in the table
+    # (copywrit, illustrat, programm, journalis) keep working, but nothing matches mid-word.
+    check("a stem hint still matches at a word start",
+          cat("Copywriting Lead") == "writing")
+    check("a stem hint does not match mid-word",
+          cat("Nondeveloper Role", "", "other") == "other")
+
+    # Rule 3 -- the category with the MOST hint matches wins. CATEGORY_HINTS order is now
+    # only the tie-break, not the decision. Here design matches once ("design") and
+    # technology four times, so technology takes it despite being listed later.
+    check("the category with the most hints wins over table order",
+          cat("Engineer", "design and build python software for developers", "other")
+          == "technology")
+
+    # The job's own text decides, never the query's category. TC-011 depends on this: a tech
+    # job rejected during a writing search must lower the TECH score.
+    classified = JobSearchAgent.classify(
+        [{"title": "Backend Developer", "description": "python"}], "writing"
+    )
+    check("the job's own text beats the query's category",
+          classified[0]["category"] == "technology")
+
+    # End to end through run(). Until 2026-09-21 JobCard.category was "" for every job, so
+    # the boost term scored 0 on every listing however strong the learned preference was.
+    # This is the assertion that would have failed then and passes now.
+    jobs = [card("Graphic Designer", description="branding"),
+            card("Software Developer", description="python services")]
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+    scores = {"Graphic Designer": 0.50, "Software Developer": 0.51}
+    db = StubDB(context={"category_scores": {"design": 10}})
+
+    ranked = JobSearchAgent(db, StubEngine(scores), StubRAG()).run("laiba", "q")["jobs"]
+    check("run() assigns a category to every job",
+          all(j["category"] in config.CATEGORIES for j in ranked))
+    check("the categories come from the job text, not the source",
+          {j["title"]: j["category"] for j in ranked}
+          == {"Graphic Designer": "design", "Software Developer": "technology"})
+    # Developer leads on raw similarity by 0.01; design +10 adds 0.2 and overturns it.
+    check("a learned preference now reorders results through the full pipeline",
+          ranked[0]["title"] == "Graphic Designer")
+
+
 def jobs_as_dicts(cards):
     """Convert JobCards to the dict shape rank() operates on."""
     return [c.to_dict() for c in cards]
@@ -633,6 +768,175 @@ def test_experience_override():
     check("skills are unaffected either way", "Skills: Python" in stated)
 
 
+# --- TC-012 / TC-014: the For You feed ---------------------------------------------
+#
+# The feed is the only screen where the learned preference is the ENTIRE input, so these
+# cases are the ones that prove the save/reject loop does something rather than merely
+# writing to Atlas. All of it runs against doubles: no Adzuna quota, no Groq, no model load.
+
+
+def feed_agent(top_categories, context, by_variant, scores=None):
+    """Build a JobSearchAgent wired to doubles for one feed case, and return it with them."""
+    db = StubDB(context=context, top_categories=top_categories)
+    fetch = FetchRecorder(by_variant=by_variant)
+    engine = StubEngine(scores=scores or {})
+    rag = StubRAG()
+    install(monkey_fetch=fetch)
+    return agent_module.JobSearchAgent(db, engine, rag), db, fetch, rag
+
+
+def test_feed_personalised():
+    """TC-012: a user with writing=5 and tech=-2 sees writing jobs and no tech jobs."""
+    print("\nTC-012  For You feed is personalised, and rejected categories are absent")
+
+    # get_top_categories drops non-positive scores, so "technology" is not in the list even
+    # though the user has a score for it. That is the test's whole point.
+    context = {
+        "skills": ["copywriting"],
+        "experience": "entry",
+        "category_scores": {"writing": 5, "technology": -2},
+        "rejected_jobs": [JobCard.make_job_id("Content Writer", "Acme")],
+    }
+    # The "writing" fetch returns a tech job too, which is exactly what happens in production:
+    # a keyword search for one category routinely returns jobs belonging to another.
+    by_variant = {
+        "writing": [
+            card("Technical Writer", description="writing documentation"),
+            card("Backend Developer", description="python software engineering"),
+            card("Content Writer", description="content and copywriting"),
+        ]
+    }
+    ag, db, fetch, rag = feed_agent(["writing"], context, by_variant)
+    result = ag.build_feed("laiba")
+
+    titles = [job["title"] for job in result["feed_jobs"]]
+    categories = {job["category"] for job in result["feed_jobs"]}
+
+    check("feed fetches once per top category", fetch.calls == ["writing"])
+    check("writing jobs appear in the feed", "Technical Writer" in titles)
+    check("no technology job survives the filter", "technology" not in categories)
+    check("every card is in a top category", categories <= {"writing"})
+    # TC-012 says rejected jobs are absent, and this is the assertion that deviation 4 --
+    # storing job_id rather than title in rejected_jobs -- exists to make possible.
+    check("an already-rejected job is absent", "Content Writer" not in titles)
+    check("top_categories is reported to the template", result["top_categories"] == ["writing"])
+    check("no error on a populated feed", result["error"] is None)
+    # The feed deliberately makes no Groq call: it is a browse surface, not a question.
+    check("the feed makes no RAG call", rag.received is None)
+    check("every card carries a match band",
+          all(job.get("match_band") for job in result["feed_jobs"]))
+
+
+def test_feed_two_users_differ():
+    """TC-014: two users with opposite preferences get feeds with no jobs in common."""
+    print("\nTC-014  Two users with different histories get different feeds")
+
+    writer_jobs = [card("Technical Writer", description="writing and editing")]
+    tech_jobs = [card("Backend Developer", description="python software developer")]
+    by_variant = {"writing": writer_jobs, "technology": tech_jobs}
+
+    a, _, _, _ = feed_agent(
+        ["writing"],
+        {"skills": [], "category_scores": {"writing": 5, "technology": -2}},
+        by_variant,
+    )
+    feed_a = a.build_feed("user_a")
+
+    b, _, _, _ = feed_agent(
+        ["technology"],
+        {"skills": [], "category_scores": {"technology": 5, "writing": -2}},
+        by_variant,
+    )
+    feed_b = b.build_feed("user_b")
+
+    ids_a = {job["job_id"] for job in feed_a["feed_jobs"]}
+    ids_b = {job["job_id"] for job in feed_b["feed_jobs"]}
+
+    check("user A's feed is not empty", bool(ids_a))
+    check("user B's feed is not empty", bool(ids_b))
+    # Disjointness is the claim TC-014 actually makes. Asserting only that the two lists
+    # differ would pass on a one-job overlap, which is not "completely different feeds".
+    check("the two feeds share no job at all", ids_a.isdisjoint(ids_b))
+    check("A sees the writing job",
+          "Technical Writer" in [j["title"] for j in feed_a["feed_jobs"]])
+    check("B sees the tech job",
+          "Backend Developer" in [j["title"] for j in feed_b["feed_jobs"]])
+
+
+def test_feed_no_scores():
+    """A user with no positive category scores gets the empty state and costs nothing."""
+    print("\nFeed  no positive scores -> empty state, and no external call is made")
+
+    ag, db, fetch, rag = feed_agent([], {"skills": [], "category_scores": {}}, {})
+    result = ag.build_feed("fresh_user")
+
+    check("feed is empty", result["feed_jobs"] == [])
+    check("top_categories is empty", result["top_categories"] == [])
+    check("the empty-state message is returned", result["error"] == agent_module.MSG_FEED_EMPTY)
+    # Proving a call did NOT happen needs a counter, not a return value -- the same technique
+    # the TC-017 case uses. This is what makes the quota claim in build_feed's comment true.
+    check("no API fetch was made", fetch.calls == [])
+    check("nothing was embedded", ag.semantic_engine.encoded == [])
+    check("no RAG call was made", rag.received is None)
+
+
+def test_feed_categories_return_nothing():
+    """A feed whose categories return no usable job says so, and does not say a source failed."""
+    print("\nFeed  categories return nothing -> the right message, not the outage one")
+
+    ag, _, _, _ = feed_agent(
+        ["writing"], {"skills": [], "category_scores": {"writing": 3}}, {"writing": []}
+    )
+    result = ag.build_feed("laiba")
+
+    # Same distinction TC-018 draws for search: "nothing matched" and "a source is down" are
+    # different events and must not share a message.
+    check("empty categories give the none-found message",
+          result["error"] == agent_module.MSG_FEED_NONE_FOUND)
+    check("top categories are still shown", result["top_categories"] == ["writing"])
+
+
+def test_feed_match_bands():
+    """The match-quality badge maps normalized scores onto the three FR-019 labels."""
+    print("\nFR-019  match band thresholds")
+
+    check("100 is a Top Match", agent_module.match_band(100.0) == "Top Match")
+    check("85 is a Top Match (inclusive)", agent_module.match_band(85.0) == "Top Match")
+    check("84.9 is a Great Match", agent_module.match_band(84.9) == "Great Match")
+    check("65 is a Great Match (inclusive)", agent_module.match_band(65.0) == "Great Match")
+    check("64.9 is Worth a Look", agent_module.match_band(64.9) == "Worth a Look")
+    check("0 is Worth a Look", agent_module.match_band(0.0) == "Worth a Look")
+
+
+def test_feed_ranking_uses_scores():
+    """Within the feed, a higher-scoring category outranks a lower one at equal similarity."""
+    print("\nFeed  the category score breaks ties between equally similar jobs")
+
+    context = {
+        "skills": [],
+        "category_scores": {"writing": 10, "design": 1},
+        "rejected_jobs": [],
+    }
+    by_variant = {
+        "writing": [card("Technical Writer", description="writing")],
+        "design": [card("Graphic Designer", company="Beta", description="design")],
+    }
+    # Identical similarity for both, so the ONLY thing that can separate them is the boost.
+    ag, _, fetch, _ = feed_agent(
+        ["writing", "design"], context, by_variant,
+        scores={"Technical Writer": 0.5, "Graphic Designer": 0.5},
+    )
+    result = ag.build_feed("laiba")
+
+    titles = [job["title"] for job in result["feed_jobs"]]
+    check("both categories were fetched", fetch.calls == ["writing", "design"])
+    check("both jobs survive the filter", len(titles) == 2)
+    check("the higher-scoring category ranks first", titles[0] == "Technical Writer")
+    # The top card is a Top Match by construction, because normalized_score is relative to
+    # the best match in this feed. Worth asserting so the label's meaning stays honest.
+    check("the top card is a Top Match", result["feed_jobs"][0]["match_band"] == "Top Match")
+
+
 def main():
     """Run every case and exit non-zero if any assertion failed."""
     print("=" * 70)
@@ -650,6 +954,7 @@ def main():
         test_ranking()
         test_context_injection()
         test_category_boost()
+        test_classification()
         test_rag_fallback()
         test_cache()
         test_enrich_query_unchanged()
@@ -660,6 +965,12 @@ def main():
         test_empty_source_is_not_failure()
         test_degraded_pool_is_not_cached()
         test_experience_override()
+        test_feed_personalised()
+        test_feed_two_users_differ()
+        test_feed_no_scores()
+        test_feed_categories_return_nothing()
+        test_feed_match_bands()
+        test_feed_ranking_uses_scores()
     finally:
         # Restore the real functions, so importing this module cannot leave the agent
         # permanently stubbed for anything that imports it afterwards.

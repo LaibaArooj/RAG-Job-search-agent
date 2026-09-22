@@ -1,8 +1,7 @@
 """Search, feed, save, reject and profile routes.
 
-Covers TC-005 to TC-018. profile() (M1) and search() (M2) are implemented; save_job and
-reject_job stay as stubs tagged with the milestone that fills them in, because a stub that
-silently returns None is how an unimplemented function gets shipped.
+Covers TC-005 to TC-018. profile() (M1), search() (M2), the save/reject pair (M3,
+TC-010/TC-011/TC-013) and feed() (M3, TC-012/TC-014) are all implemented.
 
 search() serves "/" and replaced the inline route in app.py on 2026-09-20, closing the
 deferral recorded in docs/ARCHITECTURE.md § Module layout. It stays on "/" rather than moving
@@ -20,13 +19,14 @@ from flask import (
     Blueprint,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
     url_for,
 )
 
-from config import EXPERIENCE_LEVELS, WORK_TYPES
+from config import CATEGORIES, EXPERIENCE_LEVELS, WORK_TYPES
 from controllers.auth_controller import check_csrf, current_username, require_auth
 
 ui_bp = Blueprint("ui", __name__)
@@ -102,16 +102,24 @@ def profile():
 @require_auth
 def feed():
     """Render the For You feed from the user's top-scoring categories (TC-012, TC-014; TC-005)."""
-    # Registered and protected in M1 so TC-005 — /feed while logged out redirects to /login —
-    # can be tested now. The ranking itself is M3; the placeholder is explicit rather than an
-    # empty page that could be mistaken for a working but empty feed.
-    return render_template(
-        "feed.html",
-        feed_jobs=[],
-        top_categories=[],
-        user=None,
-        pending_message="The personalised feed arrives in milestone M3.",
-    )
+    # As thin as search(). Which categories, which jobs and what counts as empty are all
+    # agent decisions -- this route only chooses the template. @require_auth is what TC-005
+    # measures on this URL and is unchanged by the M3 body.
+    try:
+        result = _agent().build_feed(current_username())
+    except Exception as e:
+        # build_feed handles its own database and API failures and has no path that should
+        # reach here. This is the last line before a stack trace would render, and the SRS
+        # requires a banner instead of a blank page on every error path without exception.
+        current_app.logger.error("feed build failed: %s", e)
+        result = {
+            "feed_jobs": [],
+            "top_categories": [],
+            "error": "Could not build your feed right now. Please try again.",
+            "warning": None,
+        }
+
+    return render_template("feed.html", **result)
 
 
 def _blank_page(error=None):
@@ -151,11 +159,81 @@ def search():
     return render_template("index.html", **_blank_page())
 
 
+# --- save / reject ------------------------------------------------------------------
+#
+# These two answer with JSON rather than a redirect, and that is a deliberate choice worth
+# being able to state. The ranked result list is not persisted anywhere -- it exists only in
+# the response that rendered it -- so a POST-redirect-GET would either lose the results the
+# user is looking at or re-run the whole pipeline, including a second Groq call, for every
+# click. static/js/decisions.js posts here with fetch and flips the button in place instead.
+#
+# The body is form-encoded, not JSON, specifically so check_csrf() works unchanged: it reads
+# request.form, and a JSON body would leave request.form empty and fail every token check.
+#
+# No JavaScript framework is involved -- one delegated listener and fetch(), which the stack
+# constraint in CLAUDE.md permits. The degradation story if JS is off is that the buttons do
+# nothing; the search itself is a plain form POST and is unaffected.
+
+
+def _posted_job():
+    """Build the job dict the database layer expects out of the posted form fields."""
+    # Read field by field from a fixed list rather than passing request.form through. The form
+    # is attacker-controlled and this dict is written into the user's document; a crafted POST
+    # must not be able to add keys of its own to a stored saved_jobs entry.
+    return {
+        "job_id": (request.form.get("job_id") or "").strip(),
+        "title": (request.form.get("title") or "").strip(),
+        "company": (request.form.get("company") or "").strip(),
+        "location": (request.form.get("location") or "").strip(),
+        "source": (request.form.get("source") or "").strip(),
+        "url": (request.form.get("url") or "").strip(),
+    }
+
+
+def _record(decision):
+    """Run one save or reject, validating the request before the database layer sees it."""
+    if not check_csrf():
+        return jsonify(ok=False, error="Your session expired. Please reload the page."), 400
+
+    job = _posted_job()
+    if not job["job_id"]:
+        # Without an id the entry could never be deduplicated on a second save (TC-013) and
+        # could never be matched against the feed later, so it is refused here rather than
+        # stored as something unusable.
+        return jsonify(ok=False, error="That job is missing an identifier."), 400
+
+    category = (request.form.get("category") or "").strip().lower()
+    if category not in CATEGORIES:
+        # Defence in depth, not the only defence. DatabaseManager._score_path raises
+        # ValueError on the same condition because the category reaches a MongoDB field path
+        # -- but an unhandled ValueError reaches the user as a 500, and this is a bad request,
+        # not a server fault. Checking here makes the status code tell the truth.
+        return jsonify(ok=False, error="Unknown job category."), 400
+
+    username = current_username()
+    action = _db().save_job if decision == "save" else _db().reject_job
+
+    try:
+        recorded = action(username, job, category)
+    except Exception as e:
+        current_app.logger.error("%s failed for %s: %s", decision, username, e)
+        return jsonify(ok=False, error="Could not save that right now. Please try again."), 503
+
+    # recorded is False when this job was already in the list. That is TC-013's case and it is
+    # a success, not an error: the score was incremented exactly once, by the first click. The
+    # button still settles into its decided state, so a double click looks the same as one.
+    return jsonify(ok=True, already=not recorded, category=category)
+
+
+@ui_bp.route("/save_job", methods=["POST"])
+@require_auth
 def save_job():
     """Save a job to the user's list and raise that category's score by 1 (TC-010, TC-013)."""
-    raise NotImplementedError("M3")
+    return _record("save")
 
 
+@ui_bp.route("/reject_job", methods=["POST"])
+@require_auth
 def reject_job():
     """Record a rejection and lower that category's score by 1 (TC-011)."""
-    raise NotImplementedError("M3")
+    return _record("reject")

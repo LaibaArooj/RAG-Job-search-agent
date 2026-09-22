@@ -11,6 +11,130 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-21 — The For You feed (M3 complete)
+
+M3's last task. `get_top_categories` and `rejected_jobs` had been green in `verify_db.py` since
+M1 and nothing read them back; `/feed` rendered a placeholder string. The feed is now built, and
+it is the only screen where the learned preference is the entire input.
+
+### Decided — the feed fetches live, through the existing 60-minute cache
+
+The open question `docs/PROJECT_STATUS.md` carried was whether the feed would spend Adzuna quota
+on every visit. It fetches live, and the quota concern dissolves on inspection: the variant
+strings are **category names**, a closed set of 13, so every user and every visit shares the same
+cache keys. All feed traffic across the whole app costs at most ~13 Adzuna calls per hour against
+a 250/day budget. A user with no positive scores returns before any fetch at all.
+
+### Decided — a user with no preferences gets an empty feed, not a profile fallback
+
+Falling back to the profile's skills would keep the feed populated from day one, but it would
+give "why do two users see different feeds?" two possible answers instead of one. TC-014 exists
+to rule that ambiguity out, so the empty state stays empty.
+
+### Added
+
+- `JobSearchAgent.build_feed(user_id)` — the second entry point beside `run()`. Reuses
+  `_fetch_cached_variant`, `deduplicate`, `classify` and `rank` unchanged; adds only the
+  category filter and the ranking-without-a-query step.
+- `JobSearchAgent._filter_feed` — keeps jobs whose **self-assigned** category is in the user's
+  top categories and drops any `job_id` in `rejected_jobs`. TC-012 says rejected categories are
+  *absent*; "ranked last of twelve" is still present, so ranking alone would not satisfy it.
+- `core.agent.match_band()` and `MATCH_BANDS` — FR-019's Top Match / Great Match / Worth a Look
+  badge. The thresholds live in Python rather than Jinja so a verify script can assert on them.
+- `FEED_CATEGORIES`, `FEED_LIMIT`, `MSG_FEED_EMPTY`, `MSG_FEED_NONE_FOUND`.
+- `docs/ARCHITECTURE.md` § For You feed request flow.
+
+### Changed
+
+- `ui.feed` calls `build_feed` and renders the result; the M3 placeholder is gone. The route
+  stays as thin as `search()` — no filtering and no policy in the controller.
+- `feed.html` renders the match badge, and the same `error` / `warning` banner pair `index.html`
+  uses, so a feed built while a source is down says so above the cards rather than instead
+  of them.
+- `verify_agent.py` 97 → 129 checks: TC-012 (writing shown, tech absent, rejected job absent),
+  TC-014 (two users' feeds are **disjoint**, not merely different), the no-scores case proved by
+  call counters on the stubs, the match bands, and the category-score tie-break.
+- `verify_routes.py` gains `/feed` checks. They run **before** the saves in that script, while
+  the throwaway user still has no positive score, so `build_feed` returns without fetching and
+  the script stays free of Adzuna quota.
+
+### Honesty note for the report
+
+The feed runs a keyword search for each of the user's top category *names* and re-ranks what
+comes back against their profile. It does not discover jobs matching their taste. Same recall
+ceiling as the search path — the docstring, the architecture doc and the report all say so in
+those words.
+
+### Still hand-picked, TODO(M4)
+
+`FEED_CATEGORIES = 3`, `FEED_LIMIT = 12` and the 85 / 65 match-band thresholds have no more
+justification than `CATEGORY_BOOST` does. `normalized_score` is relative to the best match in
+the feed, so the top card is a "Top Match" by construction — say that before being asked.
+
+---
+
+## 2026-09-21 — Job categorisation, and the save/reject learning loop
+
+M3's first task. `DatabaseManager.save_job` / `reject_job` had been written and green in
+`verify_db.py` since M1, but nothing above them existed: no category to score, no routes, no
+buttons. All three are now built and the loop runs end to end.
+
+### Decided — how a job's category is derived
+
+This was the open question both `docs/PROJECT_STATUS.md` and `config.py` flagged as *must be
+settled before M3*. **Neither API taxonomy is used.** Adzuna tags jobs with its own categories
+and Remotive with a different set; reconciling them meant two mapping tables at different
+granularities, with no answer for a job whose source omits the field. Instead every job —
+whichever source returned it — is classified locally from its own title and description against
+a single `config.CATEGORY_HINTS` table. One rule for both sources, so a user's score for a
+category cannot fragment according to which API happened to return the job.
+
+Stated plainly for the report: this is **substring keyword matching over job text**, first
+matching key wins, and the order of `CATEGORY_HINTS` is the tie-break rule. A job whose title
+and opening paragraph name no category word lands on the parsed intent's category, or `"other"`.
+It is not classification by meaning and must not be described as such.
+
+### Added
+
+- `config.CATEGORY_HINTS` — the category vocabulary, promoted out of `intent_parser` so the
+  query path and the job path match against one table. A query parsed as `writing` and a job
+  classified as `content` would have incremented different keys and fragmented the loop.
+- `core.intent_parser.classify_category(text, fallback)` — used for both. The fallback is
+  validated against `CATEGORIES` too, because it reaches a MongoDB field path via `save_job`.
+- `JobSearchAgent.classify` — new pipeline step 6b, between dedupe and rank.
+- `POST /save_job` and `POST /reject_job` in `controllers/ui_controller.py`, returning JSON.
+- `static/js/decisions.js` — one delegated listener, `fetch`, button flips in place. No
+  framework. Form-encoded body so the existing `check_csrf()` works unchanged.
+- `verify_routes.py` — 46 checks. TC-010/011/013 asserted through the HTTP routes, not just the
+  data layer, plus the CSRF path, the category whitelist, the JSON contract and the rendered
+  card markup. Registered in `verify_all.py`.
+
+### Fixed
+
+- **`feed.html` posted `category="{{ job.source | lower }}"`** — the source name, e.g. `adzuna`,
+  which is not in `CATEGORIES`. Every click would have raised `ValueError` out of `_score_path`
+  and reached the user as a 500. It was unreachable only because the feed renders no jobs yet.
+  Both templates now use the same markup, and the route returns a 400 rather than a 500 for a
+  bad category.
+- **The category boost was dead code in production.** `JobCard.category` was `""` for every job,
+  so `similarity + (category_score × 0.02)` scored 0 on the boost term for every listing.
+  `verify_agent.py` proved the mechanism by passing categories in directly; it now proves it
+  through the full pipeline.
+
+### Verified
+
+- **277 assertions green offline**: verify_db 27, verify_agent 97 (was 57), verify_auth 31,
+  verify_routes 46, verify_intent 76.
+- The button behaviour was driven in a real browser against the running server with `fetch`
+  stubbed: a success flips the label to "Saved", disables both buttons and posts the right
+  form-encoded body; a 400 re-enables them and shows the server's message. No console errors.
+
+### Still to do in M3
+
+The For You feed (TC-012, TC-014). It depends on these categories existing.
+
+---
+
 ## 2026-09-20 — A verification suite that can catch a live-API change
 
 Both defects found today were invisible to `verify_agent.py`, which passed 57/57 throughout

@@ -8,6 +8,7 @@ pipeline is reported before anything spends Adzuna quota on the live run.
     verify_db.py      data layer against Atlas          TC-001/002/010..013
     verify_agent.py   the pipeline, fully offline       TC-006/016..018/021/022
     verify_auth.py    the real routes and session       TC-001..005
+    verify_routes.py  save/reject over HTTP             TC-010/011/013
     verify_intent.py  intent parsing, one live Groq call TC-019/020
     verify_live.py    the real APIs and rendered pages  the 2026-09-20 defects
 
@@ -29,6 +30,7 @@ SCRIPTS = [
     ("verify_db.py", "data layer against live Atlas", False),
     ("verify_agent.py", "search pipeline, fully offline", False),
     ("verify_auth.py", "auth routes, session and CSRF", False),
+    ("verify_routes.py", "save/reject routes and categorisation", False),
     ("verify_intent.py", "intent parsing (one live Groq call)", False),
     ("verify_live.py", "real Adzuna/Remotive/Groq + rendered pages", True),
 ]

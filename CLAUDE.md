@@ -11,7 +11,8 @@ picks. Saving and rejecting jobs updates per-category preference scores that per
 future rankings and a "For You" feed.
 
 Project type: **academic deliverable — must be demonstrable and defensible in a viva**
-Current milestone: **M1 — Auth, profile and database**
+Current milestone: **M4 — evaluation (precision@5), filters, autocomplete, demo** (M3 closed
+2026-09-21: categorisation, the save/reject loop and the For You feed all shipped)
 
 This is graded work. Correctness and my ability to explain the design matter more than speed
 or cleverness. When you make a design decision, tell me why, so I can defend it.
@@ -54,15 +55,17 @@ pip install -r requirements.txt
 python app.py                                    # dev server
 python verify_db.py                              # prove the data layer against Atlas
 python verify_auth.py                            # prove the auth routes, TC-001 to TC-005
+python verify_routes.py                          # prove save/reject, categorisation and /feed, TC-010/011/012/013
 python verify_intent.py                          # prove intent parsing, TC-019/TC-020 (live Groq call)
-python verify_agent.py                           # prove the search pipeline, TC-006/016/017/018/021/022 (offline)
+python verify_agent.py                           # prove the pipeline and the feed, TC-006/012/014/016/017/018/021/022 (offline)
 python verify_live.py                            # prove it against the REAL Adzuna/Remotive/Groq + rendered pages
-python verify_all.py                             # run all five, one summary. --offline skips the quota-spending one
+python verify_all.py                             # run all six, one summary. --offline skips the quota-spending one
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 249 assertions, about 100 seconds. Use
+**`python verify_all.py` is the pre-demo check.** 348 assertions, about 150 seconds --
+320 of them offline, measured 2026-09-21; verify_live.py contributes the other 28. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.

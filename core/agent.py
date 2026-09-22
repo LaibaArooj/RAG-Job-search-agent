@@ -1,6 +1,6 @@
 """JobSearchAgent — orchestrates the search pipeline end to end.
 
-Covers TC-006, TC-016 to TC-018 and TC-019 to TC-022.
+Covers TC-006, TC-012, TC-014, TC-016 to TC-018 and TC-019 to TC-022.
 
 The steps, per docs/ARCHITECTURE.md § Search request flow:
 
@@ -9,13 +9,20 @@ The steps, per docs/ARCHITECTURE.md § Search request flow:
     3. enrich_query              - profile folded into the query text
     4. fetch, once per variant   - Adzuna + Remotive via adapters.api_client
     5. union and deduplicate     - on job_id (SHA of title + company)
-    6. batch_encode + similarity - core.semantic_engine
-    7. score and sort            - similarity + (category_score x 0.02)
-    8. top 5 -> RAGPipeline.run  - Groq call #2, hides the AI panel on failure
+    6. classify                  - one category per job, core.intent_parser
+    7. batch_encode + similarity - core.semantic_engine
+    8. score and sort            - similarity + (category_score x 0.02)
+    9. top 5 -> RAGPipeline.run  - Groq call #2, hides the AI panel on failure
 
 Honest description of what this does: it RE-RANKS the candidate pool that keyword search
 returned. It cannot surface a job the APIs never fetched. Query expansion at step 4 widens
-that pool but does not remove the ceiling. Do not describe step 6 as "semantic retrieval".
+that pool but does not remove the ceiling. Do not describe step 7 as "semantic retrieval",
+and do not describe step 6 as anything more than keyword matching over the job text.
+
+build_feed() is the second entry point, added 2026-09-21 for the For You feed. It shares
+every step above except intent parsing and the RAG call: the user's top-scoring categories
+stand in for the query, and there is no LLM call at all. See its own docstring for the
+honest description of what it does and does not do.
 
 Five decision points the implementation must handle: empty query, unauthenticated user,
 intent-parse failure, no jobs returned from any variant, and RAG failure. The
@@ -37,7 +44,7 @@ import hashlib
 
 import config
 from adapters.api_client import fetch_variant
-from core.intent_parser import enrich_query, parse_intent
+from core.intent_parser import classify_category, enrich_query, parse_intent
 
 # Hand-picked coefficient weighting learned category preference against raw similarity.
 # TODO(M4): this number has no justification yet. Either tune it during the precision@5
@@ -45,6 +52,32 @@ from core.intent_parser import enrich_query, parse_intent
 CATEGORY_BOOST = 0.02
 
 TOP_K = 5
+
+# --- For You feed -----------------------------------------------------------------
+#
+# How many of the user's highest-scoring categories the feed is built from, and how many
+# cards it shows. Three categories is three fetches per COLD feed, but the variant strings
+# are category names -- a closed set of 13 -- so the 60-minute job cache is shared by every
+# user and every visit. All feed traffic in the whole app therefore costs at most ~13 Adzuna
+# calls per hour, which is what makes a live-fetching feed affordable against a 250/day
+# budget. That reasoning is the answer to the quota question docs/PROJECT_STATUS.md carried
+# as an open blocker.
+FEED_CATEGORIES = 3
+FEED_LIMIT = 12
+
+MSG_FEED_EMPTY = (
+    "No personalised feed yet. Search for some jobs and save the ones you like."
+)
+MSG_FEED_NONE_FOUND = "Nothing new in your categories right now. Try a search instead."
+
+# Match-quality bands for the badge on each feed card (FR-019). These thresholds are
+# HAND-PICKED and have no more justification than CATEGORY_BOOST does -- they are read off
+# normalized_score, which is already relative to the best match in this feed rather than an
+# absolute quality measure, so the top card is always a "Top Match" by construction. Say
+# that plainly rather than letting an examiner find it. TODO(M4): either tune these during
+# the precision@5 evaluation or state them in the report as presentation-only labels.
+MATCH_BANDS = ((85.0, "Top Match"), (65.0, "Great Match"))
+MATCH_BAND_DEFAULT = "Worth a Look"
 
 # The five messages the route can render. Kept here as constants because the verify script
 # asserts on them and TC-017/TC-018 quote them; a typo in one place would pass a test that
@@ -61,6 +94,17 @@ def _cache_key(variant):
     # a MongoDB _id. A hash is a fixed-length value from a fixed alphabet, so no query string
     # can collide with an operator or blow the key-length limit.
     return hashlib.sha256(variant.strip().lower().encode("utf-8")).hexdigest()
+
+
+def match_band(normalized_score):
+    """Map a normalized score onto the feed's Top Match / Great Match / Worth a Look label."""
+    # Lives here and not in the template so the thresholds are one constant the verify script
+    # can assert against. Jinja holding them would mean the only record of the rule was in
+    # markup, where nothing tests it.
+    for threshold, label in MATCH_BANDS:
+        if normalized_score >= threshold:
+            return label
+    return MATCH_BAND_DEFAULT
 
 
 class JobSearchAgent:
@@ -159,6 +203,36 @@ class JobSearchAgent:
             unique.append(job)
         return unique
 
+    # --- classification -----------------------------------------------------------
+
+    @staticmethod
+    def classify(jobs, intent_category=None):
+        """Assign every job exactly one config.CATEGORIES value from its own title and text."""
+        # This runs in the agent rather than in JobCard.from_adzuna / from_remotive, and that
+        # is the decision to be able to defend. JobCard's job is to normalise the SHAPE two
+        # APIs disagree about -- it is a dumb dataclass with no policy in it. Which category a
+        # job belongs to is policy: it decides what the save/reject loop increments and what
+        # the boost in rank() reads. Putting it here also means it happens exactly once for
+        # every job on every path, including jobs read back out of the 60-minute cache, which
+        # were serialised with whatever category was assigned when they were first fetched.
+        #
+        # The job's OWN text decides, not the source's taxonomy and not the user's query. The
+        # parsed intent is only the fallback for a job whose text names no category at all,
+        # because "the category this person was searching for" is a better guess than "other"
+        # -- but it is still a guess, and it must never override a job that classified itself.
+        # TC-011 says rejecting a TECH job lowers the TECH score; if the query's category won,
+        # a tech job found in a writing search would move the writing score instead.
+        # Title and description are passed SEPARATELY, not concatenated. classify_category
+        # reads the title first and only falls through to the description when the title
+        # names no category at all -- see its docstring for why. Joining them into one string
+        # here, as this did until 2026-09-22, threw that distinction away before the
+        # classifier could use it, and the description is where the noise lives.
+        for job in jobs:
+            job["category"] = classify_category(
+                job.get("title", ""), intent_category, job.get("description", "")
+            )
+        return jobs
+
     # --- ranking ------------------------------------------------------------------
 
     def rank(self, query_vector, jobs, category_scores):
@@ -198,6 +272,134 @@ class JobSearchAgent:
             )
 
         return jobs
+
+    # --- For You feed -------------------------------------------------------------
+
+    def _empty_feed(self, categories, message):
+        """Return the canonical result dict for a feed with no cards to show."""
+        # Same discipline as _empty_result: every exit from build_feed hands feed.html the
+        # identical key set, so the template never has to test which branch produced it.
+        return {
+            "feed_jobs": [],
+            "top_categories": categories,
+            "error": message,
+            "warning": None,
+        }
+
+    def build_feed(self, user_id):
+        """Build the For You feed from the user's highest-scoring categories (TC-012, TC-014).
+
+        Honest description, and it must stay in these words: this runs a keyword search for
+        each of the user's top category NAMES and re-ranks what comes back against their
+        profile. It does not discover jobs matching their taste, and it can only ever return
+        what those three keyword searches happened to fetch.
+        """
+        try:
+            context = self.db.get_user_context(user_id) or {}
+        except Exception as e:
+            # Unlike run(), a context failure is fatal to the feed rather than a degradation.
+            # The search has a query to fall back on; the feed has nothing else — the scores
+            # ARE the input. Returning an unpersonalised feed here would be a different
+            # feature wearing this one's name.
+            print(f"could not load user context for {user_id!r}: {e}")
+            return self._empty_feed([], MSG_FEED_EMPTY)
+
+        try:
+            categories = self.db.get_top_categories(user_id, n=FEED_CATEGORIES)
+        except Exception as e:
+            print(f"could not load top categories for {user_id!r}: {e}")
+            return self._empty_feed([], MSG_FEED_EMPTY)
+
+        # get_top_categories already drops anything scoring <= 0, which is TC-012's "tech
+        # jobs absent" enforced at the source rather than by a filter further down.
+        #
+        # No positive scores means the user has saved nothing, and there is no honest feed to
+        # build. The alternative considered and rejected was falling back to the profile's
+        # skills: it would never leave the feed empty, but it would give "why do two users
+        # see different feeds?" two possible answers instead of one, which is exactly the
+        # ambiguity TC-014 exists to rule out. Note this returns BEFORE any fetch, so a
+        # scoreless user's visit costs no Adzuna quota, no embedding and no Groq call.
+        if not categories:
+            return self._empty_feed([], MSG_FEED_EMPTY)
+
+        # The profile's stated preferences become the fetch parameters. work_type is a list on
+        # the profile and fetch_variant takes one value, so the first is used — combining them
+        # would mean one fetch per category per work type, which multiplies the quota cost for
+        # a refinement the feed does not need.
+        preferred_work = context.get("preferred_work") or []
+        work_type = preferred_work[0] if preferred_work else None
+        experience = context.get("experience") or None
+
+        raw_jobs = []
+        failed_sources = []
+        for category in categories:
+            # The category name IS the query. "customer_support" is a database key, not
+            # something to send to a job API, so the underscore is undone first.
+            variant = category.replace("_", " ")
+            result = self._fetch_cached_variant(variant, work_type, experience)
+            raw_jobs.extend(result["jobs"])
+            for source in result["failed_sources"]:
+                if source not in failed_sources:
+                    failed_sources.append(source)
+
+        jobs = self.deduplicate(raw_jobs)
+
+        # intent_category is deliberately None here. In a search, a job whose text names no
+        # category borrows the one the user was searching for; the feed has no single query,
+        # so there is nothing to borrow and such a job lands in "other" — where the filter
+        # below then drops it. A job has to earn its way into the feed by its own text.
+        jobs = self.classify(jobs, None)
+
+        jobs = self._filter_feed(jobs, categories, context.get("rejected_jobs"))
+
+        if not jobs:
+            error = MSG_SOURCE_DOWN if failed_sources else MSG_FEED_NONE_FOUND
+            return self._empty_feed(categories, error)
+
+        # The feed has no query, so the user's own preferences are the query: the top
+        # categories, enriched with the profile by the same enrich_query TC-016 was proven
+        # against. rank() then applies CATEGORY_BOOST on top of the resulting similarity, so
+        # within the feed a category scored 5 outranks one scored 1.
+        query_vector = self.semantic_engine.encode(
+            enrich_query(" ".join(categories), context)
+        )
+        jobs = self.rank(query_vector, jobs, context.get("category_scores"))[:FEED_LIMIT]
+
+        for job in jobs:
+            job["match_band"] = match_band(job.get("normalized_score", 0.0))
+
+        # RAGPipeline is deliberately NOT called. The feed is a browse surface, not a
+        # question — a second Groq call on every page load would buy an explanation of a
+        # query the user never typed, and FR-016's AI Recommendations are specified against
+        # a search. This is an omission on purpose, not one that was missed.
+        return {
+            "feed_jobs": jobs,
+            "top_categories": categories,
+            "error": None,
+            "warning": MSG_PARTIAL if failed_sources else None,
+        }
+
+    @staticmethod
+    def _filter_feed(jobs, categories, rejected_jobs):
+        """Keep only jobs in the user's top categories that they have not already rejected."""
+        # TC-012 says rejected categories are ABSENT from the feed, not merely ranked last —
+        # and "last of twelve on one page" is still present. A fetch for "writing" routinely
+        # returns jobs that classify as technology, so without this a user with tech = -2
+        # still sees tech jobs and the test fails on a feed that looks fine.
+        #
+        # Matching on the category the job classified ITSELF into, not on which category's
+        # fetch returned it: those differ often, and the self-assigned one is what save and
+        # reject increment, so it is the one the filter has to agree with.
+        allowed = set(categories)
+        rejected = set(rejected_jobs or [])
+        # Rejections are matched on job_id. That is what deviation 4 from SRS v1.0 bought —
+        # rejected_jobs stores ids rather than titles, so rejecting one "Software Engineer"
+        # hides that employer's listing and not every job sharing the title.
+        return [
+            job
+            for job in jobs
+            if job.get("category") in allowed and job.get("job_id") not in rejected
+        ]
 
     # --- pipeline -----------------------------------------------------------------
 
@@ -259,6 +461,11 @@ class JobSearchAgent:
             intent["variants"], intent.get("work_type"), intent.get("experience")
         )
         jobs = self.deduplicate(raw_jobs)
+
+        # One category per job, from the job's own text (see classify above). Until this
+        # existed, JobCard.category was "" for every job, so the CATEGORY_BOOST term in rank()
+        # scored 0 on every listing and the save/reject loop had nothing to increment.
+        jobs = self.classify(jobs, intent.get("category"))
 
         if not jobs:
             # TC-018. A rate-limited source and a genuinely empty result set are different

@@ -79,8 +79,18 @@ Swapping any dependency should mean editing one file.
    *partial* fetch is never cached, or an outage would outlive the API's recovery by an hour.
 6. Join, union all variants' results, deduplicate on `job_id` (SHA of title + company).
    If no jobs from any variant → friendly error banner, retry offered
+6b. `JobSearchAgent.classify` — every surviving job is assigned exactly one
+   `config.CATEGORIES` value by `core.intent_parser.classify_category`, matched against
+   `CATEGORY_HINTS` using the job's **own** title and description. Neither API's taxonomy is
+   consulted (settled 2026-09-21). The parsed intent's category is the fallback for a job whose
+   text matches nothing, and `"other"` is the last resort. It runs here rather than in
+   `JobCard.from_adzuna` / `from_remotive` because `JobCard` normalises *shape* and carries no
+   policy, and because running it in the agent covers jobs read back out of the cache too.
+   Honest description: keyword matching over job text, not classification by meaning.
 7. `batch_encode` all job descriptions → cosine similarity vs query vector
-8. Score = similarity + (`category_scores[job.category]` × 0.02); sort descending
+8. Score = similarity + (`category_scores[job.category]` × 0.02); sort descending.
+   Live as of 2026-09-21 — until step 6b existed `job.category` was `""` on every listing, so
+   this term contributed 0 to every score however strong the learned preference was.
 9. Top 5 → `RAGPipeline.run()`. Wrapped in try/except:
    Groq failure → `fallback()`, AI section hidden, raw results still rendered
 10. Render: AI Recommendations band, then the full ranked list
@@ -91,6 +101,91 @@ failure (fall back to keywords), no jobs returned, RAG failure (hide the AI pane
 **Groq is now called twice per search** — once for intent parsing, once for RAG generation.
 Both sit behind try/except with a working fallback, so FR-018 still holds. Watch the free-tier
 rate limit: two calls per search halves the number of searches you can demo per minute.
+
+## Save / reject request flow (M3, 2026-09-21)
+
+`POST /save_job` and `POST /reject_job` in `controllers/ui_controller.py`.
+
+1. `@require_auth` — anonymous requests redirect to `/login` (TC-005 applies here too)
+2. `check_csrf()` — the posted token compared with the session's using `hmac.compare_digest`
+3. The job dict is rebuilt field by field from a fixed key list, never from `request.form`
+   wholesale, so a crafted POST cannot add keys to a stored `saved_jobs` entry
+4. `job_id` must be present, or the entry could never be deduplicated on a second save (TC-013)
+5. `category` must be a member of `config.CATEGORIES` → otherwise **400**, not 500.
+   `DatabaseManager._score_path` raises `ValueError` on the same condition because the category
+   reaches a MongoDB field path; the route check is what makes the status code tell the truth
+6. `DatabaseManager.save_job` / `reject_job` — one atomic `$push` + `$inc` (TC-010, TC-011)
+7. Response is **JSON**: `{ok, already, category}`
+
+**Why JSON and not a redirect.** The ranked list exists only in the response that rendered it —
+nothing persists it. A POST-redirect-GET would either lose the results the user is looking at or
+re-run the whole pipeline, including a second Groq call, on every click. `static/js/decisions.js`
+posts with `fetch` and flips the button in place instead.
+
+**Why the body is form-encoded, not JSON.** `check_csrf()` reads `request.form`. A JSON request
+body leaves `request.form` empty, so every token check would fail.
+
+`already: true` means the job was already recorded by an earlier click. That is TC-013's case
+and it is a **success** — the score moved exactly once — so the button settles identically.
+
+Degradation with JavaScript disabled: the buttons do nothing. The search itself is a plain form
+POST and is unaffected.
+
+## For You feed request flow (M3, 2026-09-21)
+
+`GET /feed` in `controllers/ui_controller.py` → `JobSearchAgent.build_feed(username)`.
+
+The feed shares the search pipeline's steps except intent parsing and the RAG call. The user's
+top-scoring categories stand in for the query, so **the learned preference is the entire
+input** — this is the only screen where that is true.
+
+1. `@require_auth` — anonymous requests redirect to `/login` (TC-005)
+2. `get_user_context` — profile, `category_scores` and `rejected_jobs` in one read
+3. `get_top_categories(n=3)` — **positive scores only**. A category the user has rejected more
+   than saved is not in this list, which is TC-012's "tech jobs absent" enforced at the source
+4. **No categories → return immediately.** No fetch, no embedding, no LLM call
+5. Fetch once per category, through the same 60-minute cache `run()` uses. The variant string
+   is the category name with `_` → space; the profile's `experience` and first `preferred_work`
+   become the fetch parameters
+6. `deduplicate` → `classify(jobs, None)` — the intent fallback is deliberately `None`, so a job
+   whose text names no category lands in `"other"` and is filtered out at step 7. A job earns
+   its place in the feed by its own text
+7. `_filter_feed` — keep only jobs whose **self-assigned** category is in the top categories,
+   and drop any `job_id` in `rejected_jobs`
+8. `encode(enrich_query(" ".join(categories), context))` — the preferences are the query vector
+9. `rank()` → `CATEGORY_BOOST` applies, so within the feed a category scored 5 outranks one
+   scored 1 at equal similarity → truncate to 12
+10. `match_band(normalized_score)` → the FR-019 badge string, set here and not in Jinja
+
+**Honest description, and it must stay in these words.** The feed runs a keyword search for
+each of the user's top category *names* and re-ranks what comes back against their profile. It
+does not discover jobs matching their taste, and it can return only what those three keyword
+searches happened to fetch. Same recall ceiling as the search path.
+
+**Why live fetching is affordable.** The variant strings are category names — a closed set of
+13 — so every user and every visit shares the same cache keys. All feed traffic across the whole
+app costs at most ~13 Adzuna calls per hour against a 250/day budget. This is the answer to the
+quota question `docs/PROJECT_STATUS.md` carried as an open blocker.
+
+**Why jobs outside the top categories are dropped, not just ranked lower.** TC-012 says rejected
+categories are *absent*. "Ranked last of twelve on one page" is still present. A keyword fetch
+for `writing` routinely returns jobs that classify as `technology`, so without this filter a
+user with `technology = -2` still sees tech jobs on a feed that otherwise looks correct.
+
+**Why an empty feed stays empty.** Falling back to the profile's skills would mean the feed is
+never blank, but it would give "why do two users see different feeds?" two possible answers
+instead of one — exactly the ambiguity TC-014 exists to rule out.
+
+**Why there is no Groq call.** The feed is a browse surface, not a question. A second LLM call
+per page load would buy an explanation of a query the user never typed, and FR-016's AI
+Recommendations are specified against a search. Deliberate omission, not an oversight.
+
+**Hand-picked numbers, same standing as `CATEGORY_BOOST`:** `FEED_CATEGORIES = 3`,
+`FEED_LIMIT = 12`, and the `MATCH_BANDS` thresholds (85 / 65). `normalized_score` is relative to
+the best match in the feed, so the top card is a "Top Match" by construction. TODO(M4).
+
+Save and reject work on feed cards with no JavaScript change — `feed.html` and `index.html`
+share one decision-group markup block and one `static/js/decisions.js`.
 
 ## Module layout (as built)
 

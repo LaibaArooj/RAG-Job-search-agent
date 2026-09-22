@@ -305,6 +305,14 @@ are the ones an examiner is most likely to find.
    they have saved or rejected several jobs.
 8. **No evaluation of the LLM stage.** precision@5 measures the ranking. Whether the three AI
    picks are better than the top three by similarity alone is untested.
+9. **Categories are assigned by keyword matching.** Added 2026-09-21. A job's category — which
+   is what the whole save/reject preference loop scores — comes from substring matching the job's
+   title and first 500 characters against a hand-written hint table, first match winning. It
+   misfiles jobs whose text names no category word (they fall back to the query's category, or
+   `"other"`) and jobs that mention two fields (order of the table decides). It is not
+   classification by meaning and the report must not describe it as such. A learned classifier,
+   or the embedding model itself, would be the upgrade; both were weighed and rejected as harder
+   to justify in a viva than a table you can read.
 
 ## Data model — MongoDB `users` collection
 
@@ -379,11 +387,20 @@ job_search_agent/
 
 ## Open questions
 
-- [ ] How is a job's `category` determined? The API responses don't share a category taxonomy —
-      Adzuna has categories, Remotive has its own. Needs a mapping function, or derive from
-      keyword matching against the same category set `parse_intent` uses. **Decide before M3**,
-      because the whole save/reject scoring loop depends on it.
+- [x] **How is a job's `category` determined?** — settled 2026-09-21. Neither taxonomy is
+      mapped. Every job, whichever source returned it, is classified locally from its own title
+      and description against `config.CATEGORY_HINTS` by `core.intent_parser.classify_category`
+      — the same table and matcher the `parse_intent` keyword fallback uses on a query. One
+      rule for both sources, so a category score cannot fragment by source, and no per-source
+      mapping table has to be defended or kept current. Cost, to be stated in the report: it is
+      substring keyword matching over job text, first match wins, and a job whose text names no
+      category word falls back to the parsed intent's category or `"other"`.
 - [ ] Where does the autocomplete category list come from — hardcoded constant, or built from
       `search_history`? SRS says both.
-- [ ] Does the For You feed call the live APIs (costing Adzuna quota on every visit) or reuse
-      the last search's results?
+- [x] Does the For You feed call the live APIs (costing Adzuna quota on every visit) or reuse
+      the last search's results? **Settled 2026-09-21: live, through the existing 60-minute
+      cache, keyed on the category NAME.** The quota objection does not survive inspection —
+      `CATEGORIES` is a closed set of 13 strings, so every user and every feed visit shares the
+      same cache keys and all feed traffic in the app costs at most ~13 Adzuna calls per hour
+      against a 250/day budget. A user with no positive category scores returns before any
+      fetch at all. See `docs/ARCHITECTURE.md` § For You feed request flow.
