@@ -239,6 +239,20 @@ def main():
             str(sorted(saved[0])) if saved else "no entry",
         )
 
+        # The saved entry renames the job's `url` to `source_url` on the way into Mongo, so
+        # the profile page is reading a DIFFERENT key from the one index.html and feed.html
+        # read off a live JobCard. Until 2026-09-22 profile.html asked for job.url, which does
+        # not exist on a stored entry; Jinja rendered the undefined as "" and the browser
+        # resolved href="" to the current document, so "View" reloaded /profile. Asserting on
+        # the full href rather than the bare URL is deliberate -- the URL alone would still be
+        # found in the page if the attribute were empty and the link text held it.
+        profile_html = client.get("/profile").get_data(as_text=True)
+        check(
+            "a saved job's View link carries its source_url, not an empty href",
+            f'href="{JOB["url"]}"' in profile_html,
+            "href is empty or missing" if JOB["url"] not in profile_html else "URL present but not in href",
+        )
+
         print("\n5. Same job saved twice — TC-013")
         status, payload = post(client, "/save_job", JOB, token)
         check("a second save still returns 200", status == 200, str(status))

@@ -119,7 +119,13 @@
                     <strong>{{ job.title }}</strong>
                     <span class="text-muted ms-2">{{ job.company }}</span>
                 </div>
-                <a href="{{ job.url }}" target="_blank"
+                {# source_url, NOT url. A stored saved_jobs entry is not a live JobCard:
+                   DatabaseManager._record_decision renames the card's `url` to `source_url`
+                   on the way in, so index.html and feed.html read job.url and this page must
+                   read job.source_url. Asking for job.url here rendered href="" -- an empty
+                   URI reference resolves to the current document, so "View" reloaded
+                   /profile instead of opening the advert. #}
+                <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer"
                    class="btn btn-outline-primary btn-sm">View</a>
             </div>
             {% endfor %}
