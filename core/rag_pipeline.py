@@ -7,13 +7,39 @@ load_dotenv()
 
 # Single point of change for the LLM.
 #
-# The SRS names Llama 3 8B-instant. Groq has since decommissioned its Llama 3
-# chat models: `llama3-8b-8192` returns "has been decommissioned" and
-# `llama-3.1-8b-instant` returns 404. No Llama chat model remains on the Groq
-# model list, so this is a forced substitution, not a preference. Provider,
-# cost and the free-tier constraint are all unchanged. Needs supervisor
-# sign-off and a line in docs/PROJECT_SPEC.md § Deviations.
-GROQ_MODEL = "groq/compound-mini"
+# SECOND forced substitution on this line. The SRS names Llama 3 8B-instant; Groq
+# decommissioned its Llama 3 chat models (2026-09-13), so this became
+# `groq/compound-mini`. On 2026-09-23 that model started returning 404 as well --
+# "does not exist or you do not have access to it" -- and no groq/compound-* or
+# Llama chat model remains on the account's model list. Both substitutions were
+# forced by the provider, neither was a preference. Provider, cost and the
+# free-tier constraint are unchanged throughout. Needs supervisor sign-off and a
+# line in docs/PROJECT_SPEC.md § Deviations.
+#
+# The replacement is a REASONING model, and that is not a detail -- it changed
+# max_tokens at both call sites. gpt-oss models spend hidden reasoning tokens
+# before emitting any content, and max_tokens covers both. Measured 2026-09-23:
+#
+#   gpt-oss-20b, max_tokens=300 (the old intent budget): 99 reasoning tokens, the
+#     JSON truncated, no parseable object, so parse_intent fell back to keywords
+#     and query expansion silently stopped happening. TC-019 and TC-021 both
+#     broken WITH THE APP STILL APPEARING TO WORK. That is the failure mode to
+#     watch for whenever this constant changes.
+#   gpt-oss-120b, max_tokens=700 (the old RAG budget): 475 reasoning tokens and
+#     finish_reason="length" -- recommendations cut off mid-sentence.
+#
+# Both budgets below were raised to fit. Candidates measured on four test queries:
+#
+#   qwen/qwen3.8-27b     0 reasoning tokens, existing budgets fine, but reads
+#                        "something creative I can do from home" as "other",
+#                        which fails TC-019's category assertion.
+#   openai/gpt-oss-20b   reads "junior software engineer" as "engineering".
+#   openai/gpt-oss-120b  all four queries correct, TC-019 included. Chosen.
+#
+# The cost of the choice is latency: ~250-475 reasoning tokens per call, twice per
+# search. If the demo feels slow, qwen is the fast fallback and the only thing it
+# loses is that one category judgement.
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 
 class RAGPipeline:
@@ -63,7 +89,9 @@ class RAGPipeline:
                 model=self.model,
                 messages=[{"role": "user", "content": self.build_prompt(query, jobs)}],
                 temperature=0.3,
-                max_tokens=700,
+                # Covers the model's hidden reasoning tokens as well as the prose. At 700
+                # gpt-oss-120b returned finish_reason="length" and cut off mid-sentence.
+                max_tokens=1200,
             )
             text = (response.choices[0].message.content or "").strip()
             return text or self.fallback()

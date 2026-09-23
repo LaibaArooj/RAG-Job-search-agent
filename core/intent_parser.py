@@ -211,7 +211,10 @@ def parse_intent(query):
             model=GROQ_MODEL,
             messages=[{"role": "user", "content": _build_prompt(query)}],
             temperature=TEMPERATURE,
-            max_tokens=300,
+            # Must cover the model's hidden reasoning tokens as well as the JSON. At 300 a
+            # reasoning model truncated the object, _extract_json raised, and parse_intent
+            # fell back to keywords with query expansion silently gone. See GROQ_MODEL.
+            max_tokens=600,
             timeout=TIMEOUT_SECONDS,
         )
         raw = _extract_json((response.choices[0].message.content or "").strip())
