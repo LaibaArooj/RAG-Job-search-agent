@@ -61,6 +61,28 @@
                         <span class="badge bg-success">{{ job.match_band }}</span>
                         {% endif %}
                         <span class="badge bg-secondary">{{ job.source }}</span>
+
+                        {# Same eligibility badge as index.html. Kept in step with that file
+                           by hand for now -- the two card blocks are still duplicated, which
+                           is the macro extraction noted as outstanding work. #}
+                        {% if job.eligibility == "open" %}
+                        <span class="badge bg-success">🌍 Open worldwide</span>
+                        {% elif job.eligibility == "regional" %}
+                        <span class="badge bg-warning text-dark"
+                              title="This employer only hires from these places">
+                            Only: {{ job.candidate_location }}
+                        </span>
+                        {% elif job.eligibility == "local" %}
+                        <span class="badge bg-danger"
+                              title="An on-site role in this location, not a remote-from-anywhere job">
+                            Local role — {{ job.candidate_location or job.location }}
+                        </span>
+                        {% elif job.eligibility == "unknown" %}
+                        <span class="badge bg-light text-dark border"
+                              title="The listing does not say where it will hire from — check before applying">
+                            Location terms unclear
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
                 <p class="card-subtitle text-muted mb-2">

@@ -36,6 +36,17 @@ from models.job_card import JobCard
 ADZUNA_PER_VARIANT = 10
 REMOTIVE_PER_VARIANT = 15
 
+# Jobicy, added 2026-09-23. Asked for more than Remotive's hard cap of 18 because Jobicy
+# actually honours `count`, and because geo=anywhere narrows the result set before we see it.
+JOBICY_PER_VARIANT = 50
+
+# Jobicy's own value for "no geographic restriction". Sent as a request parameter, so the
+# filtering happens on their side and we never pay to rank jobs the user cannot apply for.
+# Measured 2026-09-23: geo=anywhere returned 100 jobs, every one of them jobGeo="Anywhere".
+# Their geo vocabulary is their own -- geo=asia returns 0 -- so do not pass a country here
+# without checking it first.
+JOBICY_GEO_ANYWHERE = "anywhere"
+
 # Adzuna's own work-type parameters, verified live on 2026-09-20 against a control: a made-up
 # parameter returns HTTP 400, so these three are genuinely honoured rather than ignored.
 #
@@ -196,6 +207,60 @@ def _fetch_remotive_raw(query, count):
         return [], False
 
 
+def _fetch_jobicy_raw(query, count):
+    """Call Jobicy for worldwide-eligible jobs and return (raw results, ok)."""
+    # `tag` is an AND match like Adzuna's `what`, and it collapses just as hard. Measured
+    # 2026-09-23 with geo=anywhere:
+    #
+    #   "junior software engineer"        ->  5      "software"     -> 50
+    #   "entry level marketing no degree" ->  0      "marketing"    -> 17
+    #   "something creative ... home"     ->  0      "creative"     -> 18
+    #
+    # So the work-type and stopword stripping that already exists for Adzuna is applied
+    # first, and if the result is still empty ONE retry is made on the single longest
+    # token. Two HTTP calls per variant is the cap; Jobicy publishes no rate limit and an
+    # unbounded retry loop against an API whose limits are unknown is not worth the jobs.
+    tokens = _query_tokens(query)
+    attempts = [" ".join(tokens) or query]
+    if len(tokens) > 1:
+        attempts.append(max(tokens, key=len))
+
+    ok = False
+    for tag in attempts:
+        try:
+            response = requests.get(
+                "https://jobicy.com/api/v2/remote-jobs",
+                params={
+                    "count": count,
+                    "geo": JOBICY_GEO_ANYWHERE,
+                    "tag": tag,
+                },
+                timeout=10,
+            )
+            if response.status_code != 200:
+                print(f"Jobicy returned HTTP {response.status_code}")
+                continue
+            ok = True
+            jobs = response.json().get("jobs", []) or []
+            if jobs:
+                return jobs, True
+        except Exception as e:
+            print(f"Jobicy API error: {e}")
+    # ok stays False only if EVERY attempt failed at the transport or HTTP level. A 200 that
+    # matched nothing is an empty result, not a failed source -- the same distinction Adzuna
+    # and Remotive already report, and TC-018 depends on it.
+    return [], ok
+
+
+def _filter_jobicy_level(raw, experience):
+    """Drop Jobicy results whose title contradicts the experience level the user asked for."""
+    # Same rule and the same helper Remotive is filtered with. Jobicy's geo filter is
+    # server-side but it has no level filter, so a "senior" title can still come back for an
+    # entry-level search. Applied here rather than left to the ranker for the reason
+    # _wrong_level documents: cosine similarity rates "junior" and "senior" as near-synonyms.
+    return [j for j in raw if not _wrong_level((j.get("jobTitle") or "").lower(), experience)]
+
+
 def fetch_variant(query, app_id, app_key, work_type=None, experience=None):
     """Fetch one variant from both sources, reporting failed and empty sources separately."""
     jobs = []
@@ -227,6 +292,19 @@ def fetch_variant(query, app_id, app_key, work_type=None, experience=None):
         # the caller has to be able to tell.
         empty_sources.append("Adzuna")
     jobs.extend(JobCard.from_adzuna(raw) for raw in adzuna_raw)
+
+    # Jobicy last, and that ordering is load-bearing: the agent keeps the FIRST occurrence
+    # of a duplicate, so putting Jobicy after Adzuna means a listing syndicated to both
+    # keeps Adzuna's copy and its eligibility stays honestly "local". Putting it first would
+    # relabel the same job "open worldwide" purely because of fetch order.
+    jobicy_raw, jobicy_ok = _fetch_jobicy_raw(query, JOBICY_PER_VARIANT)
+    if not jobicy_ok:
+        failed_sources.append("Jobicy")
+    else:
+        jobicy_raw = _filter_jobicy_level(jobicy_raw, experience)
+        if not jobicy_raw:
+            empty_sources.append("Jobicy")
+    jobs.extend(JobCard.from_jobicy(raw) for raw in jobicy_raw)
 
     # Not deduplicated here. Deduplication is across ALL variants, which only the agent can
     # see; doing a partial pass here would just be work repeated three times.
