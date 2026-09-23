@@ -401,6 +401,34 @@ class JobSearchAgent:
             if job.get("category") in allowed and job.get("job_id") not in rejected
         ]
 
+    @staticmethod
+    def rag_candidates(jobs, top_k=TOP_K):
+        """Pick the jobs the AI panel explains: applicable ones first, then the rest."""
+        # Added 2026-09-23, and it is a deliberate departure worth stating: the AI panel no
+        # longer explains "the top 5 by score", it explains "the best 5 the seeker can
+        # actually apply for, topped up by score".
+        #
+        # Why it was needed. Telling the prompt to prefer unrestricted roles fixed nothing
+        # on its own, because the prompt can only choose from what it is handed. Measured
+        # on "junior software engineer": all five top-ranked jobs were UK-local Adzuna
+        # listings and the four worldwide ones ranked sixth and below, so every pick in the
+        # most prominent panel on the page was a job the seeker could not apply for.
+        #
+        # Rank order is preserved WITHIN each group, so this re-partitions the top of the
+        # list, it does not re-score anything. The semantic ranking claim is untouched --
+        # the ranked list the user sees below the panel is still ordered purely by
+        # similarity plus the category boost.
+        #
+        # "unknown" is grouped with applicable rather than excluded. A job whose terms are
+        # unstated might well hire the seeker, and the prompt is instructed to say the terms
+        # are unstated, so the user is told rather than misled.
+        applicable = [j for j in jobs if j.get("eligibility") in ("open", "unknown")]
+        rest = [j for j in jobs if j.get("eligibility") not in ("open", "unknown")]
+        # Topped up rather than truncated: a seeker with only two applicable jobs still gets
+        # a full panel, and the restricted ones arrive carrying their restriction in the
+        # prompt. An empty panel would teach them nothing.
+        return (applicable + rest)[:top_k]
+
     # --- pipeline -----------------------------------------------------------------
 
     def _empty_result(self, query, error, intent=None):
@@ -479,7 +507,7 @@ class JobSearchAgent:
         # Groq call #2. RAGPipeline.run returns None on failure, and the template hides the
         # AI band when ai_recommendations is falsy, so a Groq outage costs the explanation
         # and nothing else. The ranked list is still rendered in full (FR-018).
-        ai_recommendations = self.rag_pipeline.run(query, jobs[:TOP_K])
+        ai_recommendations = self.rag_pipeline.run(query, self.rag_candidates(jobs))
 
         try:
             self.db.add_search_history(user_id, query)

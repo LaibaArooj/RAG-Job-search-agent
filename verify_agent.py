@@ -490,6 +490,70 @@ def test_classification():
           cat("Engineer", "design and build python software for developers", "other")
           == "technology")
 
+
+def test_rag_prompt_states_eligibility():
+    """The AI panel must not recommend jobs the seeker is not allowed to apply for."""
+    print("\nRAG prompt — candidate eligibility")
+
+    # build_prompt is a pure function, so this runs offline with no Groq call and no key.
+    # Added 2026-09-23: before it, the prompt showed only `location`, so the model could not
+    # tell a worldwide role from a UK-only one and spent picks on jobs the seeker could not
+    # act on. Measured on a real run, it recommended a UK-local Adzuna role first.
+    from core.rag_pipeline import RAGPipeline
+
+    jobs = [
+        {"title": "Remote Dev", "company": "A", "location": "Remote",
+         "candidate_location": "Worldwide", "eligibility": "open", "description": "x"},
+        {"title": "Euro Dev", "company": "B", "location": "Remote",
+         "candidate_location": "Europe", "eligibility": "regional", "description": "x"},
+        {"title": "London Dev", "company": "C", "location": "London",
+         "candidate_location": "London, UK", "eligibility": "local", "description": "x"},
+        {"title": "Mystery Dev", "company": "D", "location": "Remote",
+         "candidate_location": "", "eligibility": "unknown", "description": "x"},
+    ]
+    prompt = RAGPipeline(top_k=5).build_prompt("developer", jobs)
+
+    check("the prompt carries a Hiring from line per job",
+          prompt.count("- Hiring from:") == 4)
+    check("an open job is described as unrestricted",
+          "anywhere in the world, no geographic restriction" in prompt)
+    check("a regional job names its restriction",
+          "ONLY candidates in: Europe" in prompt)
+    check("a local job is marked as local, not remote",
+          "ONLY candidates already able to work in London, UK" in prompt)
+    # The state that must never be smoothed over: an unknown restriction is stated as
+    # unknown, so the model cannot present a guess to the user as a fact.
+    check("an unknown restriction is stated, not guessed",
+          "not stated by the employer" in prompt)
+    check("the prompt tells the model to prefer jobs the seeker can apply for",
+          "Prefer jobs whose 'Hiring from' line shows no geographic restriction" in prompt)
+    check("the prompt still forbids inventing jobs",
+          "Do not invent jobs." in prompt)
+
+    # Telling the prompt to prefer applicable jobs does nothing if none are handed to it.
+    # Measured on a real search: all five top-ranked jobs were UK-local, so every AI pick
+    # was unreachable. rag_candidates re-partitions the top of the list before the call.
+    def j(title, eligibility):
+        return {"title": title, "eligibility": eligibility}
+
+    ranked = [j("L1", "local"), j("L2", "local"), j("O1", "open"),
+              j("L3", "local"), j("R1", "regional"), j("O2", "open"),
+              j("U1", "unknown")]
+    picked = [p["title"] for p in JobSearchAgent.rag_candidates(ranked)]
+    check("applicable jobs are handed to the AI panel ahead of restricted ones",
+          picked[:3] == ["O1", "O2", "U1"])
+    check("the panel is topped up to top_k rather than left short",
+          len(picked) == 5)
+    check("restricted jobs still fill the remaining slots, in rank order",
+          picked[3:] == ["L1", "L2"])
+    check("rank order is preserved within the applicable group",
+          [p for p in picked if p in ("O1", "O2")] == ["O1", "O2"])
+    # A result set with nothing applicable must still produce a full panel, because the
+    # prompt states each restriction and a silent empty panel teaches the user nothing.
+    all_local = [j("L1", "local"), j("L2", "local")]
+    check("a result set with no applicable job still fills the panel",
+          [p["title"] for p in JobSearchAgent.rag_candidates(all_local)] == ["L1", "L2"])
+
     # The job's own text decides, never the query's category. TC-011 depends on this: a tech
     # job rejected during a writing search must lower the TECH score.
     classified = JobSearchAgent.classify(
@@ -955,6 +1019,7 @@ def main():
         test_context_injection()
         test_category_boost()
         test_classification()
+        test_rag_prompt_states_eligibility()
         test_rag_fallback()
         test_cache()
         test_enrich_query_unchanged()

@@ -42,6 +42,24 @@ load_dotenv()
 GROQ_MODEL = "openai/gpt-oss-120b"
 
 
+def _hiring_line(job):
+    """Render one job's candidate-eligibility as a phrase the prompt can reason about."""
+    # Plain English rather than the raw bucket name, because the model reads this as text.
+    # "unknown" is stated as unknown and never smoothed into something reassuring: the whole
+    # point of the field is that guessing costs the seeker a wasted application.
+    eligibility = job.get("eligibility") or "unknown"
+    candidate_location = (job.get("candidate_location") or "").strip()
+
+    if eligibility == "open":
+        return "anywhere in the world, no geographic restriction"
+    if eligibility == "regional":
+        return f"ONLY candidates in: {candidate_location or 'unspecified regions'}"
+    if eligibility == "local":
+        where = candidate_location or job.get("location") or "one location"
+        return f"ONLY candidates already able to work in {where} (on-site or local role)"
+    return "not stated by the employer"
+
+
 class RAGPipeline:
     """Builds a prompt from the top ranked jobs and asks Groq to explain three picks."""
 
@@ -60,6 +78,12 @@ class RAGPipeline:
                 f"- Title: {job.get('title', 'Unknown')}\n"
                 f"- Company: {job.get('company', 'Unknown')}\n"
                 f"- Location: {job.get('location', 'Unknown')}\n"
+                # Added 2026-09-23. Without this the model could not see eligibility at all
+                # and routinely spent one of its three picks on a UK-only Adzuna role -- a
+                # recommendation the user cannot act on, in the most prominent panel on the
+                # page. The two lines are separate because they answer different questions:
+                # Location is where the job IS, Hiring is where the candidate MAY LIVE.
+                f"- Hiring from: {_hiring_line(job)}\n"
                 f"- Source: {job.get('source', 'Unknown')}\n"
                 f"- Description: {str(job.get('description', ''))[:400]}\n"
             )
@@ -71,7 +95,16 @@ class RAGPipeline:
             f"for that search:\n\n{job_context}\n"
             f"Recommend the three best matches from the list above. For each one give "
             f"the job title, the company, and two sentences explaining why it fits the "
-            f"search. Only use jobs from the list. Do not invent jobs. "
+            f"search. Only use jobs from the list. Do not invent jobs.\n"
+            # Prefer, not exclude. A hard "only recommend open roles" rule would leave the
+            # panel empty whenever all five top-ranked jobs are location-restricted, which
+            # for a UK-heavy result set is common -- and an empty panel teaches the user
+            # nothing. Ranking them lower and stating the restriction keeps the panel
+            # useful and honest at the same time.
+            f"Prefer jobs whose 'Hiring from' line shows no geographic restriction, "
+            f"because the seeker can actually apply for those. If you recommend a job "
+            f"that is restricted to a place or region, say so plainly in its first "
+            f"sentence so the seeker is not misled.\n"
             f"Write plain text, no markdown."
         )
 
