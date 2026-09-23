@@ -26,7 +26,13 @@ from flask import (
     url_for,
 )
 
-from config import CATEGORIES, EXPERIENCE_LEVELS, WORK_TYPES
+from config import (
+    ADZUNA_COUNTRIES,
+    CATEGORIES,
+    COUNTRIES,
+    EXPERIENCE_LEVELS,
+    WORK_TYPES,
+)
 from controllers.auth_controller import check_csrf, current_username, require_auth
 
 ui_bp = Blueprint("ui", __name__)
@@ -70,6 +76,12 @@ def profile():
         if experience in EXPERIENCE_LEVELS:
             update["experience"] = experience
 
+        # Same whitelist as registration. An unrecognised country is ignored rather than
+        # stored, so the user keeps whichever one they had instead of silently losing Adzuna.
+        country = request.form.get("country", "").strip().lower()
+        if country in COUNTRIES:
+            update["country"] = country
+
         update["preferred_work"] = [
             w for w in request.form.getlist("preferred_work") if w in WORK_TYPES
         ]
@@ -95,6 +107,8 @@ def profile():
         user=user or {},
         work_types=WORK_TYPES,
         experience_levels=EXPERIENCE_LEVELS,
+        countries=COUNTRIES,
+        adzuna_countries=ADZUNA_COUNTRIES,
     )
 
 

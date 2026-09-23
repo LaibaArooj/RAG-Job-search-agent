@@ -331,6 +331,12 @@ it was fixed rather than worked around.
 
 ## Data model
 
+The `users` document gained `country` (ISO 3166-1 alpha-2) on 2026-09-23. It is the input to
+`adapters.api_client.adzuna_market`, which decides whether Adzuna can serve this user at all.
+Validated against `config.COUNTRIES` in the controller before storage, for the same reason a
+category is checked against `config.CATEGORIES` — it reaches a URL path. An empty value means
+a user created before the field existed and is treated as `config.DEFAULT_ADZUNA_COUNTRY`.
+
 See `docs/PROJECT_SPEC.md` § Data model. One denormalised document per user in `users`.
 Unique index on `username`. `job_cache` with a TTL index on `created_at`, expiry driven by
 `config.JOB_CACHE_TTL_MINUTES` (60, the spec value) rather than a hardcoded number.
@@ -345,7 +351,7 @@ not by a read-then-write check in Python, which a concurrent signup could slip b
 
 | Service | Used for | Env var | Limit |
 |---|---|---|---|
-| Adzuna | Live job listings, **UK market only** — country is hardcoded in `api_client`, and `config.ADZUNA_COUNTRY` is currently dead config | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | 250 requests/day |
+| Adzuna | Live job listings for **19 country markets**, verified empirically 2026-09-23 (`at au be br ca ch de es fr gb in it mx nl nz pl sg us za`). **Skipped entirely** for a user whose country is not one of them — `jobs/pk/search` returns 404, so there is no endpoint to call | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | 250 requests/day |
 | Remotive | Remote job listings. Ignores `search`, `category` and `limit` alike — fetched once and filtered locally, capped at 18 jobs | none — no auth | none |
 | Jobicy | Remote job listings **filtered by candidate eligibility** (`geo=anywhere`). Added 2026-09-23; the only free source that both searches and filters eligibility server-side | none — no auth | none published — treat as unknown |
 | Groq | LLM inference — `openai/gpt-oss-120b`. **A reasoning model**: hidden reasoning tokens count against `max_tokens`, so both call-site budgets were raised. Llama 3 and then `groq/compound-mini` were each decommissioned by Groq; see `docs/PROJECT_SPEC.md` § Deviations | `GROQ_API_KEY` | free-tier rate limits |

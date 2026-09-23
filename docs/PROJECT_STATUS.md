@@ -1,6 +1,7 @@
 Last updated: 2026-09-23 (**M4 in progress.** Four defects found by using the app as a real
-user are fixed; Jobicy added as a third source so a non-UK user has jobs they can apply for.
-**347/347 offline checks green** across five scripts.)
+user are fixed; Jobicy added as a third source and per-user source selection shipped, so a
+user in Pakistan now sees 31 applicable jobs where they saw 6. **362/362 offline checks
+green** across five scripts. Deadline revised: at least two more months, not one.)
 
 ## Where we left off — 2026-09-23 (first real browser session)
 
@@ -43,8 +44,9 @@ writing the 20 queries**, not after.
 
 1. **Write the 20 precision@5 queries** — before looking at any results. Settle the Adzuna
    baseline question first.
-2. **Tell the supervisor**: the second forced model substitution, and Jobicy as a new source.
-   Both are recorded in `docs/PROJECT_SPEC.md` § Deviations, which now lists **seven**.
+2. **Tell the supervisor**: the second forced model substitution, Jobicy as a new source, and
+   per-user source selection (which adds a `country` field to the user document). All recorded
+   in `docs/PROJECT_SPEC.md` § Deviations, which now lists **eight**.
 3. **Run `verify_live.py`** — nothing has exercised Jobicy under the live suite. ~12 Adzuna calls.
 4. Items 2 and 3 from the table above are still open and still unscoped.
 
@@ -84,8 +86,12 @@ What this bought, measured:
 
 ## Deadline
 
-Under one month to submission. The SRS assumed an 8-week timeline; the milestone plan in
-`docs/PROJECT_SPEC.md` has been compressed to four weeks accordingly.
+**Revised 2026-09-23: at least two more months available**, not the one month this file
+previously recorded. The four-week compression of the milestone plan in
+`docs/PROJECT_SPEC.md` was made under the old assumption and no longer binds. Work that was
+cut for time — the AI picks as real job cards, TC-007 autocomplete, TC-015 filters, TC-009's
+missing assertion, the msmarco embedding-model comparison and tuning CATEGORY_BOOST — is all
+back on the table.
 
 ## Milestones
 
@@ -94,7 +100,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
 | M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 221/221 across the four verify scripts, plus a live end-to-end run against the running server | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | **Done (2026-09-21)** — RAG panel shipped in M2; categorisation, save/reject and the For You feed all built. `verify_agent.py` 129/129, `verify_routes.py` 57/57 | TC-008 to TC-014 pass |
-| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **In progress** — first browser session done and four defects fixed; geographic eligibility shipped. Evaluation NOT started. `verify_all.py --offline` 347/347 | Demo runs end to end + P@5 measured |
+| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **In progress** — first browser session done, four defects fixed, geographic eligibility and per-user source selection shipped. The 20 queries are pre-registered in `evaluation/queries.md`; fixtures NOT yet generated. `verify_all.py --offline` 362/362 | Demo runs end to end + P@5 measured |
 
 ## Completed
 

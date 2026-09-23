@@ -94,6 +94,7 @@ def main():
                     "csrf_token": token,
                     "username": username,
                     "password": password,
+                    "country": "gb",
                     "skills": "Python, Flask",
                     "experience": "entry level",
                     "location": "Remote",
@@ -120,6 +121,7 @@ def main():
                     "csrf_token": token,
                     "username": username,
                     "password": password,
+                    "country": "gb",
                 },
             )
             check("TC-002  'Username taken' shown", "Username taken" in r.get_data(as_text=True))

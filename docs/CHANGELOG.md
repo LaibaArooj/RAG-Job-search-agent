@@ -11,6 +11,93 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-23 — Per-user source selection: the country field
+
+The eligibility badges shipped earlier the same day made the problem visible; they did not
+solve it. A user in Pakistan still saw a page where 22 of 28 listings were UK-local roles,
+correctly labelled and still useless to them.
+
+### The rule
+
+> **Only query a source that can serve this user.**
+
+One rule, no country-specific branches anywhere. `pk` is not excluded by us — Adzuna is a
+country-market API and `jobs/pk/search` **returns 404**, so there is no endpoint to call.
+
+### Measured — Adzuna's country list, because Adzuna does not publish it
+
+Their docs show only `gb`. Probed every candidate on 2026-09-23:
+
+- **19 markets returned HTTP 200:** `at au be br ca ch de es fr gb in it mx nl nz pl sg us za`
+- **404:** `ru`, `se`, `pk`, `ae`, `ng`
+
+Recorded in `config.ADZUNA_COUNTRIES`. Re-measure if searches start failing.
+
+### Result, measured end to end on "junior frontend developer"
+
+| Profile | Jobs | Applicable | Adzuna | Outage banner |
+|---|---|---|---|---|
+| `pk` | 32 | **31** | **0 — skipped** | none |
+| `gb` | 34 | 31 | 2 local | none |
+
+A Pakistan-based user goes from 6 applicable jobs to 31. **A UK user is not worse off** — they
+gain the worldwide remote listings and keep their local ones.
+
+### Added
+
+- `config.COUNTRIES` — 196 sovereign states, ISO 3166-1 alpha-2.
+- `config.ADZUNA_COUNTRIES`, `config.DEFAULT_ADZUNA_COUNTRY`.
+- `adapters.api_client.adzuna_market(country)` — the single place the "can this source serve
+  this user?" question is answered.
+- `country` on the user document, on the registration form and on the profile form.
+
+### Changed
+
+- `fetch_variant` takes `country` and **skips Adzuna entirely** when it has no market for it.
+- `_fetch_adzuna_raw` interpolates the market into the URL.
+- `JobSearchAgent` reads `country` from the user context in both `run()` and `build_feed()`.
+
+### Three decisions that are load-bearing
+
+1. **A skipped source is in NEITHER `failed_sources` NOR `empty_sources`.** Both halves matter.
+   `failed_sources` drives TC-018's outage banner, which would otherwise have fired on *every
+   search a Pakistan-based user ran* — Adzuna did not fail, it was never asked. `empty_sources`
+   marks a fetch as degraded so it is not cached, which would have made those users bypass the
+   60-minute cache forever. Asserted offline.
+2. **The job cache key now includes the market.** Without it, two users searching identical
+   words — who now genuinely get different result sets — would have been served whichever of
+   them searched first. This would have been a silent, intermittent, near-undebuggable bug.
+3. **A missing country keeps the old behaviour.** If absent meant "skip Adzuna", every
+   existing account would have silently lost most of its results on deploy — a data migration
+   wearing a feature's clothes.
+
+### Why the full country list rather than a curated ten
+
+A curated list has no principled answer to "why these ten?", and arbitrary choices are what a
+viva pulls on. The 19 Adzuna markets are a real, measured boundary, so the select is grouped by
+it — "Local + remote jobs available" and "Remote jobs only" — and the dropdown tells the user
+what they will get before they search. A `supported / other` flag was rejected for the same
+reason `JobCard.location` had to be split: a sentinel would collapse Pakistan, Nigeria and the
+UAE into one value and would have to be undone the moment region matching is attempted.
+
+### Also fixes
+
+`config.ADZUNA_COUNTRY` was read from `.env` and consumed by nothing, because `gb` was
+hardcoded in the URL. Setting it changed nothing and reported no error. Now removed as dead
+config — the market comes from the user.
+
+### Framing note for the report
+
+For a user in a country Adzuna does not cover, **every job the system can offer is remote**, so
+the product is a semantic search engine for *remote roles open to your location*. That is a
+real narrowing of the SRS's scope and the write-up must say so — but it is a sharper project
+than a general job board, and geographic eligibility is something the large boards handle
+badly.
+
+`verify_all.py --offline`: 347 → **362 passed, 0 failed**.
+
+---
+
 ## 2026-09-23 — Geographic eligibility: jobs the seeker can actually apply for
 
 Found by using the app as a real user: every listing on the page was a UK role, and nothing

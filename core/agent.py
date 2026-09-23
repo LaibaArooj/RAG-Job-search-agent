@@ -43,7 +43,7 @@ Two deliberate departures from the SDD, both recorded in docs/ARCHITECTURE.md:
 import hashlib
 
 import config
-from adapters.api_client import fetch_variant
+from adapters.api_client import adzuna_market, fetch_variant
 from core.intent_parser import classify_category, enrich_query, parse_intent
 
 # Hand-picked coefficient weighting learned category preference against raw similarity.
@@ -88,12 +88,20 @@ MSG_NO_RESULTS = "No jobs matched that search. Try different wording."
 MSG_PARTIAL = "Some job sources are unavailable, so these results are incomplete."
 
 
-def _cache_key(variant):
-    """Hash one query variant into the _id used by the job cache collection."""
+def _cache_key(variant, market=None):
+    """Hash one query variant plus its Adzuna market into the job cache's _id."""
     # Hashed rather than used raw because the variant is user-influenced text and it becomes
     # a MongoDB _id. A hash is a fixed-length value from a fixed alphabet, so no query string
     # can collide with an operator or blow the key-length limit.
-    return hashlib.sha256(variant.strip().lower().encode("utf-8")).hexdigest()
+    #
+    # The MARKET is part of the key as of 2026-09-23, and leaving it out would have been a
+    # real bug: two users searching the same words now get genuinely different result sets --
+    # a user in Pakistan gets no Adzuna listings at all, a user in the UK gets jobs/gb ones --
+    # so a key naming only the variant would serve whichever of them searched first to the
+    # other. Sharing stays wide, because the market is a closed set of 19 plus "none" rather
+    # than anything per-user.
+    scoped = f"{market or 'none'}|{variant.strip().lower()}"
+    return hashlib.sha256(scoped.encode("utf-8")).hexdigest()
 
 
 def match_band(normalized_score):
@@ -122,9 +130,9 @@ class JobSearchAgent:
 
     # --- fetching -----------------------------------------------------------------
 
-    def _fetch_cached_variant(self, variant, work_type=None, experience=None):
+    def _fetch_cached_variant(self, variant, work_type=None, experience=None, country=None):
         """Fetch one variant, reading and writing the 60-minute job cache around the call."""
-        key = _cache_key(variant)
+        key = _cache_key(variant, adzuna_market(country))
 
         try:
             cached = self.db.cache_get(key)
@@ -140,7 +148,8 @@ class JobSearchAgent:
             return {"jobs": list(cached["results"]), "failed_sources": [], "empty_sources": []}
 
         result = fetch_variant(
-            variant, config.ADZUNA_APP_ID, config.ADZUNA_APP_KEY, work_type, experience
+            variant, config.ADZUNA_APP_ID, config.ADZUNA_APP_KEY, work_type, experience,
+            country,
         )
         jobs = [card.to_dict() for card in result["jobs"]]
         empty_sources = result.get("empty_sources", [])
@@ -169,12 +178,12 @@ class JobSearchAgent:
             "empty_sources": empty_sources,
         }
 
-    def _fetch_all_variants(self, variants, work_type=None, experience=None):
+    def _fetch_all_variants(self, variants, work_type=None, experience=None, country=None):
         """Fetch every variant in turn and return the un-deduplicated union plus failed sources."""
         jobs = []
         failed_sources = []
         for variant in variants:
-            result = self._fetch_cached_variant(variant, work_type, experience)
+            result = self._fetch_cached_variant(variant, work_type, experience, country)
             jobs.extend(result["jobs"])
             for source in result["failed_sources"]:
                 if source not in failed_sources:
@@ -336,7 +345,9 @@ class JobSearchAgent:
             # The category name IS the query. "customer_support" is a database key, not
             # something to send to a job API, so the underscore is undone first.
             variant = category.replace("_", " ")
-            result = self._fetch_cached_variant(variant, work_type, experience)
+            result = self._fetch_cached_variant(
+                variant, work_type, experience, context.get("country")
+            )
             raw_jobs.extend(result["jobs"])
             for source in result["failed_sources"]:
                 if source not in failed_sources:
@@ -485,8 +496,11 @@ class JobSearchAgent:
         # work_type is passed down rather than left in the query text. Adzuna's `what` is an
         # AND keyword match, so a word like "remote" in it returns nothing at all; it becomes
         # one of Adzuna's own parameters instead. See adapters/api_client.py.
+        # country decides which SOURCES can serve this user at all -- Adzuna has no endpoint
+        # for a country it does not cover, so it is skipped rather than called and filtered.
         raw_jobs, failed_sources = self._fetch_all_variants(
-            intent["variants"], intent.get("work_type"), intent.get("experience")
+            intent["variants"], intent.get("work_type"), intent.get("experience"),
+            context.get("country"),
         )
         jobs = self.deduplicate(raw_jobs)
 

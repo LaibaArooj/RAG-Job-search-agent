@@ -154,6 +154,9 @@ def main():
             c.post("/register", data={
                 "csrf_token": csrf_from(c, "/register"),
                 "username": username, "password": password,
+                # gb, not pk: this script asserts on Adzuna behaviour, and a pk profile
+                # would skip Adzuna entirely and the assertions would have nothing to read.
+                "country": "gb",
                 "skills": "Python, Flask",
                 # Deliberately MID level: the 2026-09-20 report was a mid-level profile
                 # searching for beginner work, where the profile fought the query.

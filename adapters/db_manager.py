@@ -130,6 +130,12 @@ class DatabaseManager:
             "skills": profile.get("skills", []),
             "experience": profile.get("experience", ""),
             "location": profile.get("location", ""),
+            # ISO 3166-1 alpha-2, added 2026-09-23. Decides which job sources can serve this
+            # user at all -- see config.ADZUNA_COUNTRIES. Validated by the controller against
+            # config.COUNTRIES before it reaches here; "" means a pre-existing user, which
+            # adapters.api_client.adzuna_market treats as the old default rather than as
+            # "no sources".
+            "country": profile.get("country", ""),
             "preferred_work": profile.get("preferred_work", []),
             "category_scores": {},
             "search_history": [],
@@ -160,6 +166,7 @@ class DatabaseManager:
                 "skills": 1,
                 "experience": 1,
                 "location": 1,
+                "country": 1,
                 "preferred_work": 1,
                 "category_scores": 1,
                 "rejected_jobs": 1,
@@ -168,7 +175,7 @@ class DatabaseManager:
 
     def update_profile(self, username, profile):
         """Update the editable profile fields only, never password or scores (TC-008)."""
-        allowed = ("skills", "experience", "location", "preferred_work")
+        allowed = ("skills", "experience", "location", "country", "preferred_work")
         # Build the update from a fixed key list rather than from whatever the form posted,
         # so a crafted field name cannot overwrite password or category_scores.
         update = {k: profile[k] for k in allowed if k in profile}

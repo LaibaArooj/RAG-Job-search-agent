@@ -134,8 +134,10 @@ class FetchRecorder:
         self.calls = []
         self.work_types = []
         self.experiences = []
+        self.countries = []
 
-    def __call__(self, query, app_id, app_key, work_type=None, experience=None):
+    def __call__(self, query, app_id, app_key, work_type=None, experience=None,
+                 country=None):
         """Mimic fetch_variant, recording the variant, work type and experience asked for."""
         # The signature tracks the real fetch_variant deliberately. A double that keeps an
         # older interface than the code it stands in for stops testing anything and starts
@@ -143,6 +145,7 @@ class FetchRecorder:
         self.calls.append(query)
         self.work_types.append(work_type)
         self.experiences.append(experience)
+        self.countries.append(country)
         return {
             "jobs": list(self.by_variant.get(query, [])),
             "failed_sources": list(self.failed_sources),
@@ -489,6 +492,54 @@ def test_classification():
     check("the category with the most hints wins over table order",
           cat("Engineer", "design and build python software for developers", "other")
           == "technology")
+
+
+def test_country_source_selection():
+    """Only a source that can serve this user's country is queried (2026-09-23)."""
+    print("\nCountry — which sources can serve this user")
+
+    from adapters.api_client import adzuna_market
+
+    check("an Adzuna market maps to itself", adzuna_market("gb") == "gb")
+    check("case and padding do not matter", adzuna_market("  GB ") == "gb")
+    # Measured 2026-09-23: jobs/pk/search returns 404. There is no endpoint to call, so this
+    # is not "Pakistan is excluded" -- the source genuinely cannot serve that user.
+    check("a country Adzuna does not cover maps to None", adzuna_market("pk") is None)
+    check("so does another one", adzuna_market("ng") is None)
+    # A user whose document predates the field must keep the old behaviour. If missing meant
+    # "skip Adzuna", every existing account would silently lose most of its results on deploy.
+    check("a missing country falls back to the old default",
+          adzuna_market(None) == config.DEFAULT_ADZUNA_COUNTRY)
+    check("an empty country falls back too",
+          adzuna_market("") == config.DEFAULT_ADZUNA_COUNTRY)
+    check("every Adzuna market is a real country",
+          config.ADZUNA_COUNTRIES.issubset(set(config.COUNTRIES)))
+    check("the user's own country is selectable", "pk" in config.COUNTRIES)
+
+    # The cache key must include the market. Two users searching identical words now get
+    # genuinely different result sets, so a key naming only the variant would serve whichever
+    # of them searched first to the other.
+    check("the cache key separates two markets",
+          agent_module._cache_key("python", "gb") != agent_module._cache_key("python", None))
+    check("the cache key is stable for one market",
+          agent_module._cache_key("python", "gb") == agent_module._cache_key(" Python ", "gb"))
+
+    # The subtle one. A skipped source is not a failed source: failed_sources drives TC-018's
+    # outage banner, which would otherwise fire on every search a Pakistan-based user ran.
+    recorder = FetchRecorder(by_variant={"q": [card("Remote Dev", source="Jobicy")]})
+    install(recorder, fixed_intent("q"))
+    db = StubDB(context={"country": "pk"})
+    result = JobSearchAgent(db, StubEngine({"Remote Dev": 0.9}), StubRAG()).run("laiba", "q")
+    check("a search from an uncovered country still returns jobs", len(result["jobs"]) == 1)
+    check("and shows no outage banner", result["warning"] is None)
+    check("and no error", result["error"] is None)
+    check("the country reached the fetch layer", recorder.countries == ["pk"])
+
+    recorder = FetchRecorder(by_variant={"q": [card("UK Dev", source="Adzuna")]})
+    install(recorder, fixed_intent("q"))
+    JobSearchAgent(StubDB(context={"country": "gb"}), StubEngine({"UK Dev": 0.9}),
+                   StubRAG()).run("laiba", "q")
+    check("a covered country is passed through unchanged", recorder.countries == ["gb"])
 
 
 def test_rag_prompt_states_eligibility():
@@ -1019,6 +1070,7 @@ def main():
         test_context_injection()
         test_category_boost()
         test_classification()
+        test_country_source_selection()
         test_rag_prompt_states_eligibility()
         test_rag_fallback()
         test_cache()

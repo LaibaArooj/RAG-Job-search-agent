@@ -49,10 +49,38 @@
                                 <option value="senior">Senior</option>
                             </select>
                         </div>
+                        {# The country decides which job sources can serve this user at all --
+                           Adzuna has no endpoint for a country it does not cover, so for those
+                           users it is skipped rather than queried. The two groups say so
+                           before the user searches, rather than leaving the difference
+                           silent. Required: guessing someone's country would show them jobs
+                           that reject them. #}
                         <div class="mb-3">
-                            <label class="form-label">Preferred Location</label>
+                            <label class="form-label">Country you are based in</label>
+                            <select name="country" class="form-select" required>
+                                <option value="" selected disabled>Choose your country…</option>
+                                <optgroup label="Local + remote jobs available">
+                                    {% for code, name in countries.items() if code in adzuna_countries %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Remote jobs only">
+                                    {% for code, name in countries.items() if code not in adzuna_countries %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                            <small class="text-muted">
+                                We only show jobs whose employer will hire someone based here.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Preferred Location
+                                <small class="text-muted">(optional)</small>
+                            </label>
                             <input type="text" name="location" class="form-control"
-                                   placeholder="e.g. Remote, Pakistan, London">
+                                   placeholder="e.g. Remote, Lahore, London">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Work Type</label>

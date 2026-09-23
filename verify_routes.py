@@ -160,7 +160,8 @@ def main():
         token = csrf_from(client, "/register")
         client.post(
             "/register",
-            data={"csrf_token": token, "username": username, "password": password},
+            data={"csrf_token": token, "username": username, "password": password,
+                  "country": "gb"},
         )
         check("throwaway user registered", db.get_user(username) is not None)
 

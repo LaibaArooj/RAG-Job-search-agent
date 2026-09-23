@@ -159,10 +159,30 @@ def _filter_remotive(query, raw, experience=None):
     return kept
 
 
-def _fetch_adzuna_raw(query, app_id, app_key, count, work_type=None):
+def adzuna_market(country):
+    """Return the Adzuna market to query for this user's country, or None if it has none."""
+    # The single place the "can this source serve this user?" question is answered for Adzuna.
+    # A country Adzuna does not cover has no jobs/<code>/search endpoint at all, so there is
+    # nothing to call -- see config.ADZUNA_COUNTRIES for how the list was measured.
+    #
+    # A user whose document predates the country field falls back to the old behaviour rather
+    # than losing Adzuna silently.
+    code = (country or "").strip().lower()
+    if not code:
+        return config.DEFAULT_ADZUNA_COUNTRY
+    return code if code in config.ADZUNA_COUNTRIES else None
+
+
+def _fetch_adzuna_raw(query, app_id, app_key, count, work_type=None, market=None):
     """Call Adzuna and return (raw results, ok) — ok is False only on a transport or HTTP error."""
     try:
-        url = "https://api.adzuna.com/v1/api/jobs/gb/search/1"
+        # The market is interpolated, not hardcoded. Until 2026-09-23 this read
+        # ".../jobs/gb/search/1" while config.ADZUNA_COUNTRY was read from .env and consumed
+        # by nothing, so setting that variable changed nothing and reported no error.
+        # The value reaching this URL is always a member of config.ADZUNA_COUNTRIES, checked
+        # by adzuna_market above -- it must never be raw user input.
+        market = market or config.DEFAULT_ADZUNA_COUNTRY
+        url = f"https://api.adzuna.com/v1/api/jobs/{market}/search/1"
         params = {
             "app_id": app_id,
             "app_key": app_key,
@@ -261,8 +281,8 @@ def _filter_jobicy_level(raw, experience):
     return [j for j in raw if not _wrong_level((j.get("jobTitle") or "").lower(), experience)]
 
 
-def fetch_variant(query, app_id, app_key, work_type=None, experience=None):
-    """Fetch one variant from both sources, reporting failed and empty sources separately."""
+def fetch_variant(query, app_id, app_key, work_type=None, experience=None, country=None):
+    """Fetch one variant from every source that can serve this user's country."""
     jobs = []
     failed_sources = []
     empty_sources = []
@@ -281,10 +301,24 @@ def fetch_variant(query, app_id, app_key, work_type=None, experience=None):
             empty_sources.append("Remotive")
     jobs.extend(JobCard.from_remotive(raw) for raw in remotive_raw)
 
-    adzuna_raw, adzuna_ok = _fetch_adzuna_raw(
-        query, app_id, app_key, ADZUNA_PER_VARIANT, work_type
+    # Adzuna is a country-market board. For a user whose country it does not cover there is no
+    # endpoint to call, so it is SKIPPED rather than called and filtered -- the call would
+    # spend one of 250 daily quota units fetching jobs that would reject the user on sight.
+    #
+    # A skipped source is reported in NEITHER failed_sources NOR empty_sources, and both
+    # halves of that matter:
+    #   - failed_sources drives TC-018's "Job data temporarily unavailable" banner, which
+    #     would then fire on every single search a Pakistan-based user ran. Adzuna has not
+    #     failed; it was never asked.
+    #   - empty_sources marks a fetch as degraded in core/agent.py so it is not cached. Every
+    #     such user's search would bypass the 60-minute cache forever.
+    market = adzuna_market(country)
+    adzuna_raw, adzuna_ok = ([], True) if market is None else _fetch_adzuna_raw(
+        query, app_id, app_key, ADZUNA_PER_VARIANT, work_type, market
     )
-    if not adzuna_ok:
+    if market is None:
+        pass
+    elif not adzuna_ok:
         failed_sources.append("Adzuna")
     elif not adzuna_raw:
         # The signal that was missing. Adzuna answering "200, nothing here" is not a failure,

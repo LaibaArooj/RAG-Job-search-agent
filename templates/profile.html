@@ -57,8 +57,36 @@
                             </select>
                         </div>
 
+                        {# Same grouped select as register.html. Changing it changes which
+                           sources are queried, so the two groups name the consequence. #}
                         <div class="mb-3">
-                            <label class="form-label">Preferred Location</label>
+                            <label class="form-label">Country you are based in</label>
+                            <select name="country" class="form-select" required>
+                                <option value="" {% if not user.country %}selected{% endif %} disabled>
+                                    Choose your country…
+                                </option>
+                                <optgroup label="Local + remote jobs available">
+                                    {% for code, name in countries.items() if code in adzuna_countries %}
+                                    <option value="{{ code }}"
+                                            {% if user.country == code %}selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Remote jobs only">
+                                    {% for code, name in countries.items() if code not in adzuna_countries %}
+                                    <option value="{{ code }}"
+                                            {% if user.country == code %}selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                            <small class="text-muted">
+                                We only show jobs whose employer will hire someone based here.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Preferred Location
+                                <small class="text-muted">(optional)</small>
+                            </label>
                             <input type="text" name="location" class="form-control"
                                    value="{{ user.location or '' }}">
                         </div>

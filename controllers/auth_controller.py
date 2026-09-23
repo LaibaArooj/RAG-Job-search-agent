@@ -37,6 +37,8 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+import config
+
 auth_bp = Blueprint("auth", __name__)
 
 # Short enough not to obstruct a demo, long enough to defend. SRS §3.5 says "strong
@@ -110,20 +112,32 @@ def register():
     if request.method == "POST":
         if not check_csrf():
             flash("Your session expired. Please try again.", "error")
-            return render_template("register.html")
+            return render_template("register.html", countries=config.COUNTRIES,
+                               adzuna_countries=config.ADZUNA_COUNTRIES)
 
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
         if not username or not password:
             flash("Username and password are required.", "error")
-            return render_template("register.html")
+            return render_template("register.html", countries=config.COUNTRIES,
+                               adzuna_countries=config.ADZUNA_COUNTRIES)
 
         if len(password) < MIN_PASSWORD_LENGTH:
             flash(
                 f"Password must be at least {MIN_PASSWORD_LENGTH} characters.", "error"
             )
-            return render_template("register.html")
+            return render_template("register.html", countries=config.COUNTRIES,
+                               adzuna_countries=config.ADZUNA_COUNTRIES)
+
+        # Membership of the closed set, not free text. The country reaches an Adzuna URL
+        # path, so it is whitelisted here for the same reason config.CATEGORIES is checked
+        # before a category reaches a MongoDB field path.
+        country = request.form.get("country", "").strip().lower()
+        if country not in config.COUNTRIES:
+            flash("Please choose the country you are based in.", "error")
+            return render_template("register.html", countries=config.COUNTRIES,
+                                   adzuna_countries=config.ADZUNA_COUNTRIES)
 
         profile = {
             "skills": [
@@ -131,6 +145,7 @@ def register():
             ],
             "experience": request.form.get("experience", "entry level"),
             "location": request.form.get("location", "remote"),
+            "country": country,
             "preferred_work": request.form.getlist("preferred_work"),
         }
 
@@ -144,7 +159,8 @@ def register():
         except Exception as e:  # Atlas unreachable — banner, never a stack trace
             current_app.logger.error("register failed: %s", e)
             flash("Service temporarily unavailable. Please try again.", "error")
-            return render_template("register.html")
+            return render_template("register.html", countries=config.COUNTRIES,
+                               adzuna_countries=config.ADZUNA_COUNTRIES)
 
         if created:
             session.clear()
@@ -155,7 +171,8 @@ def register():
         # TC-002 — the unique index rejected the insert, not an if-statement here.
         flash(message, "error")
 
-    return render_template("register.html")
+    return render_template("register.html", countries=config.COUNTRIES,
+                               adzuna_countries=config.ADZUNA_COUNTRIES)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])

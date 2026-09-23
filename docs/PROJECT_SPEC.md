@@ -237,7 +237,7 @@ parsed keywords. A production system with its own crawled corpus would use a rea
 
 ## Deviations from the SRS — declare these in the final report
 
-The SRS is v1.0 and authoritative. Seven changes have been made since — five intentional, two
+The SRS is v1.0 and authoritative. Eight changes have been made since — six intentional, two
 forced. Each needs a one-line justification in the report; supervisors generally accept
 documented deviations and penalise undocumented ones.
 
@@ -248,6 +248,7 @@ documented deviations and penalise undocumented ones.
 | Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claims semantic ranking is better; that claim needs evidence |
 | **LLM model** | **Llama 3 8B-instant via Groq** | **`openai/gpt-oss-120b` via Groq** | **Forced TWICE, not chosen — see below** |
 | **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + Remotive + **Jobicy** | Neither original source can answer "will this employer hire a candidate in my country?" — Adzuna has no such concept and Remotive is capped at 18 jobs. Jobicy filters eligibility server-side. Free, no key, no card, so the SRS cost constraint holds. See § Geographic eligibility below. |
+| **Source selection** | All sources queried for every user | **Only sources that can serve the user's country** | Adzuna is a country-market API with no `jobs/pk/search` endpoint (404, measured 2026-09-23). Querying it for a user it cannot serve spends quota to fetch jobs that reject them. Requires a `country` field on the user document. |
 | **AI panel selection** | Top 5 ranked jobs → LLM (FR-016) | Top 5 **the seeker can apply for** → LLM | Measured: all five top-ranked jobs were UK-local for a non-UK user, so every AI pick was unreachable. Ranking itself is unchanged — only which five reach the prompt. |
 | `rejected_jobs` contents | `Array<String>` of job **titles** (§ Data model) | `Array<String>` of **`job_id`** | Titles are not unique across employers. TC-012 requires rejected jobs to be *absent* from the feed; keyed on title, rejecting one "Software Engineer" hides every job with that title from every company. `saved_jobs` already keys on `job_id` for the same reason (TC-013). Field type is unchanged — still an array of strings. |
 
@@ -369,10 +370,16 @@ are the ones an examiner is most likely to find.
     particular user; that is stated as unknown rather than guessed, because a confident wrong
     answer costs the seeker a wasted application.
 
-11. **Adzuna results are still shown to users who cannot apply for them.** They are badged as
-    local roles, but they are not filtered out, and on a typical search they are the majority
-    of the result set. Filtering them needs a country on the profile, which the form does not
-    yet collect. Named here because an examiner searching from outside the UK will see it.
+11. **~~Adzuna results are still shown to users who cannot apply for them.~~** Resolved
+    2026-09-23: the profile now collects a country and Adzuna is skipped for users in the 177
+    countries it has no market for. What remains is narrower and still worth stating — for
+    such a user **every job the system can offer is remote**, so the product is a search engine
+    for remote roles rather than the general job search the SRS describes.
+
+12. **Region-restricted listings are shown, not filtered.** Remotive and Jobicy listings
+    restricted to named regions are badged and kept. Filtering them would need the "does APAC
+    include Pakistan?" judgement this system deliberately refuses to make, and would drop
+    Europe/UK listings for a UK user.
 
 ## Data model — MongoDB `users` collection
 
