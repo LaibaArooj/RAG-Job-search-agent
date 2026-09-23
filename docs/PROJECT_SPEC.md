@@ -237,7 +237,7 @@ parsed keywords. A production system with its own crawled corpus would use a rea
 
 ## Deviations from the SRS — declare these in the final report
 
-The SRS is v1.0 and authoritative. Five changes have been made since — four intentional, one
+The SRS is v1.0 and authoritative. Seven changes have been made since — five intentional, two
 forced. Each needs a one-line justification in the report; supervisors generally accept
 documented deviations and penalise undocumented ones.
 
@@ -246,12 +246,51 @@ documented deviations and penalise undocumented ones.
 | Intent parsing | `parse_intent` matches keywords with if-statements (SDD §5.1) | Groq call returning structured JSON, keyword matching as fallback | The SRS defines an Agent as something that "autonomously decides what steps to take". Keyword matching doesn't meet that definition. This makes the claim true. |
 | Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped | Directly addresses the recall ceiling described below |
 | Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claims semantic ranking is better; that claim needs evidence |
-| **LLM model** | **Llama 3 8B-instant via Groq** | **`groq/compound-mini` via Groq** | **Forced, not chosen — see below** |
+| **LLM model** | **Llama 3 8B-instant via Groq** | **`openai/gpt-oss-120b` via Groq** | **Forced TWICE, not chosen — see below** |
+| **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + Remotive + **Jobicy** | Neither original source can answer "will this employer hire a candidate in my country?" — Adzuna has no such concept and Remotive is capped at 18 jobs. Jobicy filters eligibility server-side. Free, no key, no card, so the SRS cost constraint holds. See § Geographic eligibility below. |
+| **AI panel selection** | Top 5 ranked jobs → LLM (FR-016) | Top 5 **the seeker can apply for** → LLM | Measured: all five top-ranked jobs were UK-local for a non-UK user, so every AI pick was unreachable. Ranking itself is unchanged — only which five reach the prompt. |
 | `rejected_jobs` contents | `Array<String>` of job **titles** (§ Data model) | `Array<String>` of **`job_id`** | Titles are not unique across employers. TC-012 requires rejected jobs to be *absent* from the feed; keyed on title, rejecting one "Software Engineer" hides every job with that title from every company. `saved_jobs` already keys on `job_id` for the same reason (TC-013). Field type is unchanged — still an array of strings. |
 
-### The LLM substitution is forced, not a preference
+### Geographic eligibility — added 2026-09-23
 
-Verified against the live Groq model list on 2026-09-13:
+Found by using the app as a real user. The SRS assumes a job listing is a result; for a
+candidate outside the source's market it may be an advert they are not allowed to answer.
+Three changes follow, and none of them hardcodes a country — eligibility is derived per
+user, so the product stays general:
+
+- `JobCard` now separates `location` (where the job IS) from `candidate_location` (where the
+  candidate MAY LIVE), which the SRS's single "location" field conflated.
+- `eligibility` buckets as `open` / `regional` / `local` / `unknown`. **`unknown` is a real
+  state and is never guessed at** — deciding whether "APAC" includes a given user would cost
+  that user a wasted application.
+- Jobicy is queried with `geo=anywhere`, so unrestricted roles are filtered server-side.
+
+Measured on "junior software engineer": jobs applicable from anywhere went from 1 to 5 of 28.
+
+**Still open, and both belong in the report:** Adzuna is not yet skipped for users outside
+its markets (the profile's location field defaults to "remote" and cannot drive the rule),
+and Remotive is labelled rather than filtered, so a user still sees region-restricted
+listings — clearly badged, but present.
+
+### The LLM substitution is forced, not a preference — and it has now happened TWICE
+
+**Second substitution, 2026-09-23.** `groq/compound-mini` — itself the replacement for
+Llama 3 — began returning `404 ... does not exist or you do not have access to it`. No
+`groq/compound-*` and no Llama chat model remains on the account's model list. The model is
+now `openai/gpt-oss-120b`.
+
+This one carried a hazard worth writing up. gpt-oss models are **reasoning models**: they
+spend hidden reasoning tokens before emitting content, and `max_tokens` covers both. At the
+original budget of 300, `parse_intent`'s JSON was truncated, no object could be parsed, and
+the module fell back to keyword matching — so query expansion silently stopped happening
+and TC-019 and TC-021 were both broken **while the app still appeared to work**. Both token
+budgets were raised (intent 300 → 600, RAG 700 → 1200).
+
+It also went undetected for two days because `verify_intent.py` reported the dead model as
+"Groq unreachable", which reads like a network fault. A test's own wording can hide a
+diagnosis.
+
+**First substitution, verified against the live Groq model list on 2026-09-13:**
 
 - `llama3-8b-8192` → `400 ... has been decommissioned and is no longer supported`
 - `llama-3.1-8b-instant` → `404 ... does not exist or you do not have access to it`
@@ -305,14 +344,35 @@ are the ones an examiner is most likely to find.
    they have saved or rejected several jobs.
 8. **No evaluation of the LLM stage.** precision@5 measures the ranking. Whether the three AI
    picks are better than the top three by similarity alone is untested.
-9. **Categories are assigned by keyword matching.** Added 2026-09-21. A job's category — which
-   is what the whole save/reject preference loop scores — comes from substring matching the job's
-   title and first 500 characters against a hand-written hint table, first match winning. It
-   misfiles jobs whose text names no category word (they fall back to the query's category, or
-   `"other"`) and jobs that mention two fields (order of the table decides). It is not
-   classification by meaning and the report must not describe it as such. A learned classifier,
-   or the embedding model itself, would be the upgrade; both were weighed and rejected as harder
-   to justify in a viva than a table you can read.
+9. **Categories are assigned by keyword matching.** Added 2026-09-21, **rewritten 2026-09-22**.
+   A job's category — which is what the whole save/reject preference loop scores — comes from
+   matching the job's title, then its description, against a hand-written hint table. It is not
+   classification by meaning and the report must not describe it as such. It still misfiles a
+   job whose text names no category word (those fall back to the query's category, or `"other"`)
+   and it cannot tell a job that *mentions* design from a job that *is* design.
+
+   The first version matched hints as bare substrings, first key winning in table order, and
+   that was measurably wrong on live data: four of the five jobs real users had saved were
+   filed as `design`, because `"ui"` matched inside "suited" and "built" and `design` is listed
+   before `technology`. Three rules replaced it — title first, word-boundary matching, and most
+   hint matches wins with table order only as the tie-break. **This is worth writing up rather
+   than hiding: it is a concrete example of a plausible-looking heuristic silently corrupting
+   user data, caught only by reading the database.** A learned classifier, or the embedding
+   model itself, remains the upgrade; both were weighed and rejected as harder to justify in a
+   viva than a table you can read.
+
+10. **Geographic eligibility is read from free text.** Added 2026-09-23. Whether an employer
+    will hire a candidate in a given country comes from a prose field — Remotive's
+    `candidate_required_location`, Jobicy's `jobGeo` — that has no controlled vocabulary.
+    Anything not positively unrestricted is classed `regional` and shown verbatim for the user
+    to judge. The system deliberately does **not** decide whether "APAC" or "EMEA" includes a
+    particular user; that is stated as unknown rather than guessed, because a confident wrong
+    answer costs the seeker a wasted application.
+
+11. **Adzuna results are still shown to users who cannot apply for them.** They are badged as
+    local roles, but they are not filtered out, and on a typical search they are the majority
+    of the result set. Filtering them needs a country on the profile, which the form does not
+    yet collect. Named here because an examiner searching from outside the UK will see it.
 
 ## Data model — MongoDB `users` collection
 

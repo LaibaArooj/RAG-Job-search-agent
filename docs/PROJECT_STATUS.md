@@ -1,3 +1,57 @@
+Last updated: 2026-09-23 (**M4 in progress.** Four defects found by using the app as a real
+user are fixed; Jobicy added as a third source so a non-UK user has jobs they can apply for.
+**347/347 offline checks green** across five scripts.)
+
+## Where we left off — 2026-09-23 (first real browser session)
+
+**The first click-through of the app as a logged-in user found five problems, four of which
+were real defects.** That is the headline for the report: the 320 green assertions could not
+see any of them, because every one lived in the gap between "the code does what the test
+says" and "the product does what a user needs".
+
+| # | Symptom | Verdict | Status |
+|---|---|---|---|
+| 1 | "My user isn't in MongoDB" | Not a bug — login only reads; was looking at the wrong DB name | Closed |
+| 2 | AI picks have no Save/Reject buttons | Design gap — `RAGPipeline` returns prose | **Open** |
+| 3 | Feed ≠ saved jobs | Working as designed, plus two design gaps | **Open** |
+| 4 | Searched software, got a `design` score | **Bug** — `"ui"` matched inside "suited" | Fixed 2026-09-22 |
+| 5 | Profile "View" reloads the page | **Bug** — template read `job.url`, DB stores `source_url` | Fixed 2026-09-22 |
+
+Then two more, found while fixing those:
+
+- **Groq had silently killed the AI panel.** `groq/compound-mini` was returning 404 and had
+  been since ~2026-09-21. Now `openai/gpt-oss-120b`. See the CHANGELOG for the reasoning-token
+  trap this introduced — it is the best "why tests pass while the product is broken" story in
+  the project.
+- **Every job shown was one the user could not apply for.** Adzuna is UK-only and has no
+  concept of hiring a remote candidate from abroad; Remotive is capped at 18. Jobicy added.
+
+### The three test users were deleted by the user on 2026-09-23
+
+Their `category_scores` were corrupt from the old classifier and no migration was written.
+**The database is now empty — you must register a fresh account before demoing**, and the
+feed and profile will be empty until you save a few jobs.
+
+### Read this before touching the evaluation
+
+`docs/EVALUATION.md` assumes Adzuna is the only genuine keyword search and therefore the whole
+baseline. That is still true, but Adzuna's results are now a minority of what the user sees
+and are badged as inapplicable for a non-UK seeker. **Decide what the baseline means before
+writing the 20 queries**, not after.
+
+### Next actions
+
+1. **Write the 20 precision@5 queries** — before looking at any results. Settle the Adzuna
+   baseline question first.
+2. **Tell the supervisor**: the second forced model substitution, and Jobicy as a new source.
+   Both are recorded in `docs/PROJECT_SPEC.md` § Deviations, which now lists **seven**.
+3. **Run `verify_live.py`** — nothing has exercised Jobicy under the live suite. ~12 Adzuna calls.
+4. Items 2 and 3 from the table above are still open and still unscoped.
+
+---
+
+## Where we left off — 2026-09-21 (M3 complete)
+
 Last updated: 2026-09-21 (**M3 done** — the For You feed is built, so categorisation, the
 save/reject loop and the feed are all shipped. 320/320 offline checks green across five
 scripts.)
@@ -40,7 +94,7 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
 | M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 221/221 across the four verify scripts, plus a live end-to-end run against the running server | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | **Done (2026-09-21)** — RAG panel shipped in M2; categorisation, save/reject and the For You feed all built. `verify_agent.py` 129/129, `verify_routes.py` 57/57 | TC-008 to TC-014 pass |
-| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | Not started | Demo runs end to end + P@5 measured |
+| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **In progress** — first browser session done and four defects fixed; geographic eligibility shipped. Evaluation NOT started. `verify_all.py --offline` 347/347 | Demo runs end to end + P@5 measured |
 
 ## Completed
 
@@ -56,8 +110,11 @@ Under one month to submission. The SRS assumed an 8-week timeline; the milestone
 
 ## In progress
 
-- **Currently working on:** M4. M3 closed on 2026-09-21 with the For You feed. Next is the
-  precision@5 evaluation — write the 20 queries BEFORE looking at any results.
+- **Currently working on:** M4. The 2026-09-23 browser session took priority over the
+  evaluation: four defects and two silent failures were found and fixed, and geographic
+  eligibility shipped. The precision@5 evaluation is STILL NOT STARTED and is now the
+  critical path — write the 20 queries BEFORE looking at any results, and settle the Adzuna
+  baseline question first (see the 2026-09-23 note at the top).
 - **Branch:** `feat/search-pipeline`
 - **Related issue:** none yet
 

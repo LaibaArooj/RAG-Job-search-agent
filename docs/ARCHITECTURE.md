@@ -60,12 +60,19 @@ Swapping any dependency should mean editing one file.
 3. `parse_intent(query)` — Groq call returning structured JSON: work type, experience,
    category, and 2–3 alternative query phrasings. Falls back to keyword matching on failure
 4. `enrich_query(query, context)` — profile injected into the query text
-5. Query encoding, then Adzuna + Remotive fetched once per query variant. Each source is
-   compensated for inside `api_client`: work-type words are stripped from Adzuna's keyword
-   query (its `what=` is an AND match, so one such word returns nothing) and passed as
+5. Query encoding, then Adzuna + Remotive + **Jobicy** fetched once per query variant. Each
+   source is compensated for inside `api_client`: work-type words are stripped from Adzuna's
+   keyword query (its `what=` is an AND match, so one such word returns nothing) and passed as
    Adzuna's own parameters, while Remotive — which ignores its search parameter and returns a
    fixed list — is filtered locally on the job title, and on the requested level when one was
    parsed.
+   **Jobicy, added 2026-09-23**, is queried with `geo=anywhere` so that candidate eligibility
+   is filtered server-side. Its `tag=` is an AND match that collapses the same way Adzuna's
+   does, so the same stopword and work-type stripping is applied first, with one retry on the
+   longest token — two HTTP calls per variant, capped, because Jobicy publishes no rate limit.
+   Source ORDER is load-bearing: Jobicy is fetched last, so that a listing syndicated to both
+   it and Adzuna keeps Adzuna's copy and its eligibility stays honestly `local` rather than
+   being relabelled `open` by fetch order.
    **Deferred, deliberately:** the SDD specifies a parallel fork here (query encoding ‖ Adzuna
    ‖ Remotive, ~800 ms saved). `core/agent.py` fetches *sequentially* as of 2026-09-19. With
    three variants that is six sequential HTTP calls and the demo is correspondingly slow. The
@@ -87,13 +94,25 @@ Swapping any dependency should mean editing one file.
    `JobCard.from_adzuna` / `from_remotive` because `JobCard` normalises *shape* and carries no
    policy, and because running it in the agent covers jobs read back out of the cache too.
    Honest description: keyword matching over job text, not classification by meaning.
+   **Rewritten 2026-09-22** after four of five jobs real users had saved were misfiled as
+   `design`: the title now decides (description only as fallback), hints of three characters
+   or fewer must match whole words, and the category with the most hint matches wins with
+   table order as the tie-break only.
 7. `batch_encode` all job descriptions → cosine similarity vs query vector
 8. Score = similarity + (`category_scores[job.category]` × 0.02); sort descending.
    Live as of 2026-09-21 — until step 6b existed `job.category` was `""` on every listing, so
    this term contributed 0 to every score however strong the learned preference was.
-9. Top 5 → `RAGPipeline.run()`. Wrapped in try/except:
-   Groq failure → `fallback()`, AI section hidden, raw results still rendered
-10. Render: AI Recommendations band, then the full ranked list
+9. `JobSearchAgent.rag_candidates(jobs)` → `RAGPipeline.run()`. Wrapped in try/except:
+   Groq failure → `fallback()`, AI section hidden, raw results still rendered.
+   **Changed 2026-09-23:** the panel is handed the best five the seeker can *apply for*, not
+   the top five by score — applicable jobs (`open` and `unknown`) first, then the rest, topped
+   up to five. Measured cause: for a non-UK user all five top-ranked jobs were UK-local, so
+   every AI pick was unreachable. **Nothing is re-scored** — this re-partitions the top of the
+   list only, and the ranked list rendered below the panel is still ordered purely by
+   similarity plus the category boost. The prompt also states each job's eligibility and is
+   told to name any restriction plainly.
+10. Render: AI Recommendations band, then the full ranked list. Every card carries an
+    eligibility badge — open worldwide / region-restricted / local role / terms unclear.
 
 Five decision points the code must handle: empty query, unauthenticated, intent-parse
 failure (fall back to keywords), no jobs returned, RAG failure (hide the AI panel).
@@ -326,9 +345,10 @@ not by a read-then-write check in Python, which a concurrent signup could slip b
 
 | Service | Used for | Env var | Limit |
 |---|---|---|---|
-| Adzuna | Live job listings | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | 250 requests/day |
-| Remotive | Remote job listings | none — no auth | none |
-| Groq | LLM inference — `groq/compound-mini` (Llama 3 was decommissioned by Groq; see `docs/PROJECT_SPEC.md` § Deviations) | `GROQ_API_KEY` | free-tier rate limits |
+| Adzuna | Live job listings, **UK market only** — country is hardcoded in `api_client`, and `config.ADZUNA_COUNTRY` is currently dead config | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | 250 requests/day |
+| Remotive | Remote job listings. Ignores `search`, `category` and `limit` alike — fetched once and filtered locally, capped at 18 jobs | none — no auth | none |
+| Jobicy | Remote job listings **filtered by candidate eligibility** (`geo=anywhere`). Added 2026-09-23; the only free source that both searches and filters eligibility server-side | none — no auth | none published — treat as unknown |
+| Groq | LLM inference — `openai/gpt-oss-120b`. **A reasoning model**: hidden reasoning tokens count against `max_tokens`, so both call-site budgets were raised. Llama 3 and then `groq/compound-mini` were each decommissioned by Groq; see `docs/PROJECT_SPEC.md` § Deviations | `GROQ_API_KEY` | free-tier rate limits |
 | MongoDB Atlas | User profiles | `MONGODB_URI` | 512 MB |
 | HuggingFace | One-time model download | none | — |
 

@@ -11,6 +11,187 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-23 — Geographic eligibility: jobs the seeker can actually apply for
+
+Found by using the app as a real user: every listing on the page was a UK role, and nothing
+on the card said so. A job that will reject you on location is not a result.
+
+### Decided — eligibility is a property of the USER, not of the app
+
+Nothing is hardcoded to any country. The app stays general; it simply stops showing every
+user the same UK-centric list. This extends the project's personalisation claim from
+ranking into retrieval, which is a stronger thing to defend than a country filter.
+
+### Decided — Jobicy added as a third source, after measuring the alternatives
+
+| Source | Jobs/query | Eligibility field | Search works | Eligibility filter |
+|---|---|---|---|---|
+| Adzuna | 10–77 | none — concept absent | yes | no |
+| Remotive | **18, always** | `candidate_required_location` | **no** | no |
+| RemoteOK | 100 | `location`, 34% blank | untested | no |
+| **Jobicy** | up to 100 | `jobGeo` | **yes** | **yes** (`geo=anywhere`) |
+
+Remotive's `category` parameter is ignored exactly like `search` — 18 jobs for every value
+tested and for no parameters at all. Its pool cannot be grown. Jobicy is the only free
+source that both searches and filters eligibility server-side. Free, no key, no card.
+
+### Added
+
+- `adapters/api_client._fetch_jobicy_raw` — Jobicy with `geo=anywhere`. Its `tag` is an AND
+  match that collapses on long queries ("entry level marketing no degree" → 0, "marketing"
+  → 17), so the work-type and stopword stripping already written for Adzuna is applied
+  first, with one retry on the longest token. Two HTTP calls per variant, capped.
+- `adapters/api_client._filter_jobicy_level` — the same `_wrong_level` rule Remotive uses.
+  Jobicy filters geography server-side but not seniority.
+- `JobCard.candidate_location`, `JobCard.eligibility`, and `models.job_card.remote_eligibility`.
+- Eligibility badge on every card in `index.html` and `feed.html`.
+- `JobSearchAgent.rag_candidates` — chooses which jobs the AI panel explains.
+
+### Changed
+
+- **`JobCard.location` no longer carries two meanings.** Adzuna's "London" (where the job
+  IS) and Remotive's "Worldwide" (where the candidate MAY LIVE) were both written into
+  `location` and rendered in the same slot. That conflation is why this was invisible.
+- **`RAGPipeline.build_prompt` states eligibility per job** and is told to prefer
+  unrestricted roles and name any restriction plainly.
+- **The AI panel now explains the best five the seeker can act on, not the top five by
+  score.** The prompt change alone fixed nothing: measured on "junior software engineer",
+  all five top-ranked jobs were UK-local and the four worldwide ones ranked sixth and below,
+  so the prompt had nothing applicable to prefer. `rag_candidates` re-partitions the top of
+  the list. **Nothing is re-scored** — the ranked list below the panel is still ordered
+  purely by similarity plus the category boost.
+
+### Measured
+
+On "junior software engineer": jobs applicable from anywhere went from **1 to 5** of 28, and
+all 28 cards are now labelled. All five jobs reaching the AI panel are unrestricted, and the
+model writes "no geographic restrictions, so you can apply from anywhere".
+
+### Four eligibility states, and why "unknown" is one of them
+
+`open` / `regional` / `local` / `unknown`. Deciding whether `APAC` includes a given user is
+a judgement the code is in no position to make, and getting it wrong costs the seeker a
+wasted application. Anything not positively unrestricted is `regional`, and the raw text is
+shown so the user can judge. Same lesson as the `ui` substring bug below.
+
+### Not done, deliberately
+
+- **Adzuna is not skipped for users outside its markets.** The rule would need the profile's
+  country, and `location` defaults to the string "remote" for every user — so it would skip
+  Adzuna for everyone and destroy the precision@5 baseline. Needs a country selector on the
+  profile form first.
+- **Remotive is labelled, not filtered.** Filtering to worldwide-only would drop its Europe
+  and UK listings and hurt a UK user, which conflicts with keeping the app general.
+
+### Known gaps
+
+- `verify_live.py` has no Jobicy coverage and would not notice it going down. Its check
+  "no cached entry was built from Remotive alone" is weaker with a third source, though the
+  real guard in `agent.py` (`"Adzuna" in empty_sources`) still holds.
+- The profile's **Preferred Location is still dead data** — collected, validated, stored,
+  and read by nothing. `enrich_query` uses skills and level only.
+
+---
+
+## 2026-09-23 — Groq retired the replacement model too (second forced substitution)
+
+`groq/compound-mini` began returning `404 ... does not exist or you do not have access to
+it`. No `groq/compound-*` and no Llama chat model remains on the account. This is the
+**second** forced substitution on the same line of the SRS and needs supervisor sign-off.
+
+**It had been failing silently since 2026-09-21.** `verify_intent.py` reported TC-019 as
+"SKIPPED — Groq unreachable", which reads like a network fault and was treated as one for
+two sessions. It was a dead model. The AI Recommendations panel was simply absent from every
+search, and FR-018's fallback worked so well that nothing else looked wrong.
+
+### Changed
+
+- `GROQ_MODEL` → `openai/gpt-oss-120b`.
+- `parse_intent` `max_tokens` 300 → 600; `RAGPipeline.run` `max_tokens` 700 → 1200.
+
+### The replacement is a reasoning model, and that is not a detail
+
+gpt-oss models spend hidden reasoning tokens before emitting content, and `max_tokens`
+covers both. Measured:
+
+- **gpt-oss-20b at the old intent budget of 300**: 99 reasoning tokens, JSON truncated, no
+  parseable object — so `parse_intent` fell back to keywords and **query expansion silently
+  stopped happening**. TC-019 and TC-021 both broken with the app still appearing to work.
+  That is the failure mode to watch for whenever this constant changes.
+- **gpt-oss-120b at the old RAG budget of 700**: 475 reasoning tokens and
+  `finish_reason="length"` — recommendations cut off mid-sentence.
+
+Candidates measured on four queries: `qwen3.8-27b` spends 0 reasoning tokens and would need
+no budget change, but reads "something creative I can do from home" as `other` and fails
+TC-019; `gpt-oss-20b` reads "junior software engineer" as `engineering`; `gpt-oss-120b` gets
+all four right. The cost is latency — 250–475 reasoning tokens per call, twice per search.
+`qwen` is the fast fallback if the demo drags.
+
+**TC-019 now passes. `verify_intent.py` 71 → 76, 0 failed.**
+
+---
+
+## 2026-09-22 — Category classification rewritten after reading the live user data
+
+Four of the five jobs three real users had saved were filed as **`design`** when every one
+was a software job, so two accounts carried a design preference nobody had expressed — and
+the For You feed then keyword-searched "design" and returned genuine graphic-design jobs.
+
+### The cause, in two halves
+
+1. **`ui` is a design hint and hints were matched as bare substrings**, so it matched inside
+   s-ui-ted, b-ui-lt and req-ui-rements. Close to every advert in existence contains one of
+   those.
+2. **`design` is listed before `technology`** and the first match won, so design took it on
+   one incidental hint even where technology matched four real ones.
+
+One job, "Junior Software Engineers", was misfiled by the word **"design"** appearing
+legitimately in *"you will actively design, build, and integrate"* — that one needed
+title-priority and hint-counting, not word boundaries. A single fix would not have caught
+both.
+
+### Changed — three rules replaced "first substring hit in table order"
+
+1. **The title decides.** The description is consulted only when the title names no category.
+2. **Word-boundary matching.** Hints of three characters or fewer (`ui`, `ux`, `seo`) must
+   match a whole word; longer ones match at a word start, so the deliberate stems
+   (`copywrit`, `illustrat`, `programm`, `journalis`) keep working.
+3. **Most hint matches wins.** `CATEGORY_HINTS` order is now only the tie-break.
+
+`CATEGORY_HINTS` itself is unchanged. Patterns are compiled once at import.
+
+### Verified
+
+14 regression checks added to `verify_agent.py` using the five real saved jobs and the
+description excerpts recorded from `job_cache` before its TTL expired them. **They failed
+first, then passed** — 8 failures before the fix, 0 after. Spot-checked one title per
+category: all 23 correct, including `Account Executive` → `sales` on the order tie-break.
+`verify_agent.py` 129 → 143.
+
+### Data note
+
+The three affected user documents were **deleted by the user on 2026-09-23**. Fixing the
+classifier does not repair history, and no migration was written.
+
+---
+
+## 2026-09-22 — Profile "View" link went nowhere
+
+`DatabaseManager._record_decision` renames a job's `url` to `source_url` on the way into
+Mongo, but `profile.html` asked for `job.url`. Jinja renders an undefined as `""`, and an
+empty URI reference resolves to the current document — so "View" reloaded `/profile` instead
+of opening the advert.
+
+### Fixed
+
+- `templates/profile.html` reads `job.source_url`, and gained `rel="noopener noreferrer"`.
+- One assertion in `verify_routes.py`, on the full `href="..."` rather than the bare URL —
+  the URL alone would still be found if the attribute were empty and the link text held it.
+
+`verify_routes.py` 57 → 58.
+
+---
+
 ## 2026-09-21 — The For You feed (M3 complete)
 
 M3's last task. `get_top_categories` and `rejected_jobs` had been green in `verify_db.py` since

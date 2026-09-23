@@ -3,6 +3,11 @@
 **Laiba Arooj** · Dept. of Computer Science · Supervisor: Dr Ali Sammad
 Final Year Project · Progress consolidated **2026-09-22**
 
+> **Superseded in part.** This snapshot predates the 2026-09-23 work: the second forced Groq
+> model substitution, Jobicy as a third source, geographic eligibility, and the AI-panel
+> selection change. Its test counts and deviation count (five, now seven) are out of date.
+> `docs/CHANGELOG.md` and `docs/PROJECT_STATUS.md` are current; read those first.
+
 > A single-file record of everything built so far, what is verified, what is deliberately not
 > built, and what remains. This is a *derived* document — the sources of truth stay where they
 > are: `PROJECT_SPEC.md` (requirements), `ARCHITECTURE.md` (design), `PROJECT_STATUS.md`

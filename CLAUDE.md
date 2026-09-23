@@ -5,10 +5,11 @@ Final Year Project — Laiba Arooj, Dept. of Computer Science. Supervisor: Dr Al
 ## Goal
 
 A Flask web app that lets job seekers search in plain English instead of keywords. It fetches
-live listings from Adzuna and Remotive, ranks them by semantic similarity using a local
-sentence-transformer, and passes the top 5 to Llama 3 via Groq to produce three explained
-picks. Saving and rejecting jobs updates per-category preference scores that personalise
-future rankings and a "For You" feed.
+live listings from Adzuna, Remotive and Jobicy, ranks them by semantic similarity using a
+local sentence-transformer, and passes five to an LLM via Groq to produce three explained
+picks. Every card states whether the employer will hire a candidate in the user's location.
+Saving and rejecting jobs updates per-category preference scores that personalise future
+rankings and a "For You" feed.
 
 Project type: **academic deliverable — must be demonstrable and defensible in a viva**
 Current milestone: **M4 — evaluation (precision@5), filters, autocomplete, demo** (M3 closed
@@ -38,9 +39,9 @@ or cleverness. When you make a design decision, tell me why, so I can defend it.
 | Frontend | HTML5 + CSS + Bootstrap 5.3 — **no React, Vue or any JS framework** |
 | Database | MongoDB Atlas 7.0+ (free tier) via PyMongo 4.6+ |
 | Embeddings | sentence-transformers 2.7+, model `all-MiniLM-L6-v2`, runs locally, 384-dim |
-| LLM | **Groq** API (not Grok), model `groq/compound-mini` — Groq decommissioned Llama 3, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py` |
+| LLM | **Groq** API (not Grok), model `openai/gpt-oss-120b` — Groq decommissioned Llama 3 *and then* `groq/compound-mini`, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py`. **It is a reasoning model: hidden reasoning tokens count against `max_tokens`, so changing it means rechecking the budget at both call sites** |
 | Auth | Werkzeug password hashing (ships with Flask) |
-| Job data | Adzuna API (250 req/day free) + Remotive API (no auth, no limit) |
+| Job data | Adzuna API (250 req/day free, UK market) + Remotive API (no auth; capped at 18 jobs, ignores `search`) + Jobicy API (no auth; `geo=anywhere` filters candidate eligibility server-side) |
 | Env | pip + venv, dependencies pinned in `requirements.txt` |
 
 Hard constraint from the SRS: **every tool, API and service must be free with no credit card.**
@@ -64,8 +65,8 @@ python verify_all.py                             # run all six, one summary. --o
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 348 assertions, about 150 seconds --
-320 of them offline, measured 2026-09-21; verify_live.py contributes the other 28. Use
+**`python verify_all.py` is the pre-demo check.** 375 assertions, about 200 seconds --
+347 of them offline, measured 2026-09-23; verify_live.py contributes the other 28. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.
@@ -82,16 +83,24 @@ rather than a regression; read which check failed before assuming the code broke
 - No emails, no notifications, no direct job applications, no employer features, no mobile app.
 - Ask before adding a dependency or changing the MongoDB schema.
 
-## Deviations from the SRS — three, all deliberate
+## Deviations from the SRS — seven
 
-The SRS is v1.0 and authoritative, but three changes have been agreed since. They're recorded
-in `docs/PROJECT_SPEC.md` § Deviations with justifications. Don't revert to the SRS behaviour
+The SRS is v1.0 and authoritative, but seven changes have been made since — five deliberate,
+two forced by Groq retiring models mid-implementation. All are recorded in
+`docs/PROJECT_SPEC.md` § Deviations with justifications. Don't revert to the SRS behaviour
 without asking:
 
 1. `parse_intent` calls Groq for structured intent plus 2–3 query variants; keyword matching
    is the fallback path, not the primary one.
 2. The APIs are called once per query variant, results unioned and deduplicated on `job_id`.
 3. Evaluation (precision@5) is a deliverable, not optional.
+4. **Forced:** the LLM is `openai/gpt-oss-120b`, not Llama 3 — Groq decommissioned Llama 3
+   and then decommissioned its replacement too.
+5. `rejected_jobs` stores `job_id`, not job titles.
+6. **Jobicy is a third job source**, because neither Adzuna nor Remotive can say whether an
+   employer will hire a candidate in a given country.
+7. The AI panel explains the top five jobs the seeker **can apply for**, not the top five by
+   score. Ranking itself is unchanged.
 
 Groq is therefore called **twice per search**. Both calls need try/except with a working
 fallback — FR-018 says the app never crashes when the LLM is unavailable, and that now applies
