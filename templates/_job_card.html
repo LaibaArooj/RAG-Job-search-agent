@@ -14,7 +14,15 @@
      compact  - drop the description, for the AI panel where the same jobs appear again below
 #}
 {% macro job_card(job, reason=None, badge="score", compact=False) %}
-<div class="card mb-3">
+{# data-remote is derived from eligibility, not from a per-job remote flag, and the report
+   must say so: Adzuna has no remote field at all (`where=remote` returns 0 results), so the
+   honest rule available is "this came from a remote board". Remotive and Jobicy are
+   all-remote boards, and every Adzuna listing is classed `local`. TC-015's filter therefore
+   means "hide on-site roles", which is what the user actually wants and is not quite what
+   the SRS's wording implies. #}
+<div class="card mb-3 js-job-card"
+     data-eligibility="{{ job.eligibility }}"
+     data-remote="{{ 'no' if job.eligibility == 'local' else 'yes' }}">
     <div class="card-body">
 
         <div class="d-flex justify-content-between align-items-start mb-1">

@@ -65,8 +65,8 @@ python verify_all.py                             # run all six, one summary. --o
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 447 assertions, about 290 seconds --
-407 of them offline, measured 2026-09-25; verify_live.py contributes the other 40. Use
+**`python verify_all.py` is the pre-demo check.** 460 assertions, about 290 seconds --
+420 of them offline, measured 2026-09-25; verify_live.py contributes the other 40. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.

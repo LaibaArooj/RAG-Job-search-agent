@@ -442,7 +442,9 @@ Weekly self-check every Friday — three random rows, explained out loud, file c
   through the existing 60-minute cache keyed on the category NAME. A closed set of 13 category
   strings means all feed traffic costs at most ~13 Adzuna calls per hour, and a user with no
   positive scores costs none.
-- Autocomplete source: hardcoded category list, or built from `search_history`?
+- ~~Autocomplete source: hardcoded category list, or built from `search_history`?~~
+  **Settled 2026-09-25 — both**, which is what FR-011 says. History leads, then
+  `config.SEARCH_SUGGESTIONS`. Not `config.CATEGORIES`: those are database keys.
 - Ask the supervisor about the embedding model swap (see design changes above).
 - The 0.02 category-boost coefficient is a hand-picked number with no justification.
   Either tune it during evaluation or state it plainly as a heuristic.

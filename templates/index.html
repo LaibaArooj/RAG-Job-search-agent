@@ -48,9 +48,19 @@
 
     <form method="POST" class="d-flex mb-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {# TC-007. A native <datalist> rather than a hand-rolled dropdown: the browser does
+           the substring matching, keyboard navigation and screen-reader announcement for
+           free, and typing "tec" surfaces both "Technology" and "Tech Support" without a
+           line of JavaScript. It also degrades to a plain text box if the browser ignores
+           it, which a custom dropdown would not. #}
         <input type="text" name="query" value="{{ query }}"
-               class="form-control me-2"
+               class="form-control me-2" list="search-suggestions" autocomplete="off"
                placeholder='Try: "remote writing job no experience"'>
+        <datalist id="search-suggestions">
+            {% for suggestion in suggestions or [] %}
+            <option value="{{ suggestion }}"></option>
+            {% endfor %}
+        </datalist>
         <button type="submit" class="btn btn-primary px-4">Search</button>
     </form>
 
@@ -82,9 +92,34 @@
         <span class="text-primary">"{{ query }}"</span>
     </h5>
 
-    {% for job in jobs %}
-    {{ job_card(job, badge="score") }}
-    {% endfor %}
+    {# TC-015 / FR-021. Client-side on purpose: the ranked list exists only in this response,
+       so a server-side filter would have to re-run the whole pipeline -- a second Groq call
+       and fresh Adzuna quota -- to hide some cards the browser already has. The SRS also
+       specifies these as chips applied to the current results.
+       Only Remote and Eligible are offered. The SRS names Hybrid, Entry and Mid too, and
+       those are NOT built: no source gives a hybrid flag, and per-job seniority exists only
+       as a word in a title. Offering a chip that silently filtered on a guess would be worse
+       than not offering it. #}
+    <div class="d-flex gap-2 align-items-center mb-3 flex-wrap" id="js-filters">
+        <span class="text-muted small">Filter:</span>
+        <button type="button" class="btn btn-outline-secondary btn-sm js-filter"
+                data-filter="remote" aria-pressed="false">Remote only</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm js-filter"
+                data-filter="eligible" aria-pressed="false">Open to my location</button>
+        <span class="text-muted small ms-1 js-filter-count"></span>
+    </div>
+
+    <div id="js-results">
+        {% for job in jobs %}
+        {{ job_card(job, badge="score") }}
+        {% endfor %}
+    </div>
+
+    {# Shown by filters.js when a filter hides everything, so the page never goes silently
+       blank -- the same rule the agent's error banners follow. #}
+    <p class="text-muted d-none" id="js-filter-empty">
+        No jobs match those filters. Clear a filter to see the rest.
+    </p>
 
     {% elif query and not error %}
     {# Guarded on `not error` so this does not repeat the agent's own MSG_NO_RESULTS or
@@ -95,5 +130,6 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/decisions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/filters.js') }}"></script>
 </body>
 </html>

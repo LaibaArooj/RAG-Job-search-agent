@@ -171,6 +171,33 @@ ADZUNA_COUNTRIES = frozenset(
 # feature's clothes.
 DEFAULT_ADZUNA_COUNTRY = "gb"
 
+# --- Search autocomplete (FR-011, TC-007) ---
+# The "predefined categories" half of the SRS's autocomplete source; the other half is the
+# user's own search_history, added at render time by controllers/ui_controller.py.
+#
+# Deliberately NOT config.CATEGORIES. Those are database keys -- "customer_support",
+# "technology" -- and showing a database key to a job seeker is showing them our schema.
+# TC-007 expects typing "tec" to suggest "Technology" and "Tech Support", which the CATEGORIES
+# tuple cannot produce: it has no "Tech Support" and its keys are lowercase with underscores.
+#
+# These are search phrases, not a closed set that anything is validated against -- the user
+# stays free to type whatever they like, and the suggestion list only saves them typing.
+SEARCH_SUGGESTIONS = (
+    "Technology", "Tech Support", "Software Developer", "Web Developer",
+    "Data Analyst", "Writing", "Content Writer", "Copywriter",
+    "Design", "Graphic Designer", "UX Designer",
+    "Marketing", "Digital Marketing", "Social Media Manager",
+    "Sales", "Account Executive",
+    "Finance", "Accountant", "Financial Analyst",
+    "Healthcare", "Nurse", "Care Assistant",
+    "Education", "Teacher", "Tutor",
+    "Engineering", "Mechanical Engineer", "Electrical Engineer",
+    "Customer Support", "Customer Service", "Help Desk",
+    "Human Resources", "Recruiter",
+    "Legal", "Paralegal",
+    "Remote", "Entry Level", "Part Time", "Freelance",
+)
+
 # --- Category vocabulary ---
 # A closed set, shared by intent parsing and by the save/reject scoring loop, which
 # only works if both name a category identically.

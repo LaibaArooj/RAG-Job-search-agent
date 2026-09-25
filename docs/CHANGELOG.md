@@ -11,6 +11,68 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-25 — TC-007 autocomplete and TC-015 filters: the last two unbuilt test cases
+
+Every SRS test case now has an implementation and an assertion.
+
+### TC-007 — autocomplete
+
+A native HTML5 `<datalist>`, not a hand-rolled dropdown. The browser does the substring
+matching, keyboard navigation and screen-reader announcement for free, it degrades to a plain
+text box if unsupported, and it needs **no JavaScript at all**.
+
+**The open question in `PROJECT_STATUS.md` — "hardcoded category list, or built from
+`search_history`?" — is settled as both**, because FR-011 names both. History leads, since a
+query this user has actually run beats a generic category; duplicates are dropped.
+
+`config.SEARCH_SUGGESTIONS` is deliberately **not** `config.CATEGORIES`. Those are database
+keys — `customer_support`, `technology` — and showing a user your schema is not autocomplete.
+TC-007 expects "tec" to surface *"Technology"* and *"Tech Support"*, and the `CATEGORIES`
+tuple cannot produce either.
+
+### TC-015 — result filters
+
+Client-side chips, which is what the SRS specifies and also the only sane choice: the ranked
+list exists only in the response that rendered it, so a server-side filter would re-run the
+whole pipeline — a second Groq call and fresh Adzuna quota — to hide cards the browser already
+holds.
+
+Two chips: **Remote only** and **Open to my location**. They narrow together rather than
+replacing each other, and the filter is scoped to `#js-results` so the **AI band is never
+filtered** — those three are the answer to the question the user asked.
+
+### What is deliberately NOT built
+
+The SRS also names **Hybrid, Entry and Mid** chips. No source provides a hybrid flag, and
+per-job seniority exists only as a word in a title. A chip that silently filtered on a guess
+would be worse than no chip. Stated here rather than quietly omitted.
+
+**`data-remote` is derived from eligibility, not from a per-job remote flag**, and the report
+must say so: Adzuna has no remote field at all (`where=remote` returns 0), so the honest rule
+available is "this came from a remote board". TC-015's filter therefore means *hide on-site
+roles*, which is what the user wants and is not quite what the SRS's wording implies.
+
+### Verified in a real browser, because JavaScript is not testable from the verify scripts
+
+The suite can assert the markup and the data attributes; it cannot assert that clicking a chip
+hides anything. Driven live against the running server on a `gb` profile:
+
+- A real search rendered **29 results** (23 local, 5 open, 1 regional) plus 3 AI cards.
+- Clicking **Remote only**: 23 hidden, 6 shown, every visible card remote, every hidden card
+  local, count reads "showing 6 of 29", **AI band untouched**.
+- Adding **Open to my location**: narrows to 5, dropping the `regional` one.
+- Typing-source check: the datalist offers the user's own past search first, then the stock
+  phrases, and "tec" matches exactly `Technology` and `Tech Support`.
+
+Three earlier fixes were confirmed on real data in the same session: a saved job stored
+category **`technology`** (not `design` — the classifier fix), its `source_url` was a working
+link (the profile fix), and **saving from an AI card settled its twin in the results list**
+(the `decisions.js` multi-group fix).
+
+`verify_routes.py` 72 → **85**. `verify_all.py --offline`: **420 passed, 0 failed**.
+
+---
+
 ## 2026-09-25 — The cache guard had silently stopped working
 
 Found by running `verify_live.py` for the first time since three features landed. A cached

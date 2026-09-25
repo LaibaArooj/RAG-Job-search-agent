@@ -173,6 +173,15 @@ class DatabaseManager:
             },
         )
 
+    def get_search_history(self, username):
+        """Return the user's recent queries, newest first, for the autocomplete list (TC-007)."""
+        # Its own projection rather than a field on get_user_context: that method feeds the
+        # SEARCH PIPELINE and is called before every fetch, so it should not grow fields only
+        # the template needs. Reversed here because add_search_history appends, and the most
+        # recent search is the one most worth re-offering.
+        doc = self.users.find_one({"username": username}, {"_id": 0, "search_history": 1})
+        return list(reversed((doc or {}).get("search_history") or []))
+
     def update_profile(self, username, profile):
         """Update the editable profile fields only, never password or scores (TC-008)."""
         allowed = ("skills", "experience", "location", "country", "preferred_work")

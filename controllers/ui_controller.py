@@ -31,6 +31,7 @@ from config import (
     CATEGORIES,
     COUNTRIES,
     EXPERIENCE_LEVELS,
+    SEARCH_SUGGESTIONS,
     WORK_TYPES,
 )
 from controllers.auth_controller import check_csrf, current_username, require_auth
@@ -136,6 +137,30 @@ def feed():
     return render_template("feed.html", **result)
 
 
+def _suggestions():
+    """Return the autocomplete list: the user's own searches first, then the stock phrases."""
+    # FR-011 names both sources. History leads because a query this user has actually run is
+    # a better suggestion than a generic category, and duplicates are dropped so a repeated
+    # search does not fill the dropdown with itself.
+    #
+    # A history read failure costs the suggestions and nothing else -- the search box is a
+    # plain text input and works perfectly without a datalist attached to it.
+    try:
+        history = _db().get_search_history(current_username())
+    except Exception as e:
+        current_app.logger.error("search history read failed: %s", e)
+        history = []
+
+    seen = set()
+    ordered = []
+    for phrase in list(history) + list(SEARCH_SUGGESTIONS):
+        key = phrase.strip().lower()
+        if key and key not in seen:
+            seen.add(key)
+            ordered.append(phrase)
+    return ordered
+
+
 def _blank_page(error=None):
     """Return the same key set JobSearchAgent.run() returns, for a page with nothing to show."""
     # Mirrors JobSearchAgent._empty_result deliberately. A GET and a rejected POST hand the
@@ -159,18 +184,20 @@ def search():
     if request.method == "POST":
         if not check_csrf():
             flash("Your session expired. Please search again.", "error")
-            return render_template("index.html", **_blank_page())
+            return render_template("index.html", suggestions=_suggestions(),
+                               **_blank_page())
 
         # The whole pipeline lives behind one call. The route does not read the profile, does
         # not strip the query and does not decide what an empty result means — the agent owns
         # every one of those and returns the same keys on every exit path.
         result = _agent().run(current_username(), request.form.get("query", ""))
-        return render_template("index.html", **result)
+        return render_template("index.html", suggestions=_suggestions(), **result)
 
     # GET. agent.run() is deliberately NOT called here: with an empty query it returns
     # TC-017's "Please enter a search term", so every first visit to the search page would
     # open with an error banner. That message belongs to an empty *submit*, not to arrival.
-    return render_template("index.html", **_blank_page())
+    return render_template("index.html", suggestions=_suggestions(),
+                               **_blank_page())
 
 
 # --- save / reject ------------------------------------------------------------------

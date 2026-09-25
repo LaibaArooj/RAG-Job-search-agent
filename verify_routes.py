@@ -423,6 +423,62 @@ def main():
         check("the AI card omits the description the ranked card shows",
               up_html.count("writes documentation") == 1)
 
+        print("\n7c. TC-007 — autocomplete, and TC-015 — result filters")
+        # Rendered through the ROUTE, not directly, because the suggestion list is assembled
+        # by the controller from two sources and rendering the template by hand would skip
+        # exactly the part under test.
+        home = client.get("/").get_data(as_text=True)
+
+        check("TC-007  the search box is wired to a suggestion list",
+              'list="search-suggestions"' in home and '<datalist id="search-suggestions"' in home)
+        # The literal case from the SRS: typing "tec" must be able to surface both of these.
+        # The browser does the substring matching, so what this asserts is that both phrases
+        # are actually offered to it.
+        check("TC-007  Technology is offered as a suggestion",
+              '<option value="Technology">' in home)
+        check("TC-007  Tech Support is offered as a suggestion",
+              '<option value="Tech Support">' in home)
+        # The other half of FR-011's stated source. This user searched nothing, so history is
+        # empty here; verify_agent covers the ordering rule.
+        check("TC-007  the stock suggestions all render",
+              all(('<option value="' + s + '">') in home for s in
+                  ("Writing", "Design", "Nurse", "Paralegal")))
+
+        # TC-015 needs a page that actually has results, and the route would fetch live to
+        # get them, so the filter markup is asserted on a rendered page with canned jobs.
+        with client_app.test_request_context("/"):
+            from flask import render_template, session
+
+            session["csrf_token"] = "token-for-render-only"
+            filtered = render_template(
+                "index.html",
+                jobs=[dict(JOB, description="d", normalized_score=90.0,
+                           eligibility="open", candidate_location="Worldwide"),
+                      dict(OTHER_JOB, description="d", normalized_score=80.0,
+                           eligibility="local", candidate_location="London, UK")],
+                query="developer", intent=None, ai_recommendations=None,
+                error=None, warning=None, suggestions=["Technology"],
+            )
+
+        check("TC-015  the filter chips render", 'id="js-filters"' in filtered)
+        check("TC-015  a Remote filter is offered", 'data-filter="remote"' in filtered)
+        check("TC-015  an eligibility filter is offered", 'data-filter="eligible"' in filtered)
+        check("TC-015  filters.js is loaded", "js/filters.js" in filtered)
+        # The data the filter reads. If these attributes are wrong the chips would silently
+        # hide the wrong cards, which no amount of testing the JS alone would catch.
+        check("TC-015  a remote-board job is tagged remote",
+              'data-remote="yes"' in filtered)
+        check("TC-015  an on-site job is tagged not-remote",
+              'data-remote="no"' in filtered)
+        check("TC-015  each card carries its eligibility for the filter to read",
+              'data-eligibility="open"' in filtered
+              and 'data-eligibility="local"' in filtered)
+        check("TC-015  the results are wrapped so the AI band is never filtered",
+              'id="js-results"' in filtered)
+        # A filter must never leave the page silently blank.
+        check("TC-015  an empty-filter-result message exists to be shown",
+              'id="js-filter-empty"' in filtered)
+
         print("\n8. The scores the feed reads")
         tops = db.get_top_categories(username)
         check("TC-012  top categories include writing", "writing" in tops, str(tops))
