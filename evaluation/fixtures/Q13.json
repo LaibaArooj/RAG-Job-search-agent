@@ -1,0 +1,18 @@
+{
+  "query_id": "Q13",
+  "query": "paralegal position no prior experience",
+  "profile": {
+    "country": "gb",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Remotive",
+    "Adzuna",
+    "Jobicy"
+  ],
+  "jobs": []
+}

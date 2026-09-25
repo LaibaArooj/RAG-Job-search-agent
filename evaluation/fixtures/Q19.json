@@ -1,0 +1,45 @@
+{
+  "query_id": "Q19",
+  "query": "coding job that isn't web development",
+  "profile": {
+    "country": "gb",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Adzuna"
+  ],
+  "jobs": [
+    {
+      "job_id": "1cdaf0a6ba1b56a4",
+      "title": "Frontend Web Application Developer",
+      "company": "KoboToolbox",
+      "location": "USA, Canada, Argentina, Mexico, Peru",
+      "description": "<p><strong>Location:</strong> Remote<br><strong>Availability:</strong> 35-40 hours per week<br><strong>Working hours:</strong> US East business hours<br><strong>Reporting to:</strong> Lead developer</p>\n<p><a href=\"http://www.kobotoolbox.org/\" rel=\"nofollow\">KoboToolbox</a> has an immediate opening for a Frontend Web Application Developer to fill a full-time position of approximately 35-40 hours per week, for a commitment of at least 1 year. As a member of our team, you will share in the challen",
+      "url": "https://remotive.com/remote-jobs/design/frontend-web-application-developer-2091141",
+      "salary": "$90k - $105k",
+      "source": "Remotive",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "USA, Canada, Argentina, Mexico, Peru",
+      "eligibility": "regional"
+    },
+    {
+      "job_id": "96a55d12722b1a0b",
+      "title": "Engineering Manager",
+      "company": "Canonical",
+      "location": "Remote",
+      "description": "Canonical is a leading provider of open source software and operating systems to the global enterprise and technology markets. Our platform, Ubuntu, is very widely used in breakthrough enterprise initiatives such as public cloud, data science, AI, engineering innovation, and IoT. Our customers include the world's leading public cloud and silicon providers, and industry leaders&hellip;",
+      "url": "https://jobicy.com/jobs/149575-engineering-manager",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    }
+  ]
+}

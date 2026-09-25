@@ -112,9 +112,8 @@ Eligibility is instead recorded as a **separate secondary metric, eligible@5** â
 each system's top 5 the seeker could actually apply for. That reports the benefit of the
 2026-09-23 work without contaminating the primary number.
 
-> **Decision needed before judging.** If you would rather eligibility count toward relevance,
-> change this section *now*, before any fixture is generated. Changing it afterwards invalidates
-> the pre-registration.
+> **SETTLED 2026-09-26, before any fixture was generated: eligibility does NOT count toward
+> relevance.** It is reported separately as eligible@5. This section is now frozen.
 
 ---
 
@@ -147,7 +146,7 @@ baseline. But since 2026-09-23 it is a minority of what the user sees and its li
 badged inapplicable for a non-UK seeker. Remotive's order is query-independent, and Jobicy's
 `geo=anywhere` ordering is not a keyword ranking either.
 
-The recommendation, unless overridden:
+**SETTLED 2026-09-26, before any fixture was generated:**
 
 - **Headline: Adzuna-only precision@5**, A vs B vs C. The only genuine keyword-vs-semantic contrast.
 - **Secondary: all-sources precision@5**, with the caveat stated in the same sentence as the number.

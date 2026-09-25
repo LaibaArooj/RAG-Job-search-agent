@@ -1,0 +1,46 @@
+{
+  "query_id": "Q18",
+  "query": "something in HR that isn't recruitment",
+  "profile": {
+    "country": "gb",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Remotive",
+    "Adzuna"
+  ],
+  "jobs": [
+    {
+      "job_id": "6824d077d7adbea8",
+      "title": "DevOps Engineer (Intern)",
+      "company": "Mactores",
+      "location": "Remote",
+      "description": "Mactores is the agent-native AWS modernization firm. Most modernization work doesn't ship, it stalls in pilots, slips a year, or lands at three times the budget. We exist to ship it: production systems running, legacy retired, outcomes measured. Our delivery is built on Aedeon, the agent platform built by Mactores' founders' sister company, which absorbs&hellip;",
+      "url": "https://jobicy.com/jobs/152298-devops-engineer-intern",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    },
+    {
+      "job_id": "0d61f42780f3a42d",
+      "title": "AWS DevOps Engineer (Senior)",
+      "company": "Mactores",
+      "location": "Remote",
+      "description": "Mactores is the agent-native AWS modernization firm. Most modernization work doesn't ship, it stalls in pilots, slips a year, or lands at three times the budget. We exist to ship it: production systems running, legacy retired, outcomes measured. Our delivery is built on Aedeon, the agent platform built by Mactores' founders' sister company, which absorbs&hellip;",
+      "url": "https://jobicy.com/jobs/152282-aws-devops-engineer-senior",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    }
+  ]
+}

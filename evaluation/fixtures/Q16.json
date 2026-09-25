@@ -1,0 +1,88 @@
+{
+  "query_id": "Q16",
+  "query": "job where I write stuff but not journalism",
+  "profile": {
+    "country": "gb",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Remotive",
+    "Adzuna"
+  ],
+  "jobs": [
+    {
+      "job_id": "dd577e89888aad80",
+      "title": "French (Canada) Sports Localization Specialist (Football)",
+      "company": "Welo Global",
+      "location": "Remote",
+      "description": "As a trusted global transformation partner, Welocalize accelerates the global business journey by enabling brands and companies to reach, engage, and grow international audiences. Welocalize delivers multilingual content transformation services in translation, localization, and adaptation for over 250 languages with a growing network of over 400,000 in-country linguistic resources. Driving innovation in language services, Welocalize&hellip;",
+      "url": "https://jobicy.com/jobs/151010-french-canada-sports-localization-specialist-football",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    },
+    {
+      "job_id": "30b925c2d69c4076",
+      "title": "Hebrew Sports Localization Specialist (Football)",
+      "company": "Welo Global",
+      "location": "Remote",
+      "description": "As a trusted global transformation partner, Welocalize accelerates the global business journey by enabling brands and companies to reach, engage, and grow international audiences. Welocalize delivers multilingual content transformation services in translation, localization, and adaptation for over 250 languages with a growing network of over 400,000 in-country linguistic resources. Driving innovation in language services, Welocalize&hellip;",
+      "url": "https://jobicy.com/jobs/151009-hebrew-sports-localization-specialist-football",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    },
+    {
+      "job_id": "cda4b695b1cbb94a",
+      "title": "Dutch Sports Localization Specialist (Football)",
+      "company": "Welo Global",
+      "location": "Remote",
+      "description": "As a trusted global transformation partner, Welocalize accelerates the global business journey by enabling brands and companies to reach, engage, and grow international audiences. Welocalize delivers multilingual content transformation services in translation, localization, and adaptation for over 250 languages with a growing network of over 400,000 in-country linguistic resources. Driving innovation in language services, Welocalize&hellip;",
+      "url": "https://jobicy.com/jobs/151006-dutch-sports-localization-specialist-football",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    },
+    {
+      "job_id": "f2cc762084afc4ff",
+      "title": "Slovak Sports Localization Specialist (Football)",
+      "company": "Welo Global",
+      "location": "Remote",
+      "description": "As a trusted global transformation partner, Welocalize accelerates the global business journey by enabling brands and companies to reach, engage, and grow international audiences. Welocalize delivers multilingual content transformation services in translation, localization, and adaptation for over 250 languages with a growing network of over 400,000 in-country linguistic resources. Driving innovation in language services, Welocalize&hellip;",
+      "url": "https://jobicy.com/jobs/151005-slovak-sports-localization-specialist-football",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    },
+    {
+      "job_id": "aaaedc552b37e51f",
+      "title": "Ukrainian Sports Localization Specialist (Football)",
+      "company": "Welo Global",
+      "location": "Remote",
+      "description": "As a trusted global transformation partner, Welocalize accelerates the global business journey by enabling brands and companies to reach, engage, and grow international audiences. Welocalize delivers multilingual content transformation services in translation, localization, and adaptation for over 250 languages with a growing network of over 400,000 in-country linguistic resources. Driving innovation in language services, Welocalize&hellip;",
+      "url": "https://jobicy.com/jobs/151004-ukrainian-sports-localization-specialist-football",
+      "salary": null,
+      "source": "Jobicy",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Anywhere",
+      "eligibility": "open"
+    }
+  ]
+}

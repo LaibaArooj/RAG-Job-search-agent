@@ -1,0 +1,18 @@
+{
+  "query_id": "Q03",
+  "query": "work with numbers but not boring",
+  "profile": {
+    "country": "gb",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Remotive",
+    "Adzuna",
+    "Jobicy"
+  ],
+  "jobs": []
+}
