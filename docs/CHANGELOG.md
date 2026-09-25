@@ -11,6 +11,46 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-25 — TC-009 closed: the LLM-outage fallback is now measured
+
+TC-009 is the test case behind FR-018 — *"Groq API down (mocked) → raw ranked results shown,
+no crash, AI section hidden gracefully"* — and it was the one SRS test case with no assertion
+carrying its name. Closed now, in three places it was not covered before.
+
+### Why the existing checks were not enough
+
+`test_rag_fallback` already asserted the fallback, but through `StubRAG(reply=None)`. That
+proves the **agent** copes with a `None`; it never once executed `RAGPipeline`'s own
+`try/except`. **The line FR-018 actually rests on was unmeasured** — which is precisely why a
+dead Groq model went unnoticed from 2026-09-21 to 2026-09-23 while the AI panel was silently
+absent from every single search.
+
+### Added
+
+- **`verify_agent.py`** — `_DownGroq`, a client double whose completion call raises, standing
+  in for TC-009's "Groq API down (mocked)". Asserts `RAGPipeline.run` returns `None` rather
+  than raising. Plus `_BlankGroq` for the second route to an empty panel: a call that
+  *succeeds* and returns whitespace, which without `text or self.fallback()` would render an
+  empty highlighted band rather than no band. Plus the no-jobs path, which must cost no call.
+- **`verify_agent.py`** — an outage raises no `warning` banner either. The banner belongs to
+  a failed *source*, not a failed LLM; a Groq outage costs the explanation and nothing else.
+- **`verify_routes.py` §7b** — TC-009's remaining claim is about the *page*, so it is asserted
+  on rendered HTML: the band is absent, the ranked cards and their decision groups still
+  render, no error banner, no traceback. Rendered directly rather than POSTed, so it costs no
+  Adzuna quota and no Groq call.
+
+### The control that makes it mean something
+
+§7b also renders the **same page with a working reply** and asserts the band *is* present.
+Without it, a template that never rendered the band under any condition would pass every
+other assertion — the check would be measuring a typo in the section name rather than the
+fallback. A one-sided assertion about something being absent is usually worth this little.
+
+`verify_all.py --offline`: 362 → **371 passed, 0 failed**. All 22 test cases now have at
+least one assertion except TC-007 (autocomplete) and TC-015 (filters), both unbuilt.
+
+---
+
 ## 2026-09-23 — Per-user source selection: the country field
 
 The eligibility badges shipped earlier the same day made the problem visible; they did not

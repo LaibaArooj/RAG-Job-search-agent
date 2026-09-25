@@ -360,6 +360,40 @@ def main():
         check("a populated feed shows no empty-state message",
               "No personalised feed yet" not in feed_html)
 
+        print("\n7b. TC-009 — the AI band is hidden when Groq is unavailable")
+        # verify_agent.py proves RAGPipeline returns None on an outage and that the agent
+        # passes that through. TC-009's remaining claim is about the PAGE: "AI section hidden
+        # gracefully, raw ranked results shown, no crash". That is a rendering fact, so it is
+        # asserted on rendered HTML. Rendered directly rather than POSTed, so it costs no
+        # Adzuna quota and no Groq call -- the same trick the feed check above uses.
+        ranked = [dict(JOB, description="writes documentation", normalized_score=91.2,
+                       eligibility="open", candidate_location="Worldwide")]
+
+        with client_app.test_request_context("/"):
+            from flask import render_template, session
+
+            session["csrf_token"] = "token-for-render-only"
+            page_args = dict(jobs=ranked, query="technical writer", intent=None,
+                             error=None, warning=None)
+            down_html = render_template("index.html", ai_recommendations=None, **page_args)
+            up_html = render_template(
+                "index.html", ai_recommendations="1. Technical Writer — Example Ltd",
+                **page_args
+            )
+
+        check("TC-009  the AI Recommendations band is absent when Groq failed",
+              "AI Recommendations" not in down_html)
+        check("TC-009  the ranked results are still rendered",
+              JOB["title"] in down_html and "js-decision-group" in down_html)
+        check("TC-009  the page shows no error banner for an LLM outage",
+              "alert-danger" not in down_html)
+        check("TC-009  no stack trace reaches the page", "Traceback" not in down_html)
+        # The control. Without it, a template that never rendered the band under ANY
+        # condition would pass every assertion above -- the check would be measuring a typo
+        # in the section name rather than the fallback.
+        check("TC-009  the same page DOES show the band when Groq answers",
+              "AI Recommendations" in up_html)
+
         print("\n8. The scores the feed reads")
         tops = db.get_top_categories(username)
         check("TC-012  top categories include writing", "writing" in tops, str(tops))

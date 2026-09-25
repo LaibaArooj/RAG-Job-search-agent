@@ -133,7 +133,7 @@ SRS test cases TC-001 to TC-018, plus TC-019 to TC-022 added for the deviations.
 | TC-006 | Semantic search — intent match | `verify_agent.py`, `verify_live.py` | ✅ |
 | TC-007 | Autocomplete — partial match | — | ❌ **M4, not built** |
 | TC-008 | RAG LLM response | `verify_live.py` | ✅ (live only) |
-| TC-009 | LLM unavailable — section hidden, no crash | — | ⚠️ **implemented, not asserted** |
+| TC-009 | LLM unavailable — section hidden, no crash | `verify_agent.py`, `verify_routes.py` | ✅ (closed 2026-09-25) |
 | TC-010 | Save job — score +1 | `verify_db.py`, `verify_routes.py` | ✅ |
 | TC-011 | Reject job — score −1 | `verify_db.py`, `verify_routes.py`, `verify_agent.py` | ✅ |
 | TC-012 | For You feed — personalised, rejected absent | `verify_db.py`, `verify_routes.py`, `verify_agent.py` | ✅ |

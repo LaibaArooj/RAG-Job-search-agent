@@ -641,19 +641,100 @@ def jobs_as_dicts(cards):
 # --- RAG failure and caching --------------------------------------------------------
 
 
+class _DownGroq:
+    """Groq client double whose completion call raises — TC-009's "Groq API down (mocked)"."""
+
+    class _Completions:
+        def create(self, **kwargs):
+            """Raise the way the SDK does on a transport failure, a 404 or a 429."""
+            raise RuntimeError("Groq API is down (simulated)")
+
+    class _Chat:
+        completions = None
+
+    def __init__(self):
+        """Wire the nested chat.completions shape the real SDK exposes."""
+        self.chat = self._Chat()
+        self.chat.completions = self._Completions()
+
+
+class _BlankGroq:
+    """Groq client double that answers successfully with empty content."""
+
+    class _Message:
+        content = "   "
+
+    class _Choice:
+        message = None
+
+    class _Response:
+        choices = None
+
+    class _Completions:
+        def create(self, **kwargs):
+            """Return a well-formed response whose content is whitespace only."""
+            choice = _BlankGroq._Choice()
+            choice.message = _BlankGroq._Message()
+            response = _BlankGroq._Response()
+            response.choices = [choice]
+            return response
+
+    class _Chat:
+        completions = None
+
+    def __init__(self):
+        """Wire the nested chat.completions shape the real SDK exposes."""
+        self.chat = self._Chat()
+        self.chat.completions = self._Completions()
+
+
 def test_rag_fallback():
-    """FR-018: a Groq failure hides the AI band but still returns the full ranked list."""
-    print("\nFR-018 — RAG fallback")
+    """TC-009 / FR-018: a Groq failure hides the AI band but still returns the ranked list."""
+    print("\nTC-009 / FR-018 — RAG fallback")
+
+    from core.rag_pipeline import RAGPipeline
+
+    sample = [{"title": "Dev", "company": "Acme", "description": "python",
+               "eligibility": "open", "candidate_location": "Worldwide"}]
+
+    # TC-009 proper. Until 2026-09-25 the only fallback assertions used StubRAG(reply=None),
+    # which proves the AGENT copes with a None -- it never once exercised RAGPipeline's own
+    # try/except, so the line FR-018 actually rests on was unmeasured. It was a dead model
+    # (2026-09-23) rather than a test that caught the AI panel silently vanishing.
+    down = RAGPipeline()
+    down.client = _DownGroq()
+    check("TC-009  a Groq outage returns None rather than raising",
+          down.run("developer", sample) is None)
+
+    # The other route to an empty panel: a call that succeeds and says nothing. `text or
+    # self.fallback()` handles it, and an empty string reaching the template would render an
+    # empty highlighted band rather than no band at all.
+    blank = RAGPipeline()
+    blank.client = _BlankGroq()
+    check("TC-009  a blank reply also falls back", blank.run("developer", sample) is None)
+
+    # No jobs means no prompt worth building, and it must not cost a Groq call.
+    never_called = RAGPipeline()
+    never_called.client = _DownGroq()
+    check("TC-009  an empty job list returns None without calling Groq",
+          never_called.run("developer", []) is None)
+
+    # Agent level: the ranked list survives the outage intact.
     jobs = [card(f"Job {i}") for i in range(8)]
     scores = {f"Job {i}": 0.9 - i / 100 for i in range(8)}
     install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
 
     rag = StubRAG(reply=None)
     result = JobSearchAgent(StubDB(), StubEngine(scores), rag).run("laiba", "q")
-    check("a RAG failure returns no recommendations", result["ai_recommendations"] is None)
-    check("a RAG failure does not set an error", result["error"] is None)
-    check("the full ranked list is still returned", len(result["jobs"]) == 8)
+    check("TC-009  a RAG failure returns no recommendations",
+          result["ai_recommendations"] is None)
+    check("TC-009  a RAG failure does not set an error", result["error"] is None)
+    check("TC-009  the full ranked list is still returned", len(result["jobs"]) == 8)
     check("only the top 5 were sent to the LLM", len(rag.received) == 5)
+    # The banner belongs to a failed SOURCE, not a failed LLM. A Groq outage costs the
+    # explanation and nothing else, so warning stays None and the user sees no alarm.
+    check("TC-009  a RAG failure raises no warning banner either",
+          result["warning"] is None)
 
 
 def test_cache():
