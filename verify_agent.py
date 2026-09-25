@@ -110,15 +110,21 @@ class StubEngine:
 
 
 class StubRAG:
-    """RAG pipeline double returning canned prose, or None to simulate a Groq failure."""
+    """RAG pipeline double returning canned picks, or None to simulate a Groq failure."""
 
-    def __init__(self, reply="AI picks go here"):
+    # Since 2026-09-25 RAGPipeline returns [{"index", "reason"}], not prose, because the AI
+    # panel renders real job cards. A double still returning a string would keep passing its
+    # own assertions while the production join broke -- the same shape of gap that let
+    # TC-021 sit green for a day while query expansion did not happen.
+    DEFAULT = ({"index": 1, "reason": "canned reason"},)
+
+    def __init__(self, reply="__default__"):
         """Store the canned reply (None simulates the FR-018 fallback)."""
-        self.reply = reply
+        self.reply = list(self.DEFAULT) if reply == "__default__" else reply
         self.received = None
 
     def run(self, query, jobs):
-        """Record the jobs it was handed and return the canned reply."""
+        """Record the jobs it was handed and return the canned picks."""
         self.received = jobs
         return self.reply
 
@@ -540,6 +546,78 @@ def test_country_source_selection():
     JobSearchAgent(StubDB(context={"country": "gb"}), StubEngine({"UK Dev": 0.9}),
                    StubRAG()).run("laiba", "q")
     check("a covered country is passed through unchanged", recorder.countries == ["gb"])
+
+
+def _raises(fn, *args):
+    """Return True if fn(*args) raises ValueError — used for the reply-validation cases."""
+    try:
+        fn(*args)
+    except ValueError:
+        return True
+    return False
+
+
+def test_rag_structured_picks():
+    """The AI panel renders real job cards, so RAGPipeline must return indices, not prose."""
+    print("\nAI picks — structured output and the join")
+
+    from core.rag_pipeline import MAX_PICKS, RAGPipeline
+
+    v = RAGPipeline.validate_picks
+
+    check("a well-formed reply is accepted",
+          v({"picks": [{"index": 1, "reason": "good"}]}, 5)
+          == [{"index": 1, "reason": "good"}])
+    # The index selects which of OUR job dicts becomes a card with a live Save button, so an
+    # out-of-range value would either crash the join or attach the reasoning to the wrong job.
+    check("an out-of-range index is refused", _raises(v, {"picks": [{"index": 9, "reason": "x"}]}, 5))
+    check("a zero index is refused", _raises(v, {"picks": [{"index": 0, "reason": "x"}]}, 5))
+    # bool is a subclass of int in Python, so True would otherwise sail through as index 1.
+    check("a boolean index is refused", _raises(v, {"picks": [{"index": True, "reason": "x"}]}, 5))
+    check("a blank reason is refused", _raises(v, {"picks": [{"index": 1, "reason": "  "}]}, 5))
+    check("a missing picks list is refused", _raises(v, {"nope": 1}, 5))
+    # An empty list would render an AI band containing nothing, which is worse than no band.
+    check("an empty picks list is refused", _raises(v, {"picks": []}, 5))
+    check("a duplicate index is dropped, not repeated",
+          v({"picks": [{"index": 1, "reason": "a"}, {"index": 1, "reason": "b"}]}, 5)
+          == [{"index": 1, "reason": "a"}])
+    check("more than three picks are capped",
+          len(v({"picks": [{"index": i, "reason": "r"} for i in range(1, 6)]}, 5)) == MAX_PICKS)
+    check("a long reason is truncated",
+          len(v({"picks": [{"index": 1, "reason": "x" * 999}]}, 5)[0]["reason"]) == 400)
+
+    # The join is what makes the panel safe: the model supplies an index and a sentence, and
+    # every other field on the card comes from the dict we passed it.
+    candidates = [
+        {"title": "First", "url": "https://example.com/1", "job_id": "a", "category": "writing"},
+        {"title": "Second", "url": "https://example.com/2", "job_id": "b", "category": "technology"},
+    ]
+    joined = JobSearchAgent.join_picks([{"index": 2, "reason": "because"}], candidates)
+    check("the pick is joined onto the right job", joined[0]["title"] == "Second")
+    check("the reason rides along", joined[0]["ai_reason"] == "because")
+    check("the real url comes from our data, never the model",
+          joined[0]["url"] == "https://example.com/2")
+    check("the job_id survives, so Save still deduplicates", joined[0]["job_id"] == "b")
+    # Copied, not mutated: the same dict is rendered again in the ranked list below, and it
+    # must not pick up an AI reason it is not supposed to show.
+    check("the original candidate dict is not mutated", "ai_reason" not in candidates[1])
+    check("no picks means no panel", JobSearchAgent.join_picks(None, candidates) is None)
+    check("an empty pick list means no panel",
+          JobSearchAgent.join_picks([], candidates) is None)
+
+    # End to end through run(): the panel is a list of real jobs, not a string.
+    jobs = [card("Alpha"), card("Beta")]
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+    rag = StubRAG(reply=[{"index": 1, "reason": "top pick"}])
+    result = JobSearchAgent(StubDB(), StubEngine({"Alpha": 0.9, "Beta": 0.5}), rag).run(
+        "laiba", "q"
+    )
+    panel = result["ai_recommendations"]
+    check("run() returns a list of jobs, not prose", isinstance(panel, list))
+    check("the panel job carries everything a card needs",
+          {"title", "url", "job_id", "category", "ai_reason"} <= set(panel[0]))
+    check("the panel job is one the pipeline actually ranked",
+          panel[0]["job_id"] in {j["job_id"] for j in result["jobs"]})
 
 
 def test_rag_prompt_states_eligibility():
@@ -1152,6 +1230,7 @@ def main():
         test_category_boost()
         test_classification()
         test_country_source_selection()
+        test_rag_structured_picks()
         test_rag_prompt_states_eligibility()
         test_rag_fallback()
         test_cache()

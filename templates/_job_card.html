@@ -1,0 +1,111 @@
+{# One job card, used everywhere a job is shown: the ranked results, the For You feed, and
+   the AI Recommendations panel.
+
+   Extracted 2026-09-25. Until then this block was copy-pasted between index.html and
+   feed.html, and the two had already drifted once -- feed.html posted
+   category="{{ job.source | lower }}", which is not in config.CATEGORIES and would have
+   reached the user as a 500 on every click. It was unreachable only because the feed
+   rendered no jobs yet. One definition means that particular bug cannot recur.
+
+   Parameters:
+     job      - the job dict, exactly as JobSearchAgent.run / build_feed produce it
+     reason   - the LLM's explanation, shown only in the AI panel (never from job data)
+     badge    - "score" for "% match" (search), "band" for the feed's match band, "" for none
+     compact  - drop the description, for the AI panel where the same jobs appear again below
+#}
+{% macro job_card(job, reason=None, badge="score", compact=False) %}
+<div class="card mb-3">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-start mb-1">
+            <h5 class="card-title mb-0">{{ job.title }}</h5>
+            <div class="d-flex gap-2 ms-2">
+                {# FR-019's match-quality wording is decided by core.agent.match_band, NOT
+                   here -- the thresholds are a constant a verify script can assert on, which
+                   they would not be if they lived in markup. #}
+                {% if badge == "band" and job.match_band %}
+                <span class="badge bg-success">{{ job.match_band }}</span>
+                {% elif badge == "score" and job.normalized_score is defined %}
+                <span class="badge bg-success">
+                    {{ job.normalized_score | round(1) }}% match
+                </span>
+                {% endif %}
+
+                {% if job.source is defined %}
+                <span class="badge bg-secondary">{{ job.source }}</span>
+                {% endif %}
+
+                {# Where the CANDIDATE may live, which is not where the job is. A listing that
+                   will reject you on location is not a result, so this is shown on every card
+                   rather than buried in the description. "unclear" is a real state and is
+                   never guessed at -- see models/job_card.py remote_eligibility. #}
+                {% if job.eligibility == "open" %}
+                <span class="badge bg-success">🌍 Open worldwide</span>
+                {% elif job.eligibility == "regional" %}
+                <span class="badge bg-warning text-dark"
+                      title="This employer only hires from these places">
+                    Only: {{ job.candidate_location }}
+                </span>
+                {% elif job.eligibility == "local" %}
+                <span class="badge bg-danger"
+                      title="An on-site role in this location, not a remote-from-anywhere job">
+                    Local role — {{ job.candidate_location or job.location }}
+                </span>
+                {% elif job.eligibility == "unknown" %}
+                <span class="badge bg-light text-dark border"
+                      title="The listing does not say where it will hire from — check before applying">
+                    Location terms unclear
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <p class="card-subtitle text-muted mb-2">
+            {{ job.company }} — {{ job.location }}
+        </p>
+
+        {% if reason %}
+        {# The ONLY text on this card that came from the LLM. Everything else -- url, job_id,
+           category, eligibility -- comes from our own pipeline, so a hallucinated title or
+           link is not possible by construction. Labelled as AI-generated because limitation 5
+           in docs/PROJECT_SPEC.md says these explanations are unverifiable. #}
+        <p class="card-text small fst-italic text-body-secondary mb-2">
+            <span class="badge bg-warning text-dark me-1">AI</span>{{ reason }}
+        </p>
+        {% endif %}
+
+        {% if not compact %}
+        <p class="card-text small">
+            {{ job.description[:200] | striptags }}...
+        </p>
+        {% endif %}
+
+        {# Save / Reject post with fetch (static/js/decisions.js) rather than submitting a
+           form, because the ranked list only exists in this response -- a redirect would lose
+           it and re-running the search would cost a second Groq call per click. The job's
+           fields ride on the group's data-* attributes; category is the one the agent
+           assigned from the job's own text, NOT the source name. #}
+        <div class="d-flex gap-2 align-items-center mt-2 js-decision-group"
+             data-job-id="{{ job.job_id }}"
+             data-title="{{ job.title }}"
+             data-company="{{ job.company }}"
+             data-location="{{ job.location }}"
+             data-source="{{ job.source }}"
+             data-url="{{ job.url }}"
+             data-category="{{ job.category }}">
+
+            <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer"
+               class="btn btn-outline-primary btn-sm">View Job</a>
+
+            <button type="button" class="btn btn-success btn-sm js-decision"
+                    data-decision="save">Save</button>
+
+            <button type="button" class="btn btn-outline-danger btn-sm js-decision"
+                    data-decision="reject">Reject</button>
+
+            <span class="small text-danger js-decision-error d-none"></span>
+        </div>
+
+    </div>
+</div>
+{% endmacro %}

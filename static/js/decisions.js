@@ -42,14 +42,34 @@
         });
     }
 
+    /* Settles EVERY group showing this job, not just the one clicked.
+     *
+     * Since 2026-09-25 the AI Recommendations panel renders the same jobs as real cards, so a
+     * job can appear twice on one page. Settling only the clicked copy would leave the other
+     * reading "Save", inviting a second click that the server correctly answers with
+     * already=true -- no data problem, but it looks broken.
+     *
+     * The job_id is the key because that is what the routes deduplicate on (TC-013), so two
+     * cards sharing one are by definition the same listing. */
     function settle(button, decision) {
-        var group = button.closest(".js-decision-group");
-        group.querySelectorAll(".js-decision").forEach(function (other) {
-            other.disabled = true;
+        var clicked = button.closest(".js-decision-group");
+        var jobId = clicked.dataset.jobId;
+        var groups = jobId
+            ? document.querySelectorAll('.js-decision-group[data-job-id="' + jobId + '"]')
+            : [clicked];
+
+        groups.forEach(function (group) {
+            group.querySelectorAll(".js-decision").forEach(function (other) {
+                other.disabled = true;
+                /* Match by decision rather than by identity: the twin card's button is a
+                 * different element, so `button` alone would relabel only one of them. */
+                if (other.dataset.decision === decision) {
+                    other.textContent = decision === "save" ? SAVE_LABEL : REJECT_LABEL;
+                    other.classList.remove("btn-success", "btn-outline-danger");
+                    other.classList.add("btn-secondary");
+                }
+            });
         });
-        button.textContent = decision === "save" ? SAVE_LABEL : REJECT_LABEL;
-        button.classList.remove("btn-success", "btn-outline-danger");
-        button.classList.add("btn-secondary");
     }
 
     function body(group, decision) {

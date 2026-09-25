@@ -333,8 +333,18 @@ def main():
         feed_src = io.open("templates/feed.html", encoding="utf-8").read()
         check("feed.html no longer posts the source name as a category",
               "job.source | lower" not in feed_src)
-        check("feed.html uses the same decision markup",
-              "js-decision-group" in feed_src and "js/decisions.js" in feed_src)
+        # As of 2026-09-25 both templates render cards through templates/_job_card.html, so
+        # this asserts the DUPLICATION IS GONE rather than that two copies happen to agree.
+        # The job.source|lower bug above existed because there were two copies and only one
+        # was fixed; with one definition that particular drift cannot recur.
+        index_src = io.open("templates/index.html", encoding="utf-8").read()
+        check("feed.html renders cards through the shared macro",
+              "_job_card.html" in feed_src and "job_card(" in feed_src)
+        check("index.html renders cards through the same macro",
+              "_job_card.html" in index_src and "job_card(" in index_src)
+        check("neither template still carries its own copy of the decision markup",
+              "js-decision-group" not in feed_src and "js-decision-group" not in index_src)
+        check("feed.html still loads decisions.js", "js/decisions.js" in feed_src)
 
         # Rendered directly rather than through the route, so a populated feed can be
         # asserted without the live fetch a real one would trigger.
@@ -376,8 +386,11 @@ def main():
             page_args = dict(jobs=ranked, query="technical writer", intent=None,
                              error=None, warning=None)
             down_html = render_template("index.html", ai_recommendations=None, **page_args)
+            # ai_recommendations is a list of REAL job dicts carrying ai_reason since
+            # 2026-09-25, not prose -- the panel renders live cards with working buttons.
             up_html = render_template(
-                "index.html", ai_recommendations="1. Technical Writer — Example Ltd",
+                "index.html",
+                ai_recommendations=[dict(ranked[0], ai_reason="Matches your search.")],
                 **page_args
             )
 
@@ -393,6 +406,22 @@ def main():
         # in the section name rather than the fallback.
         check("TC-009  the same page DOES show the band when Groq answers",
               "AI Recommendations" in up_html)
+
+        # Issue #2 from the 2026-09-23 browser session: the AI picks were a <pre> block, so
+        # the three most prominent jobs on the page were the only ones you could not act on.
+        check("an AI pick renders as a real card with a decision group",
+              up_html.count("js-decision-group") == 2)
+        check("the AI pick carries the job_id the routes deduplicate on",
+              up_html.count('data-job-id="' + JOB["job_id"] + '"') == 2)
+        check("the AI pick's Save and Reject buttons render",
+              up_html.count(">Save<") == 2 and up_html.count(">Reject<") == 2)
+        check("the AI pick shows the model's reason", "Matches your search." in up_html)
+        check("the reason is labelled as AI-generated",
+              'class="badge bg-warning text-dark me-1">AI<' in up_html)
+        # Compact: the same three jobs appear again in full below, so repeating the
+        # description would make the user scroll past identical text twice.
+        check("the AI card omits the description the ranked card shows",
+              up_html.count("writes documentation") == 1)
 
         print("\n8. The scores the feed reads")
         tops = db.get_top_categories(username)

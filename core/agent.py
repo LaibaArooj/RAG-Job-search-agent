@@ -440,6 +440,27 @@ class JobSearchAgent:
         # prompt. An empty panel would teach them nothing.
         return (applicable + rest)[:top_k]
 
+    @staticmethod
+    def join_picks(picks, candidates):
+        """Attach each LLM reason to the real job dict its index names, or return None."""
+        # THE boundary that makes the AI panel safe to render as live job cards. The model
+        # returns an index and a sentence; every other field on the resulting card -- url,
+        # job_id, category, eligibility -- comes from the dict WE passed it. A hallucinated
+        # title or a fabricated link is therefore not possible, rather than merely unlikely.
+        #
+        # The index is 1-based because the prompt numbers the jobs "Job 1:" upward, and
+        # RAGPipeline.validate_picks has already guaranteed it is in range.
+        if not picks:
+            return None
+        joined = []
+        for pick in picks:
+            job = candidates[pick["index"] - 1]
+            # Copied, not mutated: the same dict object is rendered again in the ranked list
+            # below, and writing onto it would leak the AI reason onto a card that is not
+            # supposed to carry one.
+            joined.append(dict(job, ai_reason=pick["reason"]))
+        return joined or None
+
     # --- pipeline -----------------------------------------------------------------
 
     def _empty_result(self, query, error, intent=None):
@@ -521,7 +542,10 @@ class JobSearchAgent:
         # Groq call #2. RAGPipeline.run returns None on failure, and the template hides the
         # AI band when ai_recommendations is falsy, so a Groq outage costs the explanation
         # and nothing else. The ranked list is still rendered in full (FR-018).
-        ai_recommendations = self.rag_pipeline.run(query, self.rag_candidates(jobs))
+        # The candidate list is held so the picks can be joined back onto it. RAGPipeline
+        # returns indices INTO THIS LIST, so recomputing it here would risk the two drifting.
+        rag_jobs = self.rag_candidates(jobs)
+        ai_recommendations = self.join_picks(self.rag_pipeline.run(query, rag_jobs), rag_jobs)
 
         try:
             self.db.add_search_history(user_id, query)

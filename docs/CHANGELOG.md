@@ -11,6 +11,89 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-25 — AI Recommendations are real job cards, not prose
+
+Issue #2 from the 2026-09-23 browser session, and the last of those five findings to close.
+The AI panel rendered a `<pre>` block, so **the three most prominent jobs on the page were the
+only ones the user could not act on** — no Save, no Reject, no link.
+
+### The constraint that shaped the design
+
+**The LLM never supplies job data.** It returns an *index* and a *sentence*:
+
+```json
+{"picks": [{"index": 2, "reason": "..."}]}
+```
+
+`JobSearchAgent.join_picks` maps that index onto the real job dict it passed in, so every
+field on the rendered card — `url`, `job_id`, `category`, `eligibility` — comes from our own
+pipeline. A hallucinated title or a fabricated link is **impossible by construction** rather
+than merely unlikely, which matters because limitation 5 already says these explanations are
+unverifiable.
+
+### Division of labour
+
+| Component | Owns |
+|---|---|
+| `RAGPipeline` | prompt, call, JSON parse, validation → `[{index, reason}]` or `None` |
+| `JobSearchAgent.join_picks` | joins picks onto real jobs → list of job dicts with `ai_reason` |
+| `templates/_job_card.html` | renders a job dict as a card, with or without a reason |
+
+`RAGPipeline` never touches job data it was not given; the agent never parses model output.
+
+### Added
+
+- `RAGPipeline.validate_picks` — index is an int (not a bool — `bool` subclasses `int`, so
+  `True` would otherwise pass as index 1) within range, duplicates dropped, capped at
+  `MAX_PICKS`, reason non-empty and truncated to `REASON_LIMIT`. Any failure raises, and the
+  single `except` turns it into the FR-018 fallback. **TC-009 is unchanged.**
+- `JobSearchAgent.join_picks`.
+- **`templates/_job_card.html`** — one macro, used by the ranked results, the feed and the AI
+  panel.
+
+### Changed
+
+- **`RAGPipeline.run` returns structured data, not prose.** Strict by choice: a reply that
+  will not parse yields `None` and the band is hidden, rather than falling back to printing
+  raw text. One contract is easier to defend than two, and a prose path exercised only when
+  the model misbehaves is exactly the kind of branch that rots untested — which is how the
+  `groq/compound-mini` 404 hid for two days.
+- `_extract_json` **moved** from `intent_parser` to `rag_pipeline`. Both Groq call sites need
+  it and `intent_parser` already imports `GROQ_MODEL` from there, so this is the direction
+  that does not create a cycle. One parser, so the two cannot drift in how forgiving they are.
+- `decisions.js` settles **every** group sharing a `job_id`, not just the clicked one. A job
+  now appears twice on the page, and settling one copy left the other reading "Save".
+- The prompt requires each reason to stand alone. Observed before the fix: *"Again, the
+  position is open worldwide…"* — the model wrote them as one flowing list, which reads as a
+  non-sequitur once split across cards.
+
+### The duplication that caused a real bug is gone
+
+`index.html` and `feed.html` each carried their own copy of the card markup, and they had
+already drifted once: `feed.html` posted `category="{{ job.source | lower }}"`, which is not
+in `CATEGORIES` and would have been a 500 on every click. It was unreachable only because the
+feed rendered no jobs yet. `verify_routes.py` now asserts the duplication is **absent**,
+rather than asserting that two copies happen to agree.
+
+### Verified
+
+`verify_all.py --offline`: 371 → **400 passed, 0 failed**. Live: three picks returned, all
+real ranked jobs, all with valid URLs.
+
+Two unplanned resilience tests happened during the live runs and both passed: **Jobicy's DNS
+failed** mid-search and **Remotive timed out** on another. Both times the search still
+returned ranked jobs, a valid structured panel, and the partial-source warning banner.
+
+### An honest finding the panel now surfaces
+
+For a Pakistan-based user searching "junior frontend developer", the model wrote *"This role
+is not a junior frontend position… but it is remote with no geographic restriction."* That is
+**correct**: the worldwide-eligible pool contains no junior frontend roles for that query. The
+panel is now reporting the recall ceiling rather than confabulating a fit — good behaviour,
+and a concrete illustration of limitation 1 for the report.
+
+---
+
 ## 2026-09-25 — TC-009 closed: the LLM-outage fallback is now measured
 
 TC-009 is the test case behind FR-018 — *"Groq API down (mocked) → raw ranked results shown,

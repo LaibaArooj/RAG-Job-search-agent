@@ -24,7 +24,6 @@ Two rules shape the whole module:
    and that exists for the demo and the report, not for control flow.
 """
 
-import json
 import os
 import re
 
@@ -44,7 +43,7 @@ from config import (
     WORK_TYPE_HINTS,
     WORK_TYPES,
 )
-from core.rag_pipeline import GROQ_MODEL
+from core.rag_pipeline import GROQ_MODEL, _extract_json
 
 # At most three variants including the original query, per docs/PROJECT_SPEC.md § M2.
 # The cap is enforced here rather than trusted to the prompt: each extra variant is another
@@ -133,18 +132,6 @@ def _build_prompt(query):
         f'For "category" there is no null -- if nothing fits, use "other".\n'
         f"Reply with the JSON object only. No markdown, no commentary."
     )
-
-
-def _extract_json(text):
-    """Pull the first JSON object out of a model reply, tolerating markdown fences."""
-    # Models wrap JSON in ```json fences often enough that failing on it would send working
-    # replies down the fallback path. Slicing between the outermost braces handles fences,
-    # preambles and trailing prose in one step.
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end < start:
-        raise ValueError("no JSON object in reply")
-    return json.loads(text[start : end + 1])
 
 
 def _validate_variants(raw, query):

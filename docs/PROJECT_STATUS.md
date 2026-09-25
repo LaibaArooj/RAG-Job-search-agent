@@ -1,6 +1,6 @@
 Last updated: 2026-09-23 (**M4 in progress.** Four defects found by using the app as a real
 user are fixed; Jobicy added as a third source and per-user source selection shipped, so a
-user in Pakistan now sees 31 applicable jobs where they saw 6. **362/362 offline checks
+user in Pakistan now sees 31 applicable jobs where they saw 6. **400/400 offline checks
 green** across five scripts. Deadline revised: at least two more months, not one.)
 
 ## Where we left off — 2026-09-23 (first real browser session)
@@ -13,7 +13,7 @@ says" and "the product does what a user needs".
 | # | Symptom | Verdict | Status |
 |---|---|---|---|
 | 1 | "My user isn't in MongoDB" | Not a bug — login only reads; was looking at the wrong DB name | Closed |
-| 2 | AI picks have no Save/Reject buttons | Design gap — `RAGPipeline` returns prose | **Open** |
+| 2 | AI picks have no Save/Reject buttons | Design gap — `RAGPipeline` returned prose | Fixed 2026-09-25 |
 | 3 | Feed ≠ saved jobs | Working as designed, plus two design gaps | **Open** |
 | 4 | Searched software, got a `design` score | **Bug** — `"ui"` matched inside "suited" | Fixed 2026-09-22 |
 | 5 | Profile "View" reloads the page | **Bug** — template read `job.url`, DB stores `source_url` | Fixed 2026-09-22 |
