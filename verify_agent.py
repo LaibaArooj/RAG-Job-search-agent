@@ -557,6 +557,43 @@ def _raises(fn, *args):
     return False
 
 
+def test_cache_requires_a_searching_source():
+    """A pool no searching source contributed to must not be cached (found live 2026-09-25)."""
+    print("\nJob cache — only cache a pool a real search produced")
+
+    # This existed as a live-only check and therefore was not caught when it broke. The rule
+    # used to be `"Adzuna" in empty_sources`; once Adzuna became skippable per country it was
+    # never in empty_sources for those users, so the guard could not fire and their searches
+    # cached pools built from Remotive alone -- the source that ignores its search parameter.
+    # Asserted offline now, because a rule only one script can see is a rule that rots.
+    def cached_after(jobs, failed=None, empty=None):
+        """Run one search with these canned sources and return what reached the cache."""
+        install(FetchRecorder(by_variant={"q": jobs}, failed_sources=failed or [],
+                              empty_sources=empty or []), fixed_intent("q"))
+        db = StubDB()
+        scores = {j.title: 0.5 for j in jobs}
+        JobSearchAgent(db, StubEngine(scores), StubRAG()).run("laiba", "q")
+        return db.cache_writes
+
+    check("a pool with Adzuna in it is cached",
+          len(cached_after([card("A", source="Adzuna")])) == 1)
+    check("a pool with Jobicy in it is cached",
+          len(cached_after([card("B", source="Jobicy")])) == 1)
+    # The regression. Remotive returns the same fixed list for every query, so a pool built
+    # from it alone is the "same 20 jobs for everything" state and must not be pinned for an
+    # hour. Before 2026-09-25 this was cached for any user whose country skipped Adzuna.
+    check("a pool built from Remotive alone is NOT cached",
+          len(cached_after([card("C", source="Remotive")])) == 0)
+    check("Remotive plus a searching source IS cached",
+          len(cached_after([card("D", source="Remotive"),
+                            card("E", source="Jobicy")])) == 1)
+    # A failed source still blocks the write, or an outage would outlive the API's recovery.
+    check("a failed source still blocks the cache write",
+          len(cached_after([card("F", source="Jobicy")], failed=["Adzuna"])) == 0)
+    check("the searching-source list names the sources that really search",
+          agent_module.SEARCHING_SOURCES == frozenset({"Adzuna", "Jobicy"}))
+
+
 def test_rag_structured_picks():
     """The AI panel renders real job cards, so RAGPipeline must return indices, not prose."""
     print("\nAI picks — structured output and the join")
@@ -818,7 +855,10 @@ def test_rag_fallback():
 def test_cache():
     """The job cache is read before fetching and written after a clean fetch."""
     print("\nJob cache")
-    fetch = FetchRecorder(by_variant={"q": [card("Writer")]})
+    # source="Jobicy" matters: since 2026-09-25 a pool no SEARCHING source contributed to is
+    # not cached at all, and card()'s default source is Remotive, which ignores its search
+    # parameter. See test_cache_requires_a_searching_source for the rule itself.
+    fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]})
     install(fetch, fixed_intent("q"))
     db = StubDB()
 
@@ -828,7 +868,7 @@ def test_cache():
 
     # Feed what was just written back in as the cache contents.
     key, results = next(iter(db.cache_writes.items()))
-    warm_fetch = FetchRecorder(by_variant={"q": [card("Writer")]})
+    warm_fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]})
     install(warm_fetch, fixed_intent("q"))
     warm = JobSearchAgent(StubDB(cached={key: {"results": results}}),
                           StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
@@ -836,7 +876,8 @@ def test_cache():
     check("a cache hit still returns the jobs", len(warm["jobs"]) == 1)
 
     # A failed fetch must not be cached, or the outage outlives the API's recovery.
-    failing = FetchRecorder(by_variant={"q": [card("Writer")]}, failed_sources=["Adzuna"])
+    failing = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]},
+                            failed_sources=["Adzuna"])
     install(failing, fixed_intent("q"))
     db3 = StubDB()
     JobSearchAgent(db3, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
@@ -1014,16 +1055,34 @@ def test_degraded_pool_is_not_cached():
     # ...but it MUST stop the pool being cached. Adzuna is the only source that genuinely
     # searches, so a pool without it is the weak state, and pinning it for 60 minutes is
     # what made the senior-results bug survive every retry the user made.
+    # Restated 2026-09-25. These used to say "Adzuna empty means do not cache", from when
+    # Adzuna was the only source that really searched. The rule is now about whether ANY
+    # searching source contributed, so the fixtures say which jobs came back rather than
+    # only which source was empty — and one of them was incoherent before, claiming Remotive
+    # was empty while handing the pool a Remotive job.
     db = StubDB()
-    empty = FetchRecorder(by_variant={"q": [card("Writer")]}, empty_sources=["Adzuna"])
+    empty = FetchRecorder(by_variant={"q": [card("Writer", source="Remotive")]},
+                          empty_sources=["Adzuna"])
     install(empty, fixed_intent("q"))
     JobSearchAgent(db, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
-    check("an Adzuna-empty pool is NOT cached", db.cache_writes == {})
+    check("an Adzuna-empty pool with nothing else searching is NOT cached",
+          db.cache_writes == {})
+
+    # But an empty Adzuna is survivable now: Jobicy also runs a real keyword search, so a
+    # pool it contributed to is worth keeping even when Adzuna found nothing.
+    db_j = StubDB()
+    jobicy_only = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]},
+                                empty_sources=["Adzuna"])
+    install(jobicy_only, fixed_intent("q"))
+    JobSearchAgent(db_j, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("an Adzuna-empty pool IS cached when Jobicy contributed",
+          len(db_j.cache_writes) == 1)
 
     # Remotive filtering to nothing is the filter working, not a degraded fetch. Refusing to
     # cache these too would spend Adzuna quota on every repeat of a Remotive-less search.
     db2 = StubDB()
-    rem = FetchRecorder(by_variant={"q": [card("Writer")]}, empty_sources=["Remotive"])
+    rem = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]},
+                        empty_sources=["Remotive"])
     install(rem, fixed_intent("q"))
     JobSearchAgent(db2, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
     check("a Remotive-empty pool IS still cached", len(db2.cache_writes) == 1)
@@ -1230,6 +1289,7 @@ def main():
         test_category_boost()
         test_classification()
         test_country_source_selection()
+        test_cache_requires_a_searching_source()
         test_rag_structured_picks()
         test_rag_prompt_states_eligibility()
         test_rag_fallback()

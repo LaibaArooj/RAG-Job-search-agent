@@ -53,6 +53,15 @@ CATEGORY_BOOST = 0.02
 
 TOP_K = 5
 
+# The sources that actually run a keyword search against the query, as opposed to returning a
+# fixed list we filter ourselves. Remotive is deliberately absent: it ignores its `search`
+# parameter entirely (measured 2026-09-20, and again for `category` on 2026-09-23), so a pool
+# containing only Remotive jobs is the same pool every query would produce.
+#
+# Used to decide whether a fetch is worth caching. Keep it in step with adapters/api_client.py
+# -- a new source that genuinely searches belongs here, or its results will never be cached.
+SEARCHING_SOURCES = frozenset({"Adzuna", "Jobicy"})
+
 # --- For You feed -----------------------------------------------------------------
 #
 # How many of the user's highest-scoring categories the feed is built from, and how many
@@ -157,15 +166,25 @@ class JobSearchAgent:
         # Only cache a clean fetch. Caching a partial result set would pin an outage in
         # place for an hour after the API recovered.
         #
-        # An Adzuna that returned NOTHING counts as degraded here, even though it did not
-        # fail. Adzuna is the only source that genuinely searches -- Remotive ignores its
-        # search parameter and is filtered locally -- so a pool built without it is the
-        # weak state, and pinning it for an hour is exactly what made the senior-results
-        # bug persist across retries on 2026-09-20.
+        # Cache only a pool that at least one GENUINELY SEARCHING source contributed to.
         #
-        # Remotive filtering down to nothing is NOT degraded; it is the filter working, and
-        # it must stay cacheable or every such search costs Adzuna quota it need not.
-        degraded = bool(result["failed_sources"]) or "Adzuna" in empty_sources
+        # Rewritten 2026-09-25, and the old version had quietly stopped working. It read
+        # `"Adzuna" in empty_sources`, from when Adzuna was the only source that really
+        # searched. Once Adzuna became optional per country it is SKIPPED for a user it
+        # cannot serve -- so it is never in empty_sources for them, the check could never
+        # fire, and their searches cached happily with no searching source at all. Found by
+        # verify_live.py: a cached entry for "froentend web developer" built from Remotive
+        # alone. Remotive ignores its search parameter, so that entry is the "same 20 jobs
+        # for every query" weak state, pinned for an hour -- exactly the failure the 2026-09-20
+        # fix was about, returning through a door the country work left open.
+        #
+        # Naming the sources that search, rather than the one that used to, means adding a
+        # fourth source cannot silently reopen this again.
+        #
+        # Remotive filtering down to nothing is still NOT degraded; that is the filter
+        # working, and it must stay cacheable or every such search costs quota it need not.
+        contributed = {job.get("source") for job in jobs}
+        degraded = bool(result["failed_sources"]) or not (SEARCHING_SOURCES & contributed)
         if jobs and not degraded:
             try:
                 self.db.cache_put(key, variant, jobs)

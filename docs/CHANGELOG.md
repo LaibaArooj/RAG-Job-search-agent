@@ -11,6 +11,57 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-25 — The cache guard had silently stopped working
+
+Found by running `verify_live.py` for the first time since three features landed. A cached
+entry for the query `"froentend web developer"` had been built from **Remotive alone**.
+
+### Why that matters
+
+Remotive ignores its `search` parameter, so a pool containing only Remotive jobs is the same
+pool *every* query would produce. The cache pins it for an hour — which is exactly the failure
+the 2026-09-20 fix was about, returning through a door the country work left open.
+
+### The cause
+
+The guard read `"Adzuna" in empty_sources`, written when Adzuna was the only source that
+genuinely searched. Once Adzuna became **skippable per country** (2026-09-23) it is never in
+`empty_sources` for a user it cannot serve — so for those users the check could not fire, and
+their searches cached pools with no searching source at all.
+
+**No test caught it.** The rule was asserted only in `verify_live.py`, and only as "no entry
+built from Remotive alone" — a statement of the old premise rather than the actual invariant.
+
+### Changed
+
+- `core/agent.py` — new `SEARCHING_SOURCES = {"Adzuna", "Jobicy"}`; a fetch is degraded unless
+  at least one of them contributed. Naming the sources that *search*, rather than the one that
+  used to, means adding a fourth source cannot silently reopen this.
+- `verify_live.py` — restated as "no cached entry was built without a searching source".
+- `verify_agent.py` — the rule is now asserted **offline**, in six cases. A rule only one
+  script can see is a rule that rots.
+
+Two existing cache fixtures were incoherent and are fixed: one claimed Remotive was empty
+while handing the pool a Remotive job.
+
+### Added — live coverage for the things that had none
+
+`verify_live.py` gained a Jobicy section and an Adzuna-skip section. Jobicy shipped on
+2026-09-23 and **nothing in the live suite exercised it**, so the source supplying most of a
+non-UK user's results could have gone down unnoticed. Adzuna and Remotive each got a section
+here only *after* they broke; this one is written first.
+
+It now asserts Jobicy is reachable, that `geo=anywhere` really does return only unrestricted
+jobs (the guarantee the whole eligibility design rests on, and exactly what Remotive stopped
+honouring for `search`), that the long-query token retry works against the real API, and that
+a `pk` fetch returns no Adzuna listings while reporting the skip as **neither failed nor
+empty**.
+
+`verify_live.py` 28 → **40 passed**. `verify_all.py`: **447 passed, 0 failed** — the whole
+suite green including live, for the first time.
+
+---
+
 ## 2026-09-25 — AI Recommendations are real job cards, not prose
 
 Issue #2 from the 2026-09-23 browser session, and the last of those five findings to close.

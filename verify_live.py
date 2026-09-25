@@ -39,6 +39,8 @@ os.environ.setdefault("FLASK_SECRET_KEY", "verify-live-only-not-for-serving")
 import app as flask_app  # noqa: E402  (must follow the env default above)
 import config as cfg  # noqa: E402
 from adapters import api_client  # noqa: E402
+from core import agent as agent_module  # noqa: E402
+from models.job_card import JobCard  # noqa: E402
 
 PASSED = []
 FAILED = []
@@ -149,6 +151,56 @@ def main():
         check("an entry-level query keeps no senior-titled Remotive job",
               senior_count([j.get("title", "") for j in entry_kept]) == 0)
 
+        print("\n1b. Jobicy — the contract the eligibility work depends on")
+        # Added 2026-09-25. Jobicy shipped on 2026-09-23 and nothing in the live suite
+        # exercised it, so the source that supplies most of a non-UK user's results could
+        # have gone down without any script noticing. Adzuna and Remotive each got a section
+        # here only after they broke; this one is written before that happens.
+        jobicy_raw, jobicy_ok = api_client._fetch_jobicy_raw("developer", 25)
+        check("Jobicy reachable and returning results for a plain query",
+              jobicy_ok and len(jobicy_raw) > 0)
+
+        if jobicy_raw:
+            geos = {(j.get("jobGeo") or "").strip().lower() for j in jobicy_raw}
+            # The whole point of the source: geo=anywhere filters eligibility SERVER-side, so
+            # we never pay to rank jobs the user cannot apply for. If Jobicy ever starts
+            # ignoring it -- as Remotive did with `search` -- this is what catches it.
+            check("geo=anywhere returns only unrestricted jobs",
+                  all("anywhere" in g or "worldwide" in g for g in geos))
+            cards = [JobCard.from_jobicy(j) for j in jobicy_raw]
+            check("every Jobicy job normalises to an eligibility bucket",
+                  all(c.eligibility in ("open", "regional", "local", "unknown") for c in cards))
+            check("Jobicy jobs come back marked open",
+                  all(c.eligibility == "open" for c in cards))
+            check("a Jobicy job carries a usable apply link",
+                  all(c.url.startswith("http") for c in cards))
+
+        # Jobicy's tag is an AND match that collapses on long queries, which is why
+        # _fetch_jobicy_raw retries on the longest token. Proven against the real API here
+        # rather than assumed, because the retry is invisible when it works.
+        long_raw, _ = api_client._fetch_jobicy_raw("entry level marketing no degree", 25)
+        check("a long query still returns results via the token retry", len(long_raw) > 0)
+
+        print("\n1c. Adzuna is skipped for a country it has no market for")
+        # The rule the whole country feature rests on, checked against the live API rather
+        # than against config: if Adzuna ever adds a pk market, this tells us.
+        check("adzuna_market maps the user's own country to None",
+              api_client.adzuna_market("pk") is None)
+        check("and maps a covered country to itself", api_client.adzuna_market("gb") == "gb")
+        pk_result = api_client.fetch_variant(
+            "developer", cfg.ADZUNA_APP_ID, cfg.ADZUNA_APP_KEY, country="pk"
+        )
+        pk_sources = {c.source for c in pk_result["jobs"]}
+        check("a pk search returns no Adzuna listings at all",
+              "Adzuna" not in pk_sources)
+        # The subtle half: a skipped source must not look like an outage, or TC-018's banner
+        # would fire on every search this user ever runs.
+        check("the skipped source is not reported as failed",
+              "Adzuna" not in pk_result["failed_sources"])
+        check("nor as empty, which would stop the fetch being cached",
+              "Adzuna" not in pk_result["empty_sources"])
+        check("a pk search still finds jobs", len(pk_result["jobs"]) > 0)
+
         print("\n2. Account and search page")
         with client_app.test_client() as c:
             c.post("/register", data={
@@ -223,11 +275,20 @@ def main():
         cached = list(db.db["job_cache"].find({}))
         check("the job cache holds more than one variant (expansion is live)", len(cached) > 1)
         # The degraded state that made the 2026-09-20 bug persist for an hour at a time.
-        only_remotive = [
+        #
+        # Restated 2026-09-25. This used to read "no entry built from Remotive alone", which
+        # assumed Adzuna was the only source that genuinely searches. Jobicy now does too,
+        # and Adzuna is skipped entirely for a user whose country it cannot serve -- so the
+        # real invariant is that a cached pool contains at least one SEARCHING source,
+        # whichever it happens to be. Stating it that way is also what caught the bug: the
+        # old check passed for the wrong reason until a pk-profile run put a Remotive-only
+        # entry in the cache.
+        unsearched = [
             d for d in cached
-            if d.get("results") and {r.get("source") for r in d["results"]} == {"Remotive"}
+            if d.get("results")
+            and not ({r.get("source") for r in d["results"]} & set(agent_module.SEARCHING_SOURCES))
         ]
-        check("no cached entry was built from Remotive alone", not only_remotive)
+        check("no cached entry was built without a searching source", not unsearched)
         note(f"{len(cached)} cached variants, keyed per phrasing")
 
     finally:
