@@ -11,8 +11,22 @@
   "failed_sources": [],
   "empty_sources": [
     "Remotive",
-    "Adzuna",
     "Jobicy"
   ],
-  "jobs": []
+  "jobs": [
+    {
+      "job_id": "58bb64c8b66450dc",
+      "title": "Operations Manager",
+      "company": "Fanvue",
+      "location": "UK",
+      "description": " \u00a350,000 to \u00a360,000 depending on experience  Salary based on London. Two days a week in the office, the rest remote. Fanvue is one of the fastest-growing creator monetisation platforms globally. We're an AI-powered, creator-first platform helping creators connect, engage, and earn directly from their audiences at scale. Following our recent Series A, Fanvue has surpassed $100M in annual recurring revenue, with triple-digit year-on-year growth, supporting hundreds of thousands of creators and mi\u2026",
+      "url": "https://www.adzuna.co.uk/jobs/details/5851157254?utm_medium=api&utm_source=e09f0279",
+      "salary": 50000,
+      "source": "Adzuna",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "UK",
+      "eligibility": "local"
+    }
+  ]
 }
