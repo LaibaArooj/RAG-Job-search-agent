@@ -97,8 +97,8 @@ MSG_NO_RESULTS = "No jobs matched that search. Try different wording."
 MSG_PARTIAL = "Some job sources are unavailable, so these results are incomplete."
 
 
-def _cache_key(variant, market=None):
-    """Hash one query variant plus its Adzuna market into the job cache's _id."""
+def _cache_key(variant, market=None, experience=None, work_type=None):
+    """Hash a variant plus every input that changes what the fetch returns, into the cache _id."""
     # Hashed rather than used raw because the variant is user-influenced text and it becomes
     # a MongoDB _id. A hash is a fixed-length value from a fixed alphabet, so no query string
     # can collide with an operator or blow the key-length limit.
@@ -109,7 +109,23 @@ def _cache_key(variant, market=None):
     # so a key naming only the variant would serve whichever of them searched first to the
     # other. Sharing stays wide, because the market is a closed set of 19 plus "none" rather
     # than anything per-user.
-    scoped = f"{market or 'none'}|{variant.strip().lower()}"
+    # EXPERIENCE and WORK_TYPE joined the key on 2026-09-26, and leaving them out was a live
+    # bug that verify_live.py caught: fetch_variant filters out wrong-level titles and passes
+    # work-type flags to Adzuna, but a CACHE HIT bypasses fetch_variant entirely. So a pool
+    # cached by a user with no stated level was served, unfiltered, to an entry-level user --
+    # senior roles reappearing for exactly the person the filter exists to protect.
+    #
+    # The rule this is an instance of: everything that changes WHAT THE FETCH RETURNS has to
+    # be in the key. Market was added for the same reason three days earlier. The cost is
+    # sharing -- a pool is now reused only by users who agree on all four -- and that is the
+    # right trade, because serving one user's filtered pool to another is silently wrong
+    # rather than merely slower.
+    scoped = "|".join([
+        market or "none",
+        experience or "any",
+        work_type or "any",
+        variant.strip().lower(),
+    ])
     return hashlib.sha256(scoped.encode("utf-8")).hexdigest()
 
 
@@ -141,7 +157,7 @@ class JobSearchAgent:
 
     def _fetch_cached_variant(self, variant, work_type=None, experience=None, country=None):
         """Fetch one variant, reading and writing the 60-minute job cache around the call."""
-        key = _cache_key(variant, adzuna_market(country))
+        key = _cache_key(variant, adzuna_market(country), experience, work_type)
 
         try:
             cached = self.db.cache_get(key)

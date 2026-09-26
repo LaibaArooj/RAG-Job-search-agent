@@ -39,7 +39,7 @@ or cleverness. When you make a design decision, tell me why, so I can defend it.
 | Frontend | HTML5 + CSS + Bootstrap 5.3 — **no React, Vue or any JS framework** |
 | Database | MongoDB Atlas 7.0+ (free tier) via PyMongo 4.6+ |
 | Embeddings | sentence-transformers 2.7+, model `all-MiniLM-L6-v2`, runs locally, 384-dim |
-| LLM | **Groq** API (not Grok), model `openai/gpt-oss-120b` — Groq decommissioned Llama 3 *and then* `groq/compound-mini`, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py`. **It is a reasoning model: hidden reasoning tokens count against `max_tokens`, so changing it means rechecking the budget at both call sites** |
+| LLM | **Groq** API (not Grok), a FALLBACK CHAIN in `GROQ_MODELS` (`openai/gpt-oss-120b` → `qwen/qwen3.8-27b` → `openai/gpt-oss-20b`), because Groq has retired this project's model twice — Groq decommissioned Llama 3 *and then* `groq/compound-mini`, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py`. **It is a reasoning model: hidden reasoning tokens count against `max_tokens`, so changing it means rechecking the budget at both call sites** |
 | Auth | Werkzeug password hashing (ships with Flask) |
 | Job data | Adzuna API (250 req/day free, UK market) + Remotive API (no auth; capped at 18 jobs, ignores `search`) + Jobicy API (no auth; `geo=anywhere` filters candidate eligibility server-side) |
 | Env | pip + venv, dependencies pinned in `requirements.txt` |
@@ -65,8 +65,8 @@ python verify_all.py                             # run all six, one summary. --o
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 502 assertions, about 290 seconds --
-462 of them offline, measured 2026-09-26; verify_live.py contributes the other 40. Use
+**`python verify_all.py` is the pre-demo check.** 528 assertions, about 290 seconds --
+485 of them offline, measured 2026-09-26; verify_live.py contributes the other 43. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.

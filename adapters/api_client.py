@@ -66,6 +66,12 @@ _WORK_TYPE_TERMS = sorted(
     reverse=True,
 )
 
+# Every hint word from config.CATEGORY_HINTS, flattened once at import. Used by
+# _signal_terms to decide which words of a query name a field of work.
+_CATEGORY_WORDS = tuple(
+    hint for hints in config.CATEGORY_HINTS.values() for hint in hints
+)
+
 # Two characters is too short to be evidence of anything; "ai" would match "said".
 MIN_TOKEN_LENGTH = 3
 
@@ -140,6 +146,32 @@ def _adzuna_keywords(query):
     # A query that is nothing BUT work-type words ("remote work") would otherwise become an
     # empty keyword search. Falling back to the original is no worse than the old behaviour.
     return cleaned or query
+
+
+def _signal_terms(query):
+    """Return the query's job-domain words, for a narrower retry when Adzuna finds nothing."""
+    # Adzuna's `what=` is an AND match: every word must appear in the advert. Measured
+    # 2026-09-26 over the twenty pre-registered evaluation queries, only 3 returned the five
+    # results precision@5 needs and 16 returned NOTHING AT ALL -- including
+    # "paralegal position no prior experience", where "paralegal" alone returns plenty. The
+    # casual, constraint-heavy phrasing the SRS says users actually type is exactly what an
+    # AND match cannot answer, so the keyword baseline was failing for the queries this
+    # project exists to serve.
+    #
+    # The words kept are the ones that name a FIELD OF WORK, decided by the same
+    # CATEGORY_HINTS vocabulary the classifier uses. Reusing that table rather than writing a
+    # second one is the point: a word worth classifying a job by is a word worth searching on,
+    # and two tables would drift.
+    #
+    # Falls back to the plain meaningful tokens when nothing in the query names a field, e.g.
+    # "work with numbers but not boring" -- which needs interpretation ("numbers" means
+    # finance) that only the LLM's query expansion can supply.
+    tokens = _query_tokens(query)
+    signal = [
+        token for token in tokens
+        if any(token.startswith(hint) or hint.startswith(token) for hint in _CATEGORY_WORDS)
+    ]
+    return signal or tokens
 
 
 def _query_tokens(query):
@@ -236,7 +268,31 @@ def adzuna_market(country):
 
 
 def _fetch_adzuna_raw(query, app_id, app_key, count, work_type=None, market=None):
-    """Call Adzuna and return (raw results, ok) — ok is False only on a transport or HTTP error."""
+    """Call Adzuna, narrowing the keywords once if the full query matches nothing."""
+    # Two attempts, capped. Adzuna's AND match means a natural-language query usually matches
+    # no advert at all -- 16 of the 20 evaluation queries returned zero -- and Adzuna reports
+    # that as HTTP 200 with no results, so nothing upstream could tell the query was the
+    # problem. The retry sends only the words that name a field of work.
+    #
+    # The cap is a quota decision, not a design one: three variants times two attempts is six
+    # of 250 daily calls per cold search, and the second attempt only happens when the first
+    # returned nothing -- which today costs the user everything.
+    attempts = [_adzuna_keywords(query)]
+    narrowed = " ".join(_signal_terms(query))
+    if narrowed and narrowed != attempts[0]:
+        attempts.append(narrowed)
+
+    ok = False
+    for keywords in attempts:
+        raw, attempt_ok = _adzuna_request(keywords, app_id, app_key, count, work_type, market)
+        ok = ok or attempt_ok
+        if raw:
+            return raw, True
+    return [], ok
+
+
+def _adzuna_request(keywords, app_id, app_key, count, work_type=None, market=None):
+    """Make one Adzuna call and return (raw results, ok)."""
     try:
         # The market is interpolated, not hardcoded. Until 2026-09-23 this read
         # ".../jobs/gb/search/1" while config.ADZUNA_COUNTRY was read from .env and consumed
@@ -251,7 +307,7 @@ def _fetch_adzuna_raw(query, app_id, app_key, count, work_type=None, market=None
             "results_per_page": count,
             # The work-type words are removed rather than passed through. `what` is an AND
             # match, so leaving "remote" in it returns nothing at all.
-            "what": _adzuna_keywords(query),
+            "what": keywords,
             "content-type": "application/json",
         }
         # Adzuna rejects an unknown parameter with HTTP 400, so only the three verified keys
@@ -334,6 +390,20 @@ def _fetch_jobicy_raw(query, count):
     return [], ok
 
 
+def _filter_adzuna_level(raw, experience):
+    """Drop Adzuna results whose title contradicts the level, now that its query is narrowed."""
+    # Adzuna used to be EXEMPT from this, and the reason was sound at the time: it ran a real
+    # keyword search on the user's own words, so overruling it would be second-guessing a
+    # genuine match. That premise died on 2026-09-26 when the keyword narrowing shipped --
+    # "beginner level software engineer" now narrows to "software" on the retry, so Adzuna
+    # never sees the word "beginner" and its results are no longer earned with respect to
+    # level. Caught by verify_live.py: the query returned six "Lead Software Engineer".
+    #
+    # Nothing is lost when the query WAS specific: _wrong_level only drops titles that
+    # actively contradict the level, so a genuine match is untouched.
+    return [j for j in raw if not _wrong_level((j.get("title") or "").lower(), experience)]
+
+
 def _filter_jobicy_level(raw, experience):
     """Drop Jobicy results whose title contradicts the experience level the user asked for."""
     # Same rule and the same helper Remotive is filtered with. Jobicy's geo filter is
@@ -382,7 +452,9 @@ def fetch_variant(query, app_id, app_key, work_type=None, experience=None, count
         pass
     elif not adzuna_ok:
         failed_sources.append("Adzuna")
-    elif not adzuna_raw:
+    else:
+        adzuna_raw = _filter_adzuna_level(adzuna_raw, experience)
+    if market is not None and adzuna_ok and not adzuna_raw:
         # The signal that was missing. Adzuna answering "200, nothing here" is not a failure,
         # but it does mean the only source that genuinely searches contributed nothing, and
         # the caller has to be able to tell.

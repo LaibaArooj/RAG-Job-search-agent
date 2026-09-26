@@ -151,6 +151,17 @@ def main():
         check("an entry-level query keeps no senior-titled Remotive job",
               senior_count([j.get("title", "") for j in entry_kept]) == 0)
 
+        # Added 2026-09-26. Adzuna's `what=` is an AND match, so before the keyword narrowing
+        # a natural-language query matched no advert at all -- 16 of the 20 evaluation queries
+        # returned zero, reported as HTTP 200 with no results. This is the live proof that the
+        # narrowing works against the real API rather than only against a unit test.
+        natural, natural_ok = api_client._fetch_adzuna_raw(
+            "paralegal position no prior experience",
+            cfg.ADZUNA_APP_ID, cfg.ADZUNA_APP_KEY, 10, None, "gb",
+        )
+        check("a natural-language query now returns Adzuna results",
+              natural_ok and len(natural) > 0)
+
         print("\n1b. Jobicy — the contract the eligibility work depends on")
         # Added 2026-09-25. Jobicy shipped on 2026-09-23 and nothing in the live suite
         # exercised it, so the source that supplies most of a non-UK user's results could
@@ -180,6 +191,31 @@ def main():
         # rather than assumed, because the retry is invisible when it works.
         long_raw, _ = api_client._fetch_jobicy_raw("entry level marketing no degree", 25)
         check("a long query still returns results via the token retry", len(long_raw) > 0)
+
+        print("\n1b2. The Groq model chain is still on the account")
+        # Added 2026-09-26. Groq has retired this project's LLM twice in two weeks, and both
+        # times the AI panel simply vanished -- FR-018's fallback is graceful enough to hide
+        # the cause, so the second retirement went unnoticed for two days. This asks the live
+        # catalogue directly, so verify_all.py says a model died BEFORE a demo rather than
+        # the demo saying it.
+        from groq import Groq  # noqa: E402
+        from core.rag_pipeline import GROQ_MODELS  # noqa: E402
+
+        try:
+            catalogue = {m.id for m in Groq(api_key=cfg.GROQ_API_KEY).models.list().data}
+        except Exception as e:
+            catalogue = set()
+            note(f"could not read the Groq model list: {e}")
+
+        if catalogue:
+            retired = [m for m in GROQ_MODELS if m not in catalogue]
+            check("the primary model is still offered", GROQ_MODELS[0] in catalogue)
+            # Reported per model rather than as one pass/fail, because losing the primary and
+            # losing a spare need different reactions: one is urgent, the other is a note.
+            check("every model in the fallback chain is still offered", not retired)
+            if retired:
+                note(f"RETIRED, update core/rag_pipeline.py GROQ_MODELS: {retired}")
+            note(f"{len(catalogue)} models on the account; chain is {list(GROQ_MODELS)}")
 
         print("\n1c. Adzuna is skipped for a country it has no market for")
         # The rule the whole country feature rests on, checked against the live API rather
@@ -250,7 +286,10 @@ def main():
             bt = titles_in(beg)
             n_sen = senior_count(bt[:5])
             check("results were returned", len(bt) > 0)
-            check(f"no senior titles in the top 5 (found {n_sen})", n_sen == 0)
+            # Names the offending title. A check that reports only a count sends the reader
+            # guessing, which cost several runs on 2026-09-26.
+            offenders = [t for t in bt[:5] if any(w in t.lower() for w in SENIOR_WORDS)]
+            check(f"no senior titles in the top 5 (found {n_sen}: {offenders})", n_sen == 0)
             for title in bt[:5]:
                 note(f"top5: {title[:56]}")
 

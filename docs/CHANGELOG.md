@@ -11,6 +11,98 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-26 — Adzuna could not answer the queries this project is about
+
+Measured while generating evaluation fixtures: of the 20 pre-registered queries, **only 3
+returned the five Adzuna results precision@5 needs, and 16 returned nothing at all** —
+including *"paralegal position no prior experience"*, where `paralegal` alone returns plenty.
+
+Adzuna's `what=` is an **AND match**: every word must appear in the advert. The casual,
+constraint-heavy phrasing the SRS says users actually type is exactly what an AND match cannot
+answer — so the keyword layer was failing hardest for the project's founding premise. Adzuna
+reports it as HTTP 200 with no results, so nothing upstream could tell the query was at fault.
+
+### Changed — one narrowed retry
+
+`_fetch_adzuna_raw` now makes up to **two** calls: the query as before, then — only if that
+returned nothing — just the words that name a field of work. Those words are chosen with
+`config.CATEGORY_HINTS`, **the same vocabulary the classifier uses**: a word worth
+classifying a job by is a word worth searching on, and one table cannot drift from itself.
+
+| | Before | After |
+|---|---|---|
+| Queries with ≥5 Adzuna results | **3 / 20** | **17 / 20** |
+| Queries returning nothing | 16 | 1 |
+
+The two-call cap is a quota decision: three variants × two attempts is 6 of 250 daily calls
+per cold search, and the second only fires when the first returned nothing — which today
+costs the user everything.
+
+### Adzuna is no longer exempt from the seniority filter
+
+It used to be, and the reason was sound: *it ran a real keyword search on the user's own
+words, so overruling it would be second-guessing a genuine match.* **The narrowing killed that
+premise.** `"beginner level software engineer"` narrows to `"software"`, so Adzuna never sees
+"beginner" — and returned six *Lead Software Engineer*. Caught by `verify_live.py`.
+
+Nothing is lost when a query was specific: `_wrong_level` only drops titles that actively
+contradict the stated level.
+
+### A cache-key bug found the same way
+
+`fetch_variant` filters wrong-level titles and passes work-type flags to Adzuna — but **a
+cache hit bypasses `fetch_variant` entirely**, and the key held only the variant and the
+market. So a pool cached by a user with no stated level was served, unfiltered, to an
+entry-level user: senior roles reappearing for exactly the person the filter protects.
+
+`experience` and `work_type` are now in the key. **The rule this is the third instance of:
+everything that changes what the fetch returns must be in the cache key.** Market was added
+for the same reason three days earlier. The cost is sharing; serving one user's filtered pool
+to another is silently wrong rather than merely slower.
+
+### Known limitation, asserted so it is not forgotten
+
+The terms are chosen by vocabulary, not grammar, so a **negated** field word is still sent:
+*"not journalism"* narrows to a list containing `journalism`. Embeddings handle negation no
+better — Q16–Q20 in `evaluation/queries.md` were pre-registered to expose exactly this.
+
+### The frozen fixtures are now stale
+
+`evaluation/fixtures/` was generated under the old keyword behaviour, so **it must be
+regenerated before the evaluation runs**. The upside is that the Adzuna-only headline, which
+was not computable on 3 queries, is now viable on 17.
+
+---
+
+## 2026-09-26 — Groq model retirements no longer take the AI panel with them
+
+Groq has retired this project's LLM **twice in two weeks** — Llama 3, then
+`groq/compound-mini`. Each time the AI Recommendations panel silently vanished, and the second
+went unnoticed for two days, because FR-018's fallback is graceful enough to hide the cause.
+
+Model churn is not really the problem: the architecture already isolates the choice to one
+constant, which is the layering requirement paying off. **Silent failure was the problem.**
+
+### Changed
+
+- `GROQ_MODELS` is a **chain**, not a single model: `gpt-oss-120b → qwen3.8-27b →
+  gpt-oss-20b`, ordered by the measurements from 2026-09-23 and 09-25. A retirement now costs
+  slightly different explanations instead of no panel, and buys time to choose a replacement
+  properly rather than mid-demo.
+- `complete()` is shared by both Groq call sites. It advances the chain **only** on a
+  retirement — a network error fails fast, because three timeouts would triple the wait before
+  the fallback the user was getting anyway.
+- `model_is_gone()` tells a retirement from an outage. That is the distinction that cost two
+  days: `verify_intent.py` reported a dead model as *"Groq unreachable"* and it was read as a
+  network blip. A retirement now logs `GROQ MODEL RETIRED: ... trying the next.`
+- `verify_live.py` checks the whole chain against the **live catalogue**, so `verify_all.py`
+  says a model died *before* a demo rather than the demo saying it.
+
+Both `max_tokens` budgets are already sized for the reasoning models in the chain, so any
+member is safe to fall through to — asserted rather than assumed.
+
+---
+
 ## 2026-09-26 — enrich_query was drowning the search term
 
 The direct cause of results being *"related to the field but completely unrelated to what I

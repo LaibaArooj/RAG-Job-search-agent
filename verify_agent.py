@@ -525,10 +525,23 @@ def test_country_source_selection():
     # The cache key must include the market. Two users searching identical words now get
     # genuinely different result sets, so a key naming only the variant would serve whichever
     # of them searched first to the other.
-    check("the cache key separates two markets",
-          agent_module._cache_key("python", "gb") != agent_module._cache_key("python", None))
-    check("the cache key is stable for one market",
-          agent_module._cache_key("python", "gb") == agent_module._cache_key(" Python ", "gb"))
+    key = agent_module._cache_key
+    check("the cache key separates two markets", key("python", "gb") != key("python", None))
+    check("the cache key is stable for one market", key("python", "gb") == key(" Python ", "gb"))
+    # Added 2026-09-26 after verify_live.py caught it: fetch_variant filters out wrong-level
+    # titles, but a CACHE HIT bypasses fetch_variant entirely. With the level absent from the
+    # key, a pool cached by a user with no stated level was served unfiltered to an
+    # entry-level user -- senior roles reappearing for exactly the person the filter protects.
+    check("the cache key separates two experience levels",
+          key("python", "gb", "entry level") != key("python", "gb", "senior"))
+    check("a stated level is not shared with an unstated one",
+          key("python", "gb", "entry level") != key("python", "gb", None))
+    # work_type becomes an Adzuna request parameter, so it genuinely changes the response.
+    check("the cache key separates two work types",
+          key("python", "gb", None, "remote") != key("python", "gb", None, "freelance"))
+    check("the key is still stable when all four agree",
+          key("python", "gb", "entry level", "remote")
+          == key(" Python ", "gb", "entry level", "remote"))
 
     # The subtle one. A skipped source is not a failed source: failed_sources drives TC-018's
     # outage banner, which would otherwise fire on every search a Pakistan-based user ran.
@@ -678,6 +691,127 @@ def test_cache_requires_a_searching_source():
           len(cached_after([card("F", source="Jobicy")], failed=["Adzuna"])) == 0)
     check("the searching-source list names the sources that really search",
           agent_module.SEARCHING_SOURCES == frozenset({"Adzuna", "Jobicy"}))
+
+
+def test_adzuna_signal_terms():
+    """A natural-language query must still reach Adzuna's AND match (2026-09-26)."""
+    print("\nAdzuna keyword narrowing")
+
+    from adapters.api_client import _signal_terms
+
+    # Adzuna's `what=` requires EVERY word to appear in the advert. Measured over the twenty
+    # pre-registered evaluation queries: only 3 returned the five results precision@5 needs,
+    # and 16 returned nothing at all. The keyword baseline was failing for exactly the casual
+    # phrasing the SRS says users type -- the project's founding premise, showing up as a bug.
+    check("a job title survives an apologetic query",
+          _signal_terms("paralegal position no prior experience") == ["paralegal"])
+    check("the field word is picked, not the longest word",
+          _signal_terms("somewhere I can use my writing and actually get paid") == ["writing"])
+    check("a plain query narrows to its field word",
+          _signal_terms("registered nurse night shift") == ["nurse"])
+
+    # The words kept come from config.CATEGORY_HINTS -- the same vocabulary the classifier
+    # uses. Reusing it means a word worth classifying a job by is a word worth searching on,
+    # and there is no second table to drift.
+    check("the vocabulary is the classifier's, not a second list",
+          all(any(t.startswith(h) or h.startswith(t) for h in
+                  (hint for hints in config.CATEGORY_HINTS.values() for hint in hints))
+              for t in _signal_terms("graphic designer figma branding")))
+
+    # When nothing in the query names a field there is nothing to narrow to, and inventing a
+    # term would be worse than admitting it. "numbers" means finance, but only the LLM's
+    # query expansion can make that leap.
+    check("a query naming no field falls back to its meaningful words",
+          _signal_terms("work with numbers but not boring") != [])
+    check("an empty query yields nothing", _signal_terms("") == [])
+
+    # Known limitation, asserted so it is not forgotten: the terms are chosen by vocabulary,
+    # not by grammar, so a NEGATED field word is still sent. "not journalism" narrows to a
+    # list containing "journalism". Embeddings handle negation no better -- see Q16-Q20 in
+    # evaluation/queries.md, chosen to expose exactly this.
+    check("negation is NOT handled, and this records that",
+          "journalism" in _signal_terms("job where I write stuff but not journalism"))
+
+
+def test_model_fallback_chain():
+    """A retired model must cost different wording, not the whole AI panel (2026-09-26)."""
+    print("\nGroq model chain")
+
+    from core.rag_pipeline import GROQ_MODEL, GROQ_MODELS, complete, model_is_gone
+
+    # Groq retired this project's LLM twice in two weeks. Each time the panel vanished
+    # silently, because FR-018's fallback is graceful enough to hide the cause -- the second
+    # one went unnoticed for two days.
+    check("the chain has more than one model", len(GROQ_MODELS) > 1)
+    check("the primary is the head of the chain", GROQ_MODEL == GROQ_MODELS[0])
+    check("the chain has no duplicates", len(set(GROQ_MODELS)) == len(GROQ_MODELS))
+
+    # Telling a retirement from an outage is the distinction that cost those two days:
+    # verify_intent.py reported a dead model as "Groq unreachable" and it was read as a
+    # network blip for two sessions.
+    gone = Exception("Error code: 404 - {'error': {'code': 'model_not_found'}}")
+    check("a 404 model_not_found is read as a retirement", model_is_gone(gone))
+    check("'has been decommissioned' is read as a retirement",
+          model_is_gone(Exception("model has been decommissioned")))
+    check("a network error is NOT read as a retirement",
+          not model_is_gone(Exception("Connection aborted, read timed out")))
+
+    class Client:
+        """Groq client double whose models fail according to a script."""
+
+        def __init__(self, behaviour):
+            self.behaviour = behaviour
+            self.tried = []
+            outer = self
+
+            class _Completions:
+                def create(self, model=None, **kwargs):
+                    outer.tried.append(model)
+                    outcome = outer.behaviour.get(model, "ok")
+                    if outcome == "gone":
+                        raise Exception("404 model_not_found")
+                    if outcome == "down":
+                        raise Exception("Connection aborted")
+                    message = type("M", (), {"content": f"reply from {model}"})()
+                    return type("R", (), {"choices": [type("C", (), {"message": message})()]})()
+
+            self.chat = type("Chat", (), {"completions": _Completions()})()
+
+    first, second, third = GROQ_MODELS[0], GROQ_MODELS[1], GROQ_MODELS[2]
+
+    client = Client({})
+    check("a healthy primary answers and nothing else is tried",
+          complete(client, []) == f"reply from {first}" and client.tried == [first])
+
+    client = Client({first: "gone"})
+    check("a retired primary falls through to the next model",
+          complete(client, []) == f"reply from {second}")
+    check("and it tried them in order", client.tried == [first, second])
+
+    client = Client({first: "gone", second: "gone"})
+    check("two retirements fall through to the third",
+          complete(client, []) == f"reply from {third}")
+
+    # A network outage must NOT walk the chain: three timeouts would triple how long the user
+    # waits before the fallback they were going to get anyway.
+    client = Client({first: "down"})
+    raised = False
+    try:
+        complete(client, [])
+    except Exception:
+        raised = True
+    check("a network error fails fast instead of walking the chain",
+          raised and client.tried == [first])
+
+    # Everything retired still reaches FR-018's fallback rather than hanging or returning junk.
+    client = Client({m: "gone" for m in GROQ_MODELS})
+    raised = False
+    try:
+        complete(client, [])
+    except Exception:
+        raised = True
+    check("an entirely retired chain raises, so the caller can fall back",
+          raised and client.tried == list(GROQ_MODELS))
 
 
 def test_rag_structured_picks():
@@ -1406,6 +1540,8 @@ def main():
         test_profile_fills_in_what_the_query_omits()
         test_level_filter_titles()
         test_cache_requires_a_searching_source()
+        test_adzuna_signal_terms()
+        test_model_fallback_chain()
         test_rag_structured_picks()
         test_rag_prompt_states_eligibility()
         test_rag_fallback()

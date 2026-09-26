@@ -43,7 +43,7 @@ from config import (
     WORK_TYPE_HINTS,
     WORK_TYPES,
 )
-from core.rag_pipeline import GROQ_MODEL, _extract_json
+from core.rag_pipeline import GROQ_MODEL, _extract_json, complete
 
 # At most three variants including the original query, per docs/PROJECT_SPEC.md § M2.
 # The cap is enforced here rather than trusted to the prompt: each extra variant is another
@@ -194,9 +194,9 @@ def parse_intent(query):
         return _blank_intent("", "keywords")
 
     try:
-        response = _groq_client().chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[{"role": "user", "content": _build_prompt(query)}],
+        text = complete(
+            _groq_client(),
+            [{"role": "user", "content": _build_prompt(query)}],
             temperature=TEMPERATURE,
             # Must cover the model's hidden reasoning tokens as well as the JSON. At 300 a
             # reasoning model truncated the object, _extract_json raised, and parse_intent
@@ -204,7 +204,7 @@ def parse_intent(query):
             max_tokens=600,
             timeout=TIMEOUT_SECONDS,
         )
-        raw = _extract_json((response.choices[0].message.content or "").strip())
+        raw = _extract_json(text)
         return _validate_intent(raw, query, "llm")
     except Exception as e:
         # FR-018. A network error, a decommissioned model, a rate limit and a reply that is not

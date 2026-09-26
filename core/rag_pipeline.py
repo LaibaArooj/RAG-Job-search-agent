@@ -40,7 +40,61 @@ load_dotenv()
 # The cost of the choice is latency: ~250-475 reasoning tokens per call, twice per
 # search. If the demo feels slow, qwen is the fast fallback and the only thing it
 # loses is that one category judgement.
-GROQ_MODEL = "openai/gpt-oss-120b"
+# A CHAIN, not a single model, as of 2026-09-26. Groq has now retired this project's LLM
+# twice in two weeks -- Llama 3, then groq/compound-mini -- and a free-tier catalogue will
+# keep rotating. Pinning one model means that each retirement silently removes the AI
+# Recommendations panel until somebody notices, which took two days last time.
+#
+# The order is the measured one (see the comment above and the two-week history below): the
+# first model got all four intent test queries right, qwen missed one, gpt-oss-20b missed one.
+# So a retirement now costs slightly different explanations instead of no panel at all, and
+# buys time to choose a replacement properly rather than mid-demo.
+#
+# Both max_tokens budgets below are already sized for the reasoning models in this list, so
+# any member of the chain is safe to fall through to. verify_agent.py asserts that.
+GROQ_MODELS = (
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b",
+)
+
+# The primary. Kept as a name because core/intent_parser.py imports it and the docs name it.
+GROQ_MODEL = GROQ_MODELS[0]
+
+# How Groq words a model that no longer exists. Matched so that a RETIREMENT can be told
+# apart from a network failure -- the distinction that cost two days on 2026-09-23, when
+# verify_intent.py reported a dead model as "Groq unreachable" and it was read as a network
+# blip. A retirement advances the chain; anything else fails fast to the FR-018 fallback
+# rather than burning three timeouts.
+_MODEL_GONE_MARKERS = (
+    "model_not_found", "does not exist", "decommissioned", "deprecated",
+)
+
+
+def model_is_gone(error):
+    """Return True if this error means the model itself is no longer offered."""
+    return any(marker in str(error).lower() for marker in _MODEL_GONE_MARKERS)
+
+
+def complete(client, messages, models=GROQ_MODELS, **params):
+    """Call the first model in the chain that still exists; raise if none answer."""
+    # Returns the reply text. The caller keeps its own try/except, because FR-018 requires a
+    # working fallback whatever the reason -- this only decides whether trying the NEXT model
+    # is worth a round trip.
+    last_error = None
+    for model in models:
+        try:
+            response = client.chat.completions.create(model=model, messages=messages, **params)
+            return (response.choices[0].message.content or "").strip()
+        except Exception as e:
+            last_error = e
+            if not model_is_gone(e):
+                raise
+            # Loud on purpose. A retired model is a thing the developer must act on, and the
+            # old generic message hid it. verify_live.py also checks the chain against the
+            # live catalogue so this surfaces before a demo rather than during one.
+            print(f"GROQ MODEL RETIRED: {model!r} is no longer offered -- trying the next.")
+    raise last_error
 
 # FR-016 asks for three explained picks. Enforced on the way OUT as well as in the prompt --
 # a prompt is a request, a slice is a guarantee.
@@ -89,9 +143,13 @@ def _hiring_line(job):
 class RAGPipeline:
     """Builds a prompt from the top ranked jobs and asks Groq to explain three picks."""
 
-    def __init__(self, model=GROQ_MODEL, top_k=5):
+    def __init__(self, model=None, top_k=5):
         """Create a Groq client; the API key comes from the environment, never hardcoded."""
-        self.model = model
+        # `model` pins a single model, which the evaluation scripts use to compare candidates.
+        # Left unset, the whole GROQ_MODELS chain is tried in order, so a retirement degrades
+        # the explanations rather than removing the panel.
+        self.models = (model,) if model else GROQ_MODELS
+        self.model = self.models[0]
         self.top_k = top_k
         self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
@@ -200,15 +258,15 @@ class RAGPipeline:
             return self.fallback()
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": self.build_prompt(query, jobs)}],
+            text = complete(
+                self.client,
+                [{"role": "user", "content": self.build_prompt(query, jobs)}],
+                models=self.models,
                 temperature=0.3,
                 # Covers the model's hidden reasoning tokens as well as the prose. At 700
                 # gpt-oss-120b returned finish_reason="length" and cut off mid-sentence.
                 max_tokens=1200,
             )
-            text = (response.choices[0].message.content or "").strip()
             if not text:
                 return self.fallback()
             return self.validate_picks(_extract_json(text), len(jobs[:self.top_k]))
