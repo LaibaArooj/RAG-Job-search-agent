@@ -11,6 +11,88 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-26 — enrich_query was drowning the search term
+
+The direct cause of results being *"related to the field but completely unrelated to what I
+would apply for"*. The old format was
+
+```
+job search: {query}. Skills: {skills}. Level: {level}.
+```
+
+For a two-word query the **labels were most of the embedded text**, so the vector described
+the scaffolding rather than the search. Measured on `"customer support"`, separating a support
+job from a QA job:
+
+| Text actually embedded | gap |
+|---|---|
+| `customer support` | **+0.240** |
+| `job search: customer support. Skills: . Level: .` | +0.051 |
+| …`Skills: python.` | **+0.023** |
+
+**A ~90% collapse.** And +0.023 is *below* the +0.10 a category scored 5 contributes via
+`CATEGORY_BOOST` — so a learned preference could overturn meaning outright. It also corrects
+yesterday's model comparison, which measured margins of ~+0.29 on **raw** queries; the real
+in-system margin was an order of magnitude smaller.
+
+### Changed
+
+```python
+". ".join(part for part in (query, query, skills, level) if part) + "."
+```
+
+Two changes, each measured (`evaluation/enrichment_comparison.py` reproduces the table):
+
+1. **Drop the labels.** A job advert cannot match the word `"Skills:"`; embedding it only
+   adds noise.
+2. **Repeat the query once.** Restores the query's share of the text without discarding the
+   profile. **Repeating it a third time was measured and adds nothing**, which is why the
+   count is two by evidence rather than by taste.
+
+Empty parts are omitted rather than left as separators — a naive join produced
+`"nursing job in a hospital. . ."` for a profile-less user, and that measurably cost accuracy.
+
+### The result, over 10 benchmark cases plus two targeted probes
+
+| Format | neutral acc / margin | profile acc / margin | probe | TC-016 lift |
+|---|---|---|---|---|
+| old (labels) | 90% / +0.200 | 80% / +0.145 | +0.023 | +0.271 |
+| **shipped (query ×2)** | **90% / +0.251** | **90% / +0.183** | **+0.103** | **+0.323** |
+| query ×3 | 90% / +0.234 | 90% / +0.188 | +0.105 | +0.314 |
+| query only (control) | 80% / +0.290 | 80% / +0.290 | +0.240 | **+0.096** |
+
+**The shipped format matches or beats the old one on every column**, so there was no trade to
+make. The control shows why the profile cannot simply be dropped: it maximises the probe and
+guts TC-016, which is a required behaviour.
+
+### TC-016 is re-proven, not assumed
+
+The old code asserted the *byte string* was unchanged — a guard that was doing the opposite of
+its job, locking in the format that caused this. `verify_intent.py` needed **no changes at
+all**: its five TC-016 assertions test meaning, and meaning survived. Five assertions in
+`verify_agent.py` hard-coded the wording and now assert the behaviour instead, plus the
+property whose absence caused the bug: the query is present **and repeated**, no label text is
+embedded, and no empty segments appear.
+
+The similarity evidence cannot live in `verify_agent.py` — it is offline by design and loads
+no model — so it lives in `evaluation/enrichment_comparison.py` and the offline suite asserts
+the structural property.
+
+### Measured on real searches, ranking identical pools
+
+| Query | old top-4 | new top-4 |
+|---|---|---|
+| `customer support` | QA Tester, Solution Engineer, Software Eng: IaC, Technical Author — **0 relevant** | QA Tester, **Graduate Customer Success Manager**, Solution Engineer, **Enterprise Account Executive** — **2 relevant** |
+| `software engineer` | Community Engineer, Software Eng: IaC, Sustaining Ops, Python Engineer | Community Engineer, **Python Engineer**, **Python and Kubernetes SW Engineer**, **Software engineer** |
+
+**Not fixed, stated plainly:** *QA Tester* is still ranked first for `"customer support"`.
+This is better, not solved, and the residual is ordinary ranking quality — which is exactly
+what the precision@5 evaluation exists to quantify.
+
+`verify_agent.py` 236 → **243**. `verify_all.py --offline`: **462 passed, 0 failed**.
+
+---
+
 ## 2026-09-26 — The seniority filter was never running for the users it was built for
 
 Reported by using the app: *"the roles are for experienced persons and my project is about

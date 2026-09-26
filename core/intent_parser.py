@@ -327,19 +327,45 @@ def enrich_query(query, context, experience=None):
     # towards Python in embedding space. Editing the job text instead would change what every
     # user sees, not what this user sees.
     #
-    # The wording is carried over unchanged from the search route in app.py, which is the one
-    # code path already demonstrated to satisfy TC-016. Moving it here is a relocation, not a
-    # rewrite -- changing the phrasing would invalidate that evidence.
-    #
     # `experience` overrides the profile's level when parse_intent found one stated in the
     # query itself. A user whose profile says "mid level" searching for a "beginner" role
     # means the query, not the profile: embedding both put two conflicting levels into one
     # vector, and measurement on 2026-09-20 showed it narrowing the similarity gap between a
     # junior and a senior job by roughly a third.
     #
-    # The FORMAT is untouched, and the two-argument call still produces the byte-identical
-    # string TC-016 was proven against. Only which value fills "Level:" can change.
+    # REWRITTEN 2026-09-26. The old format was
+    #     f"job search: {query}. Skills: {skills}. Level: {level}."
+    # and it was destroying the search. For a two-word query the labels -- "job search:",
+    # "Skills:", "Level:" -- were most of the embedded text, so the vector described the
+    # SCAFFOLDING rather than what the user asked for. Measured on "customer support" against
+    # a support job and a QA job:
+    #
+    #     "customer support"                                      gap +0.240
+    #     "job search: customer support. Skills: . Level: ..."    gap +0.051
+    #     ...with Skills: python                                  gap +0.023
+    #
+    # A 90% collapse, and +0.023 is BELOW the +0.10 that a category scored 5 contributes via
+    # CATEGORY_BOOST -- so a learned preference could overturn meaning outright. That is the
+    # direct cause of the complaint that results were "related to the field but completely
+    # unrelated to what I would apply for".
+    #
+    # Two changes, both measured over the ten cases in evaluation/model_comparison.py plus
+    # two targeted probes (see evaluation/enrichment_comparison.py to reproduce):
+    #
+    #   - Drop the labels. They carry no meaning a job advert can match.
+    #   - Repeat the query once. It restores the query's share of the text without removing
+    #     the profile. Repeating it a THIRD time was measured and adds nothing, which is why
+    #     the number is two rather than an arbitrary choice.
+    #
+    # The result beats the old format on every measure taken -- accuracy and margin, with and
+    # without a profile, plus the discrimination probe AND TC-016's skill lift. There was no
+    # trade to make.
+    #
+    # Empty parts are omitted rather than left as separators. A naive join produced
+    # "nursing job in a hospital. . ." for a user with no skills or level, and that measurably
+    # cost accuracy on the neutral case.
     context = context or {}
     skills = ", ".join(context.get("skills") or [])
     level = experience or context.get("experience", "") or ""
-    return f"job search: {query}. Skills: {skills}. Level: {level}."
+    parts = [part for part in (query, query, skills, level) if part]
+    return ". ".join(parts) + "." if parts else ""

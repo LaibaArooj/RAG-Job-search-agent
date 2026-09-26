@@ -1012,13 +1012,39 @@ def test_job_card():
 # --- intent parser still intact ------------------------------------------------------
 
 
-def test_enrich_query_unchanged():
-    """enrich_query is reused, not reimplemented — the wording TC-016 was proven against."""
-    print("\nenrich_query reuse")
-    text = intent_parser.enrich_query("developer job", {"skills": ["Python"], "experience": "entry level"})
-    check("the wording is still the TC-016 phrasing",
-          text == "job search: developer job. Skills: Python. Level: entry level.")
-    check("a missing profile does not raise", "job search: x." in intent_parser.enrich_query("x", None))
+def test_enrich_query_does_not_swamp_the_query():
+    """The enrichment must not drown the thing the user actually searched for."""
+    print("\nenrich_query — the query keeps its share of the text")
+
+    # These assertions replace an exact-string check that the wording was unchanged. That
+    # guard was doing the opposite of its job: it locked in a format which, measured on
+    # 2026-09-26, destroyed ~90% of the query's discriminating power, because for a two-word
+    # query the labels "job search:", "Skills:" and "Level:" were most of the embedded text.
+    # What follows asserts the property whose ABSENCE caused that, rather than a byte string.
+    text = intent_parser.enrich_query(
+        "developer job", {"skills": ["Python"], "experience": "entry level"}
+    )
+    check("the query is present", "developer job" in text)
+    # Repeated once, deliberately. Measured: repeating it a third time adds nothing, so the
+    # number is two by evidence rather than by taste.
+    check("the query is repeated so it is not outweighed by the profile",
+          text.count("developer job") == 2)
+    check("the profile's skills are still folded in (TC-016)", "Python" in text)
+    check("the profile's level is still folded in", "entry level" in text)
+    # The labels are the specific thing that was diluting it. A job advert cannot match the
+    # word "Skills:", so embedding it only adds noise.
+    check("no label text is embedded",
+          not any(label in text for label in ("job search:", "Skills:", "Level:")))
+
+    # A naive join left dangling separators for a user with no profile, which measurably cost
+    # accuracy on the neutral case.
+    bare = intent_parser.enrich_query("x", None)
+    check("a missing profile does not raise", "x" in bare)
+    check("a missing profile leaves no empty segments", ". ." not in bare)
+    check("an empty profile leaves no empty segments either",
+          ". ." not in intent_parser.enrich_query("x", {}))
+    check("an empty query does not produce a stray separator",
+          intent_parser.enrich_query("", {}) == "")
 
 
 # --- candidate generation: the 2026-09-20 senior-results bug -----------------------
@@ -1178,13 +1204,15 @@ def test_experience_override():
     """A level stated in the query beats the one on the profile."""
     print("\nexperience override")
     profile = {"skills": ["Python"], "experience": "mid level"}
+    # Asserted on the VALUES rather than on the old "Level: ..." label, which no longer
+    # exists -- see test_enrich_query_does_not_swamp_the_query for why it was removed. The
+    # behaviour under test is unchanged; only how it is observed has moved.
     stated = intent_parser.enrich_query("beginner software engineer", profile, "entry level")
-    check("the query's level is used", "Level: entry level." in stated)
+    check("the query's level is used", "entry level" in stated)
     check("the profile's level is not also embedded", "mid level" not in stated)
     unstated = intent_parser.enrich_query("software engineer", profile, None)
-    check("with no level in the query the profile is still used",
-          "Level: mid level." in unstated)
-    check("skills are unaffected either way", "Skills: Python" in stated)
+    check("with no level in the query the profile is still used", "mid level" in unstated)
+    check("skills are unaffected either way", "Python" in stated)
 
 
 # --- TC-012 / TC-014: the For You feed ---------------------------------------------
@@ -1382,7 +1410,7 @@ def main():
         test_rag_prompt_states_eligibility()
         test_rag_fallback()
         test_cache()
-        test_enrich_query_unchanged()
+        test_enrich_query_does_not_swamp_the_query()
         test_adzuna_keywords()
         test_adzuna_work_type_params()
         test_remotive_filtering()
