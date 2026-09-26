@@ -82,13 +82,53 @@ _INFLECTIONS = r"(?:s|es|ed|er|ers|ing|ings|ment|ments)?"
 # test while being exactly the wrong level. That is the shape of the 2026-09-20 report --
 # a beginner query returning senior roles.
 _SENIOR_MARKERS = (
-    "senior", "snr", "lead", "principal", "staff engineer", "head of",
-    "director", "chief", "architect",
+    "senior", "snr", "sr", "lead", "principal", "head of", "director", "chief",
+    "architect", "manager", "vp", "experienced",
+    # Roman numeral grades. "iv" is deliberately absent: it collides with intravenous, and a
+    # "Registered Nurse IV Therapy" is not a senior role.
+    "ii", "iii",
+    # "staff" is NOT here on its own, because a Staff Nurse is an entry-level clinical role in
+    # the UK and dropping it would be a serious miss for a healthcare search. The engineering
+    # sense is matched by the longer phrases instead, which costs the rarer wordings.
+    "staff engineer", "staff software engineer",
 )
 _JUNIOR_MARKERS = (
     "junior", "jnr", "graduate", "entry level", "entry-level", "trainee",
     "intern", "apprentice",
 )
+
+# Phrases where a seniority word is part of the JOB'S SUBJECT rather than its rank. Stripped
+# from the title before the test, so "Senior Care Assistant" -- an entry-level role caring for
+# older people -- and "Lead Generation Specialist" -- entry-level sales and marketing -- are
+# not mistaken for senior appointments.
+#
+# This list is the honest cost of keyword seniority detection: every word that signals rank in
+# one industry means something else in another, and there is no way to know which from a title
+# alone. Expect to add to it, and say so in the report rather than implying the rule is
+# general.
+_SENIORITY_EXCEPTIONS = (
+    "senior care", "senior living", "senior citizen", "seniors",
+    "lead generation", "leads",
+)
+
+
+def _compile_markers(markers):
+    """Compile title markers to whole-word patterns, so "lead" cannot match "leadership"."""
+    # Word boundaries, for the same reason CATEGORY_HINTS needed them on 2026-09-22: a bare
+    # substring test on "lead" dropped "Lead Generation Specialist" and "Leadership
+    # Development Intern", both entry-level roles. Measured 2026-09-26: nine of nine
+    # deliberately chosen junior titles were being filtered out as senior.
+    return tuple(re.compile(r"\b" + re.escape(m) + r"\b") for m in markers)
+
+
+_SENIOR_PATTERNS = _compile_markers(_SENIOR_MARKERS)
+_JUNIOR_PATTERNS = _compile_markers(_JUNIOR_MARKERS)
+_EXCEPTION_PATTERNS = _compile_markers(_SENIORITY_EXCEPTIONS)
+
+
+def _matches_any(patterns, text):
+    """Return True if any compiled pattern occurs in text."""
+    return any(pattern.search(text) for pattern in patterns)
 
 
 def _adzuna_keywords(query):
@@ -118,15 +158,37 @@ def _wrong_level(title, experience):
     # "junior developer" against "senior developer" at 0.806, so the two are near-synonyms in
     # that space. An explicit word test is the only thing that separates them reliably.
     #
-    # Applied ONLY to Remotive, and only when a level was actually stated. Adzuna results are
-    # never filtered this way -- Adzuna ran the real search, so its answers are earned and
-    # overruling them would be second-guessing a genuine keyword match. Remotive ignores its
-    # search parameter entirely, so its contribution is ours to justify.
+    # Applied to Remotive AND Jobicy, and only when a level is known. Adzuna results are never
+    # filtered this way -- Adzuna ran the real search, so its answers are earned and overruling
+    # them would be second-guessing a genuine keyword match. The other two do not really search
+    # on level, so their contribution is ours to justify.
+    #
+    # The level now reaches here from the user's PROFILE when the query does not state one
+    # (see core/agent.py). Before 2026-09-26 it came only from the parsed query, so a recent
+    # graduate typing "software engineer" -- which is what someone who does not know the
+    # vocabulary types -- had no filtering at all and got 51% senior-titled results.
     title = (title or "").lower()
+    if not experience:
+        return False
+
+    # Strip the phrases where "senior" names the client group before testing seniority.
+    for pattern in _EXCEPTION_PATTERNS:
+        title = pattern.sub(" ", title)
+
     if experience == "entry level":
-        return any(m in title for m in _SENIOR_MARKERS)
+        # A junior marker WINS. "Junior Team Lead", "Graduate Architect" and "Trainee
+        # Architect" all carry a senior word and are unambiguously entry-level posts; before
+        # this override every one of them was dropped.
+        if _matches_any(_JUNIOR_PATTERNS, title):
+            return False
+        return _matches_any(_SENIOR_PATTERNS, title)
+
     if experience == "senior":
-        return any(m in title for m in _JUNIOR_MARKERS)
+        # Symmetrically, an explicit senior word wins over a junior one.
+        if _matches_any(_SENIOR_PATTERNS, title):
+            return False
+        return _matches_any(_JUNIOR_PATTERNS, title)
+
     return False
 
 

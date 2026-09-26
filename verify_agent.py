@@ -557,6 +557,92 @@ def _raises(fn, *args):
     return False
 
 
+def test_profile_fills_in_what_the_query_omits():
+    """A recent graduate who types "software engineer" must still be filtered to their level."""
+    print("\nProfile level and work type reach the fetch filter")
+
+    # The defect this covers, measured 2026-09-26 on the author's own profile: the query
+    # "software engineer" returned 77 jobs of which 51% were senior-titled, because
+    # intent["experience"] was None and the level filter never ran. The same user typing
+    # "junior software developer" got a clean list. The system was working WORST for exactly
+    # the user it exists for -- someone who does not know the search vocabulary.
+    profile = {"experience": "entry level", "preferred_work": ["remote"], "country": "gb"}
+
+    recorder = FetchRecorder(by_variant={"q": [card("A", source="Jobicy")]})
+    install(recorder, fixed_intent("q"))
+    JobSearchAgent(StubDB(context=profile), StubEngine({"A": 0.5}), StubRAG()).run("laiba", "q")
+    check("the profile's level reaches the fetch when the query is silent",
+          recorder.experiences == ["entry level"])
+    check("the profile's work type reaches it too", recorder.work_types == ["remote"])
+
+    # The query must still win. Someone entry-level on paper who searches for senior roles
+    # means the search, not the profile -- the same precedence enrich_query already applies.
+    def senior_intent(query):
+        """parse_intent double that reports a senior, freelance query."""
+        return {"work_type": "freelance", "experience": "senior", "category": "other",
+                "variants": ["q"], "source": "stub"}
+
+    recorder = FetchRecorder(by_variant={"q": [card("B", source="Jobicy")]})
+    install(recorder, senior_intent)
+    JobSearchAgent(StubDB(context=profile), StubEngine({"B": 0.5}), StubRAG()).run("laiba", "q")
+    check("a level stated in the query overrides the profile",
+          recorder.experiences == ["senior"])
+    check("a work type stated in the query overrides the profile",
+          recorder.work_types == ["freelance"])
+
+    # A user with neither must not have a level invented for them.
+    recorder = FetchRecorder(by_variant={"q": [card("C", source="Jobicy")]})
+    install(recorder, fixed_intent("q"))
+    JobSearchAgent(StubDB(context={}), StubEngine({"C": 0.5}), StubRAG()).run("laiba", "q")
+    check("no level is invented when neither query nor profile states one",
+          recorder.experiences == [None] and recorder.work_types == [None])
+
+
+def test_level_filter_titles():
+    """_wrong_level must catch senior titles without deleting junior ones (2026-09-26)."""
+    print("\nSeniority filter — titles")
+
+    from adapters.api_client import _wrong_level
+
+    def drops(title):
+        """Would this title be filtered out for an entry-level user?"""
+        return _wrong_level(title.lower(), "entry level")
+
+    # Titles that were slipping through: _SENIOR_MARKERS had no manager, sr, vp, staff or
+    # roman-numeral grade, so 17 of 77 senior roles survived on a real search.
+    must_drop = [
+        "Software Engineering Director", "Senior AI Engineer", "Engineering Manager",
+        "Staff Software Engineer (SRE)", "Sr. Backend Developer", "Principal Engineer",
+        "Tech Lead", "Head of Engineering", "VP of Engineering", "Software Engineer II",
+        "Software Engineer III", "Experienced Python Developer", "Technical Manager",
+        "Product Manager",
+    ]
+    for title in must_drop:
+        check(f"drops a senior title: {title}", drops(title))
+
+    # The false positives. Matching was a bare substring, so "lead" hit "Leadership" and
+    # "Lead Generation", and a junior marker could not override a senior one -- so titles
+    # that SAY "Junior" were being deleted. Nine of nine were wrong before the rewrite.
+    must_keep = [
+        "Lead Generation Specialist", "Leadership Development Intern", "Junior Team Lead",
+        "Graduate Architect", "Data Architect Intern", "Trainee Architect",
+        "Junior Solutions Architect", "Junior Software Developer", "Graduate Engineer",
+        "Software Engineer",
+        # Industry collisions: a Staff Nurse is an entry-level clinical role, "Senior Care"
+        # names who is cared for, and IV is intravenous rather than a grade.
+        "Staff Nurse", "Senior Care Assistant", "Registered Nurse IV Therapy",
+    ]
+    for title in must_keep:
+        check(f"keeps an entry-level title: {title}", not drops(title))
+
+    # The rule is symmetric, and nothing is filtered when no level is known at all.
+    check("a senior search drops a junior title",
+          _wrong_level("junior developer", "senior"))
+    check("a senior search keeps a senior title",
+          not _wrong_level("senior developer", "senior"))
+    check("no level means no filtering", not _wrong_level("senior developer", None))
+
+
 def test_cache_requires_a_searching_source():
     """A pool no searching source contributed to must not be cached (found live 2026-09-25)."""
     print("\nJob cache — only cache a pool a real search produced")
@@ -1289,6 +1375,8 @@ def main():
         test_category_boost()
         test_classification()
         test_country_source_selection()
+        test_profile_fills_in_what_the_query_omits()
+        test_level_filter_titles()
         test_cache_requires_a_searching_source()
         test_rag_structured_picks()
         test_rag_prompt_states_eligibility()

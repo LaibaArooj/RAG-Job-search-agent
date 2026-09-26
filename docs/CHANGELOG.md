@@ -11,6 +11,77 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-26 — The seniority filter was never running for the users it was built for
+
+Reported by using the app: *"the roles are for experienced persons and my project is about
+helping people who are recent graduates"*. Measured on the author's own profile
+(`pk`, entry level, python), query `"software engineer"`:
+
+| | Before | After |
+|---|---|---|
+| Jobs returned | 77 | **36** |
+| Senior-titled | **40 (51%)** | **0** |
+
+### Three independent defects, all in the same feature
+
+**1. The filter never ran.** `run()` passed the level to the fetch filter from the *parsed
+query only*. A query that does not say "junior" yields `intent["experience"] = None`, so
+`_wrong_level` did nothing. **The profile's experience level filtered nothing, ever.**
+
+The consequence is the wrong way round: someone who already knows to type *"junior software
+developer"* got a clean list, while someone who types *"software engineer"* — which is what a
+recent graduate who does not know the vocabulary types — got 51% senior roles. **The system
+worked worst for exactly the user it exists for.**
+
+**2. The marker list had holes.** Even when it ran it would have missed 17 of 77: six
+*Engineering Manager*, *Staff Software Engineer (SRE)*, *Technical Manager*, *Product
+Manager*. `_SENIOR_MARKERS` had no `manager`, `sr`, `vp`, or roman-numeral grade.
+
+**3. Substring matching, and no junior override.** `"lead" in title` matched *Leadership
+Development Intern* and *Lead Generation Specialist*, and a title saying **"Junior"** was
+dropped anyway because nothing let a junior marker beat a senior one. Nine of nine
+deliberately-chosen junior titles were being deleted, including *Junior Team Lead*,
+*Graduate Architect* and *Trainee Architect*.
+
+Defect 3 is the `"ui"`-inside-`"suited"` bug from 2026-09-22 in a second place. Both were
+unbounded substring matching over a hand-written marker table; finding it twice is the
+argument for auditing the third such table rather than waiting for a user to report it.
+
+### Changed
+
+- `core/agent.py` — `experience = intent.get("experience") or context.get("experience")`, and
+  the same for work type. **The query still wins when it states a level**, which is the
+  precedence `enrich_query` already applied to the embedding; the filter was simply never
+  given the fallback. `build_feed` already read both from the profile and is unchanged.
+- `adapters/api_client.py` — `_wrong_level` rewritten: whole-word matching, junior markers
+  override senior ones, wider senior markers, and a symmetric rule for senior searches.
+- The stale docstring claiming the filter is *"Applied ONLY to Remotive"* — untrue since
+  Jobicy was wired to it on 2026-09-23.
+
+### Two judgement calls worth defending
+
+**`staff` is not a senior marker on its own.** A *Staff Nurse* is an entry-level clinical
+role in the UK, so only the longer engineering phrases are matched. That costs the rarer
+wordings like *Staff Backend Engineer*.
+
+**`iv` is not a roman-numeral grade.** It collides with intravenous — *Registered Nurse IV
+Therapy* is not a grade-four post. `ii` and `iii` are matched.
+
+There is also a `_SENIORITY_EXCEPTIONS` list for phrases where a seniority word names the
+job's *subject* rather than its rank: *Senior Care Assistant*, *Lead Generation Specialist*.
+**This list is the honest cost of keyword seniority detection** — every word that signals rank
+in one industry means something else in another, and a title alone cannot say which. Expect to
+add to it, and say so rather than implying the rule is general.
+
+### Still open, and bigger — see the note below
+
+`"customer support"` still ranks *QA Tester* above *Cloud Support Engineer*. That is not this
+bug; it is `enrich_query` diluting the query, measured separately.
+
+`verify_agent.py` 201 → **236**. `verify_all.py --offline`: **455 passed, 0 failed**.
+
+---
+
 ## 2026-09-25 — TC-007 autocomplete and TC-015 filters: the last two unbuilt test cases
 
 Every SRS test case now has an implementation and an assertion.

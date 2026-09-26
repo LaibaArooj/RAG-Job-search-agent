@@ -536,11 +536,30 @@ class JobSearchAgent:
         # work_type is passed down rather than left in the query text. Adzuna's `what` is an
         # AND keyword match, so a word like "remote" in it returns nothing at all; it becomes
         # one of Adzuna's own parameters instead. See adapters/api_client.py.
+        # The PROFILE fills in what the query did not say. Added 2026-09-26 after measuring
+        # the case the project exists for: a recent graduate typing "software engineer" --
+        # which is exactly what someone who does not know the vocabulary types -- got 77 jobs
+        # of which 51% were senior-titled, because intent["experience"] was None and the
+        # level filter therefore never ran. Someone who already knew to type "junior software
+        # developer" got a clean list. The people the system is for were getting the worst
+        # results, which is backwards.
+        #
+        # The QUERY still wins when it states a level: someone who is entry-level on paper but
+        # searching for senior roles means the search, not the profile. This is the same
+        # precedence enrich_query already applies to the embedding -- the filter was simply
+        # never given the fallback.
+        experience = intent.get("experience") or context.get("experience")
+
+        # Same reasoning for work type. preferred_work is a list on the profile and
+        # fetch_variant takes one value, so the first is used -- the same choice build_feed
+        # already makes.
+        preferred_work = context.get("preferred_work") or []
+        work_type = intent.get("work_type") or (preferred_work[0] if preferred_work else None)
+
         # country decides which SOURCES can serve this user at all -- Adzuna has no endpoint
         # for a country it does not cover, so it is skipped rather than called and filtered.
         raw_jobs, failed_sources = self._fetch_all_variants(
-            intent["variants"], intent.get("work_type"), intent.get("experience"),
-            context.get("country"),
+            intent["variants"], work_type, experience, context.get("country"),
         )
         jobs = self.deduplicate(raw_jobs)
 
