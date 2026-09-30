@@ -224,6 +224,14 @@ def main():
     all_rows = score(key, main_verdicts, pairs)
     adz_rows = score(key_adzuna, adzuna_verdicts, pairs)
 
+    # How many scores the C3 rule actually moved, so it is visible rather than silent.
+    duplicate_effect = [
+        f"{view} {q} {s}"
+        for view, k, v, rows in (("all-sources", key, main_verdicts, all_rows),
+                                 ("Adzuna-only", key_adzuna, adzuna_verdicts, adz_rows))
+        for q, r in score(k, v, {}).items() for s in SYSTEMS if r[s] != rows[q][s]
+    ]
+
     # Adzuna-only queries where every system ranks the same set, so they must tie (C6).
     same_set = {q for q, e in key_adzuna["queries"].items() if e["adzuna_pool_unique"] <= TOP_N}
     no_adzuna = sorted(set(key["queries"]) - set(key_adzuna["queries"]))
@@ -245,7 +253,7 @@ def main():
     q20_in_adzuna = positions[qid][n] in key_adzuna["queries"].get(qid, {}).get("candidates", {})
 
     write_results(key, all_rows, adz_rows, eligible_rows, same_set, no_adzuna, q20_original,
-                  q20_in_adzuna)
+                  q20_in_adzuna, duplicate_effect)
     print(f"Scored {len(all_rows)} queries all-sources and {len(adz_rows)} Adzuna-only.")
     print(f"Written to {RESULTS.relative_to(HERE.parent)}.")
     return 0
@@ -253,7 +261,11 @@ def main():
 
 def fmt(value, places=2):
     """Format a score, showing an undefined mean as n/a rather than 0."""
-    return "n/a" if value is None else f"{value:.{places}f}"
+    if value is None:
+        return "n/a"
+    # Rounded first, and + 0.0 turns -0.0 into 0.0: gains and losses that cancel exactly
+    # leave float noise like -1e-17, which would otherwise print as a misleading "-0.00".
+    return f"{round(value, places) + 0.0:.{places}f}"
 
 
 def means_block(rows, label):
@@ -281,7 +293,7 @@ def means_block(rows, label):
 
 
 def write_results(key, all_rows, adz_rows, eligible_rows, same_set, no_adzuna, q20_original,
-                  q20_in_adzuna):
+                  q20_in_adzuna, duplicate_effect):
     """Write evaluation/results.md: tables and facts only; interpretation belongs in the report."""
     queries = {q: e["query"] for q, e in key["queries"].items()}
     discriminating = {q: r for q, r in adz_rows.items() if q not in same_set}
@@ -297,6 +309,8 @@ def write_results(key, all_rows, adz_rows, eligible_rows, same_set, no_adzuna, q
         f"`CATEGORY_BOOST` = {key['boost']}. C is the same with the boost at 0.",
         "- **precision@5** = relevant listings in the top 5 ÷ 5, always 5 (C5). A duplicate",
         f"  vacancy counts once per list (C3; {sum(map(len, DUPLICATES.values()))} declared pairs).",
+        f"  It changed {len(duplicate_effect)} of the per-query scores below"
+        + (f": {', '.join(duplicate_effect)}." if duplicate_effect else "."),
         "- **Significance:** two-sided exact sign test over non-tied queries. With this few",
         "  queries it can detect only a large, consistent effect; a high p is not evidence of no effect.",
         "",
