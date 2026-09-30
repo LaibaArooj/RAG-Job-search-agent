@@ -1,7 +1,54 @@
-Last updated: 2026-09-23 (**M4 in progress.** Four defects found by using the app as a real
-user are fixed; Jobicy added as a third source and per-user source selection shipped, so a
-user in Pakistan now sees 31 applicable jobs where they saw 6. **400/400 offline checks
-green** across five scripts. Deadline revised: at least two more months, not one.)
+Last updated: 2026-09-30 (**M4 in progress — precision@5 is measured.** The result is a
+null: semantic re-ranking 0.32 vs keyword baseline 0.31 on the Adzuna-only headline. What
+remains in M4 is the write-up, the demo, and the two open design gaps below.)
+
+## Where we left off — 2026-09-30 (evaluation scored)
+
+**Read `evaluation/results.md` first, then `evaluation/queries.md` § 7.** They hold the
+numbers and every ruling made while judging. The changelog entry for 2026-09-30 has the
+summary.
+
+### What happened between 2026-09-23 and today (details in `docs/CHANGELOG.md`)
+
+- 09-25: AI picks became real job cards with Save/Reject (table item 2 closed). TC-007
+  autocomplete, TC-015 filters and TC-009's outage assertion all shipped. The cache guard,
+  which had stopped working, was fixed.
+- 09-26: three search defects were fixed: the seniority filter never ran; `enrich_query`
+  drowned the search term; Adzuna's AND match emptied 16 of 20 queries. Groq retired another
+  model, which is why `GROQ_MODELS` is now a fallback chain.
+- 09-26: the 20 pools were frozen, regenerated after the Adzuna fix, and exported as
+  blind sheets.
+- 09-30: the sheets and the Adzuna-only supplement were judged, the rulings were recorded,
+  and everything was scored.
+
+### The result, in one paragraph for the report
+
+On 20 pre-registered queries judged blind by the developer, semantic re-ranking was
+indistinguishable from Adzuna's keyword order: precision@5 0.32 vs 0.31, 3 wins and
+3 losses (sign test p = 1.0). It helped some vague and negation queries and hurt some
+specific ones. Across all sources it was slightly worse (0.30 vs 0.32). The 0.02
+personalisation boost changed only three queries, two of them for the worse. **Write it up
+as measured. Do not soften it.**
+
+### Next actions
+
+1. **Reword every claim that semantic ranking beats keyword search.** Check
+   `docs/PROJECT_SPEC.md`, `docs/PROJECT_SUMMARY.md`, the README and the report draft.
+   `CLAUDE.md` § Honesty applies.
+2. **Write the evaluation section of the report** from `evaluation/results.md`: the table,
+   the means, the deltas, every query where the baseline won, and the limitations listed in
+   the changelog. Your 3–4 interpretation sentences are still unwritten.
+3. **Update `docs/VIVA_PREP.md`** with the questions this result invites. The two
+   comprehension-check questions from 2026-09-30 are a start: why only 13 of 19 queries can
+   discriminate, and why higher eligible@5 is not evidence of an eligibility-aware ranker.
+4. **Tell the supervisor** about the null result, the § 7 clarifications, and the deviations
+   still unreported since 09-23.
+5. Still open from the table below: item 3 (feed ≠ saved jobs). The database is still empty
+   after the 09-23 deletion, so register a fresh account before any demo.
+6. Optional, unstarted: the RAG-stage evaluation in `docs/EVALUATION.md` — are the LLM's
+   three picks better than the top three by similarity? It uses the same fixtures.
+
+---
 
 ## Where we left off — 2026-09-23 (first real browser session)
 
@@ -100,7 +147,7 @@ back on the table.
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
 | M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 221/221 across the four verify scripts, plus a live end-to-end run against the running server | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | **Done (2026-09-21)** — RAG panel shipped in M2; categorisation, save/reject and the For You feed all built. `verify_agent.py` 129/129, `verify_routes.py` 57/57 | TC-008 to TC-014 pass |
-| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **In progress** — first browser session done, four defects fixed, geographic eligibility and per-user source selection shipped. The 20 queries are pre-registered in `evaluation/queries.md`; fixtures NOT yet generated. `verify_all.py --offline` 362/362 | Demo runs end to end + P@5 measured |
+| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **In progress** — filters (TC-015) and autocomplete (TC-007) shipped 09-25. **P@5 measured 2026-09-30** (`evaluation/results.md`): a null result, 0.32 vs 0.31. Remaining: report write-up, viva prep for the result, demo rehearsal | Demo runs end to end + P@5 measured |
 
 ## Completed
 
@@ -116,11 +163,8 @@ back on the table.
 
 ## In progress
 
-- **Currently working on:** M4. The 2026-09-23 browser session took priority over the
-  evaluation: four defects and two silent failures were found and fixed, and geographic
-  eligibility shipped. The precision@5 evaluation is STILL NOT STARTED and is now the
-  critical path — write the 20 queries BEFORE looking at any results, and settle the Adzuna
-  baseline question first (see the 2026-09-23 note at the top).
+- **Currently working on:** M4 write-up. The precision@5 evaluation is done and scored
+  (2026-09-30); see the note at the top for next actions.
 - **Branch:** `feat/search-pipeline`
 - **Related issue:** none yet
 

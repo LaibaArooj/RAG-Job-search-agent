@@ -11,6 +11,74 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-09-30 — The precision@5 evaluation is measured: a null result
+
+The project's central claim now has a number. **Semantic re-ranking was indistinguishable
+from Adzuna's own keyword order.** Full tables in `evaluation/results.md`; protocol in
+`evaluation/queries.md`.
+
+| Adzuna-only precision@5 (headline) | Baseline A | System B | Ablation C |
+|---|---|---|---|
+| Mean over 19 queries | 0.31 | 0.32 | 0.31 |
+| B vs A, per query | | 3 wins · 13 ties · 3 losses | sign test p = 1.0 |
+
+All sources, secondary: A 0.32, **B 0.30**, C 0.32. B won 4 queries and lost 6.
+
+### What the numbers show
+
+- **The ranker helped on some vague and negation queries and hurt on specific ones.** It won
+  Q13, Q16 (`not journalism`, 0 → 0.4) and Q19; it lost Q08, Q11 and Q15, where Adzuna's
+  keyword order was already good.
+- **The 0.02 category boost changed only 3 queries, and 2 for the worse.** It helped Q19
+  (coding, technology boosted) and hurt Q20 (design, which the synthetic profile penalises)
+  and Q02 (technology jobs pulled into "a job where I help people all day").
+- **eligible@5 rose: A 0.70 → B 1.15.** The ranker does not read eligibility; it moved more
+  worldwide-hiring Jobicy listings up. Report it as a side effect, not a designed benefit.
+- **Four queries (Q12, Q14, Q17, Q18) found nothing relevant in any system's top 5.** This
+  counts only the judged candidates, not the whole pool, so it cannot be claimed as a
+  retrieval failure.
+
+### How it was made defensible
+
+- **Blind judging.** `build_export.py` merged the three top 5s into one shuffled sheet per
+  query, with nothing showing which system ranked which job. 139 candidates were judged
+  before `key.json` was opened.
+- **Rulings made after judging stayed blind.** Six clarifications (C1–C6) were written as a
+  new `queries.md` § 7, leaving the pre-registered § 1–6 untouched. Git history proves the
+  order: the marked sheets and the rules were committed before the scorer's first run.
+- **The headline was not computable from the first sheets.** They held only the all-sources
+  top 5s. `build_supplement.py` added a blind sheet for the 13 Adzuna-only candidates they
+  lacked.
+- **Six duplicate vacancies survived the fixture dedup,** which matches on `job_id` alone.
+  R1 counts each vacancy once per list, and the scorer applies that because a blind judge
+  cannot. It changed scores on Q08 and Q10 only.
+
+### Added
+
+- `evaluation/build_supplement.py` builds the blind Adzuna-only supplement sheet and
+  `key_adzuna.json`.
+- `evaluation/score.py` unblinds the sheets and writes `evaluation/results.md`. `--check`
+  validates every sheet against its key without printing a score. It re-derives each sheet
+  position from the export's fixed-seed shuffle and refuses to score on any title mismatch.
+- 2026-09-26: `build_export.py`, the 20 blind judging sheets and `HOW-TO-JUDGE.md`.
+
+### Changed
+
+- 2026-09-26: the 20 frozen pools were regenerated after the Adzuna keyword fix below, as
+  that entry required.
+
+### Known limitations, for the report
+
+- **The headline tells the systems apart on at most 13 of 19 queries.** Q04 has no Adzuna
+  listings. On six queries the Adzuna pool has five or fewer listings, so every system
+  returns the same set and ties.
+- **One judge, the developer, not blind to the project.** The 20-query sample can detect
+  only a large, consistent effect.
+- **B's profile is synthetic** (technology +3, writing +2, design −1). It is declared in
+  `build_export.py`, and it biases B against design queries.
+
+---
+
 ## 2026-09-26 — Adzuna could not answer the queries this project is about
 
 Measured while generating evaluation fixtures: of the 20 pre-registered queries, **only 3

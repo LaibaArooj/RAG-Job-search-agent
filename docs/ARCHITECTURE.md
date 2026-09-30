@@ -259,6 +259,19 @@ verify_intent.py                standalone check of intent parsing (TC-019, TC-0
 verify_agent.py                 standalone check of the pipeline (TC-006, TC-016..018,
                                 TC-021, TC-022). Entirely offline: every collaborator is a
                                 double, which is why JobSearchAgent takes them as arguments
+evaluation/                     the precision@5 evaluation — offline, outside the app. It
+                                imports core/ through the same facades (SemanticEngine,
+                                JobSearchAgent), so the layering rules still hold
+    queries.md                  pre-registered queries and relevance rule; § 7 holds the
+                                clarifications made blind during judging
+    generate_fixtures.py        the ONLY evaluation script that calls the APIs; freezes
+                                one pool per query into fixtures/
+    build_export.py             ranks each pool under A/B/C, writes blind judging/QNN.md
+                                sheets and key.json
+    build_supplement.py         the blind Adzuna-only supplement sheet and key_adzuna.json
+    score.py                    unblinds the sheets against both keys, writes results.md
+    model_comparison.py,        earlier one-off measurements (embedding model, query
+    enrichment_comparison.py    enrichment), kept so their numbers can be re-derived
 ```
 
 **Deferral closed, 2026-09-20.** Appendix B describes `app.py` as an app factory whose search

@@ -61,6 +61,7 @@ python verify_intent.py                          # prove intent parsing, TC-019/
 python verify_agent.py                           # prove the pipeline and the feed, TC-006/012/014/016/017/018/021/022 (offline)
 python verify_live.py                            # prove it against the REAL Adzuna/Remotive/Groq + rendered pages
 python verify_all.py                             # run all six, one summary. --offline skips the quota-spending one
+python evaluation/score.py                       # re-score the judged sheets into evaluation/results.md (--check: validate only)
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
