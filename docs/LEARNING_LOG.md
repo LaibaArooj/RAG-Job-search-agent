@@ -98,6 +98,8 @@ here becomes a silence in the viva.
 | Precision vs recall | | | Which one can you measure here, and which can't you? Why? |
 | Why blind judging matters | | | What bias is it controlling for? |
 | Cold start problem | | | Why is a brand-new user's feed no better than search? |
+| Pooled judging | | | Added 2026-09-30. You judged only the union of the three top 5s, not the whole pool. Why is that enough for precision@5 but useless for recall? Why can't you claim Q14/Q17/Q18 have *no* relevant jobs? Why did the Adzuna-only headline need a supplementary sheet? |
+| Sign test | | | Added 2026-09-30. `score.py` reports one. Why does it ignore ties? Why is it a better fit than a t-test for 0.0–1.0 scores in steps of 0.2 over ~13 queries? Why is a high p-value here *not* evidence that the ranker doesn't help? |
 
 ---
 
