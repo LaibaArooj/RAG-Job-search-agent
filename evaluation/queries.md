@@ -165,3 +165,81 @@ badged inapplicable for a non-UK seeker. Remotive's order is query-independent, 
 
 Fixtures cost roughly 20 Adzuna calls out of 250/day. Run them in one sitting so the pools are
 contemporaneous; a pool fetched a day later is a different pool.
+
+---
+
+## 7. Post-hoc clarifications — made blind, 2026-09-30
+
+**Everything above this line is unchanged.** These clarifications were written *after* the 20
+sheets were marked but *before* `key.json` was opened, so none of them could have been chosen
+to favour a system — the judge did not know which system ranked which listing. They are
+recorded here, not folded into § 3, so the report can say exactly what was pre-registered and
+what was decided later.
+
+### C1 — Stated qualification requirements are read under R3
+
+R3 as written covers seniority only. Three queries state a qualification the seeker lacks:
+Q04 and Q11 ("no degree"), Q13 ("no prior experience"). They are judged by the same logic R3
+and R4 already use: a listing that **explicitly states** a requirement contradicting the
+query's claim fails; a listing that is **silent** passes. "No prior experience" is close to a
+seniority claim; "no degree" is an extension by analogy, and the report should say so. This
+affected the verdict on 3 of the 20 sheets. It is a clarification of R3, deliberately not a
+new R6.
+
+### C2 — Silence is not a contradiction under R5 either (Q20)
+
+R5 excludes, for Q20, "roles *demanding* a portfolio". A listing that does not state a
+portfolio requirement does not demand one, so it passes R5 — even where the judge believes the
+industry usually expects one. Background knowledge about what a role "normally" needs is not
+applied, because it cannot be applied consistently across listings and would let the judge's
+priors stand in for the advert's text. The § 3 ambiguity clause is for a rule that is unclear
+for a listing, not for a rule the judge disagrees with. Q20 is reported under both readings as
+a sensitivity check.
+
+### C3 — R1 duplicates are applied by the scorer, not the judge
+
+R1 disqualifies a duplicate "of an already-counted listing in the same top 5". A blind judge
+cannot apply that, because they do not know which listings share a top 5. Each candidate is
+judged on its merits; the scorer then counts only the higher-ranked copy when both copies of
+a duplicate fall in one system's top 5.
+
+A **duplicate** is the same vacancy: the same employer (or a sister company), the same title
+after normalising punctuation, and the same location. Shared template text is not enough —
+one employer advertising different posts at different sites with one template has posted
+separate vacancies. On that definition, three pairs survived the fixture dedup (which matches
+on `job_id` only, and Adzuna gave each copy its own id): **Q05 #1/#4, Q08 #4/#5, Q10 #1/#4.**
+Q07 #1/#4, Q12 #2/#5 and Q17 #4/#1 and #5/#2 are templated but distinct vacancies.
+
+**Extended 2026-09-30, still blind** (after a mechanical scan of every sheet, before
+`score.py` was run): the same vacancy **advertised through an agency** is also a duplicate,
+even though the advertiser's name and wording differ. The test is the same title, the same
+town, the same salary and matching role details. Three pairs meet it: **Q01 #3/#4** (Creative
+Lead, Meta ads, Magherafelt, £35k), **Q11 #5/#7** (Head of Marketing, group-wide, Omagh,
+£55k), **Q15 #1/#5** (Copywriter, heritage architecture, London, £37k). That makes six
+declared pairs in all.
+
+### C4 — Queries with no relevant candidate stay in the mean as 0
+
+Q14, Q17 and Q18 had no relevant candidate among those judged — the union of the three
+systems' top 5s, **not** the whole pool (Q14's pool has 60 unique jobs). They stay in every
+mean as 0, because they were pre-registered and dropping queries after judging is exactly
+the selection § 1 warns against. It lowers every system equally and leaves the deltas
+unchanged. A secondary mean over the queries where at least one system found a relevant
+result is reported beside it and labelled as such.
+
+### C5 — precision@5 always divides by 5
+
+Where a pool, or a system's list, has fewer than five results (Q03's pool has one job),
+precision@5 is still relevant ÷ 5. Dividing by the number returned would inflate small pools.
+
+### C6 — The Adzuna-only headline needed a supplementary sheet
+
+The main sheets hold the three **all-sources** top 5s. Ranked over the Adzuna jobs alone, the
+systems' top 5s include 13 listings that appear on no main sheet (Q02 1, Q06 7, Q10 1, Q14 1,
+Q19 3). They are judged blind on `judging/SUPPLEMENT-adzuna.md`, under the same rules and
+these clarifications, before unblinding.
+
+The Adzuna-only comparison is structurally weaker than planned: Q04 has no Adzuna jobs, and
+Q01, Q03, Q09, Q12, Q17 and Q20 have five or fewer, so all three systems return the same set
+and tie by construction. The headline therefore discriminates on at most 13 queries. State
+that beside the number.
