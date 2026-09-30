@@ -110,7 +110,8 @@ to intent parsing too.
 ## Honesty about limitations
 
 This system re-ranks what keyword search returns; it cannot retrieve what keyword search
-missed. Don't write comments, docstrings or report text implying otherwise. If I ask you to
+missed. And **measured on 2026-09-30, the re-ranking did not beat keyword order**
+(`evaluation/results.md`), so never write that semantic ranking gives better results. Don't write comments, docstrings or report text implying otherwise. If I ask you to
 describe what the system does, describe it accurately — overclaiming in the code or the write-up
 is what gets picked apart in a viva.
 

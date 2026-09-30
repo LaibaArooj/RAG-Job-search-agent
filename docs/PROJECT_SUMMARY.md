@@ -3,6 +3,12 @@
 **Laiba Arooj** · Dept. of Computer Science · Supervisor: Dr Ali Sammad
 Final Year Project · Summary as at **2026-09-19**
 
+> **Superseded — a 2026-09-19 snapshot, kept for the record.** Since then M2–M3 have shipped,
+> the LLM is `openai/gpt-oss-120b`, Jobicy is a third source, the deviations number seven, and
+> precision@5 was measured on 2026-09-30: semantic ranking did *not* beat keyword ranking
+> (0.32 vs 0.31). Do not quote this file's milestone table or next steps. Read
+> `docs/PROJECT_STATUS.md` and `evaluation/results.md`.
+>
 > A standing overview for supervision and viva preparation. For session-level working notes
 > (blockers, next actions, where we stopped) see `PROJECT_STATUS.md`; for the full requirement
 > set see `PROJECT_SPEC.md`.

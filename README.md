@@ -3,17 +3,22 @@
 Final Year Project — Laiba Arooj, Dept. of Computer Science. Supervisor: Dr Ali Sammad.
 
 A Flask web app that lets job seekers search for work in plain English instead of keywords.
-It fetches live listings from Adzuna and Remotive, **re-ranks** them by semantic similarity
-using a locally-run sentence-transformer, and passes the top 5 to a Groq-hosted LLM to produce
-three explained recommendations. Saving and rejecting jobs adjusts per-category preference
+It fetches live listings from Adzuna, Remotive and Jobicy, **re-ranks** them by semantic
+similarity using a locally-run sentence-transformer, and passes five to a Groq-hosted LLM to
+produce three explained recommendations. Every card states whether the employer will hire a
+candidate in the user's country. Saving and rejecting jobs adjusts per-category preference
 scores, which personalise later rankings and a "For You" feed.
 
 ## What this system does and does not do
 
 It re-ranks the candidate pool that keyword search returns. It **cannot retrieve a job that
-keyword search never fetched** — recall is bounded by what the Adzuna and Remotive APIs return
-for the query. Query expansion (2–3 variants per search) widens that pool but does not remove
-the ceiling. See `docs/PROJECT_SPEC.md` § Known limitations.
+keyword search never fetched** — recall is bounded by what the job APIs return for the query.
+Query expansion (2–3 variants per search) widens that pool but does not remove the ceiling.
+See `docs/PROJECT_SPEC.md` § Known limitations.
+
+**Measured, 2026-09-30:** on 20 pre-registered, blind-judged queries, the semantic re-ranking
+did not beat Adzuna's own keyword order (precision@5 0.32 vs 0.31). See
+`evaluation/results.md`.
 
 ## Setup
 

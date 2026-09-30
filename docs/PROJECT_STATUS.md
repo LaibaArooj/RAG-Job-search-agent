@@ -32,15 +32,14 @@ as measured. Do not soften it.**
 
 ### Next actions
 
-1. **Reword every claim that semantic ranking beats keyword search.** Check
-   `docs/PROJECT_SPEC.md`, `docs/PROJECT_SUMMARY.md`, the README and the report draft.
-   `CLAUDE.md` § Honesty applies.
+1. ~~Reword every claim that semantic ranking beats keyword search.~~ **Done 2026-09-30 in
+   the repo docs** (spec, README, viva prep, evaluation plan, stale snapshots flagged).
+   **Still to check: the report draft**, which isn't in the repo.
 2. **Write the evaluation section of the report** from `evaluation/results.md`: the table,
    the means, the deltas, every query where the baseline won, and the limitations listed in
    the changelog. Your 3–4 interpretation sentences are still unwritten.
-3. **Update `docs/VIVA_PREP.md`** with the questions this result invites. The two
-   comprehension-check questions from 2026-09-30 are a start: why only 13 of 19 queries can
-   discriminate, and why higher eligible@5 is not evidence of an eligibility-aware ranker.
+3. **Rehearse the new evaluation section of `docs/VIVA_PREP.md`** (added 2026-09-30), and
+   answer the two open comprehension-check questions out loud.
 4. **Tell the supervisor** about the null result, the § 7 clarifications, and the deviations
    still unreported since 09-23.
 5. Still open from the table below: item 3 (feed ≠ saved jobs). The database is still empty

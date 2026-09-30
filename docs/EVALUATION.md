@@ -1,5 +1,11 @@
 # Evaluation Plan
 
+> **Run and scored 2026-09-30. Result: a null.** Semantic re-ranking scored Adzuna-only
+> precision@5 0.32 against the keyword baseline's 0.31. Numbers are in `evaluation/results.md`.
+> The protocol as actually run, including three systems rather than two, is
+> `evaluation/queries.md`; its § 7 records every ruling made during judging. This file is the
+> original plan, kept as written.
+
 The project claims that semantic ranking produces better job results than keyword ranking.
 This document is how that claim gets evidence. Budget one day in M4.
 

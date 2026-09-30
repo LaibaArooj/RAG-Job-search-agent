@@ -190,7 +190,7 @@ everything that has a test case and defers the Medium-priority items.
 - Write up the Known Limitations section below in the final report
 - README, requirements.txt pinned, demo script rehearsed
 - **Done when:** the demo runs start to finish without you touching the terminal, and you
-  have a precision@5 number for both ranking methods
+  have a precision@5 number for both ranking methods. *(Second half met 2026-09-30.)*
 
 ### Cut list — drop these first if time runs short
 
@@ -245,7 +245,7 @@ documented deviations and penalise undocumented ones.
 |---|---|---|---|
 | Intent parsing | `parse_intent` matches keywords with if-statements (SDD §5.1) | Groq call returning structured JSON, keyword matching as fallback | The SRS defines an Agent as something that "autonomously decides what steps to take". Keyword matching doesn't meet that definition. This makes the claim true. |
 | Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped | Directly addresses the recall ceiling described below |
-| Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claims semantic ranking is better; that claim needs evidence |
+| Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claimed semantic ranking is better; that claim needed evidence. **Measured 2026-09-30: it is not, on ranking alone** (0.32 vs 0.31, `evaluation/results.md`) |
 | **LLM model** | **Llama 3 8B-instant via Groq** | **`openai/gpt-oss-120b` via Groq** | **Forced TWICE, not chosen — see below** |
 | **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + Remotive + **Jobicy** | Neither original source can answer "will this employer hire a candidate in my country?" — Adzuna has no such concept and Remotive is capped at 18 jobs. Jobicy filters eligibility server-side. Free, no key, no card, so the SRS cost constraint holds. See § Geographic eligibility below. |
 | **Source selection** | All sources queried for every user | **Only sources that can serve the user's country** | Adzuna is a country-market API with no `jobs/pk/search` endpoint (404, measured 2026-09-23). Querying it for a user it cannot serve spends quota to fetch jobs that reject them. Requires a `country` field on the user document. |
@@ -323,6 +323,12 @@ either get it or keep the current model and name the mismatch as a limitation.
 An FYP that names its own weaknesses scores better than one that pretends it has none. These
 are the ones an examiner is most likely to find.
 
+0. **Semantic re-ranking did not measurably beat keyword order.** Added 2026-09-30. On the
+   Adzuna-only headline, precision@5 was 0.32 vs 0.31 (3 wins, 3 losses, 13 ties). Across all
+   sources it was 0.30 vs 0.32. The evaluation itself is limited: one judge (the developer),
+   20 queries, only 13 of which can discriminate on the headline, and relevance judged only
+   on the pooled top 5s. Full detail in `evaluation/results.md` and `evaluation/queries.md` § 7.
+
 1. **Recall is bounded by keyword search.** The system re-ranks whatever Adzuna and Remotive
    return for the parsed keywords. If keyword search misses a relevant job, embeddings cannot
    recover it. This is semantic *re-ranking*, not semantic *retrieval*. Query expansion widens
@@ -334,8 +340,9 @@ are the ones an examiner is most likely to find.
    description is embedded.
 4. **The 0.02 boost coefficient is unjustified.** It was chosen by hand, not tuned. Cosine
    similarities cluster in a narrow band, so a category score of 5 shifts ranking materially.
-   Either tune it during evaluation or state plainly that it is a heuristic.
-5. **LLM explanations are unverifiable.** Llama 3 will produce a fluent, confident rationale
+   **Ablated 2026-09-30:** under a declared synthetic profile it changed 3 of 20 queries,
+   helping 1 and hurting 2. That is evidence it barely matters, not a justification of 0.02.
+5. **LLM explanations are unverifiable.** The LLM will produce a fluent, confident rationale
    whether or not the match is real, and may reference requirements the listing never stated.
    The UI labels the section as AI-generated; that is a mitigation, not a fix.
 6. **Preference learning is shallow.** A single integer per category, ±1 per interaction, with
