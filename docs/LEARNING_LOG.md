@@ -94,11 +94,13 @@ here becomes a silence in the viva.
 
 | Concept | Rating | Last checked | Notes / gaps |
 |---|---|---|---|
-| precision@k | | | Define it. Why @5 and not @10? |
+| precision@k | | | Define it. Why @5 and not @10? Why is the RAG stage precision@3 (added 2026-10-01), and why is it still divided by 3 when the LLM returns fewer picks? |
 | Precision vs recall | | | Which one can you measure here, and which can't you? Why? |
 | Why blind judging matters | | | What bias is it controlling for? |
 | Cold start problem | | | Why is a brand-new user's feed no better than search? |
 | Pooled judging | | | Added 2026-09-30. You judged only the union of the three top 5s, not the whole pool. Why is that enough for precision@5 but useless for recall? Why can't you claim Q14/Q17/Q18 have *no* relevant jobs? Why did the Adzuna-only headline need a supplementary sheet? |
+| Repeated sampling of a stochastic system | | | Added 2026-10-01. The RAG-stage evaluation runs the LLM 3 times per query, because temperature 0.3 with no seed means one run is one sample. Why is the mean of 3 runs fairer than 1 run? Why are the picks frozen and never regenerated? Why does a failed run count as K instead of being retried or dropped? |
+| Isolating one stage of a pipeline | | | Added 2026-10-01. The RAG-stage baseline is "the first 3 of the same 5 candidates", not "the top 3 by cosine". Why does handing both systems identical inputs mean any difference comes from the LLM alone? What would the other baseline have mixed in? |
 | Sign test | | | Added 2026-09-30. `score.py` reports one. Why does it ignore ties? Why is it a better fit than a t-test for 0.0–1.0 scores in steps of 0.2 over ~13 queries? Why is a high p-value here *not* evidence that the ranker doesn't help? |
 
 ---

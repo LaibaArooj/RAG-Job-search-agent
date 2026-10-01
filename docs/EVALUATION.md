@@ -85,7 +85,21 @@ framing is: *a small-scale relevance assessment indicating the direction of the 
 by a single non-blind-to-the-project judge and a 20-query sample.* Naming the weakness is what
 makes it credible.
 
-## Optional extension if time allows
+## The RAG stage — pre-registered 2026-10-01
 
-Measure the RAG stage: are the LLM's three picks more relevant than the top three by cosine
-similarity alone? Same protocol, same fixtures. Currently untested, and an examiner may ask.
+Measures whether the LLM's three picks are more relevant than the first three of the
+same five candidates it is handed. The ranking is held fixed, so this isolates the LLM.
+
+- **Protocol:** `evaluation/queries.md` § 8, committed before any pick was generated.
+- **Metric:** precision@3, three frozen runs per query, with the model pinned.
+- **Fixtures:** the same ones as precision@5.
+- **Verdicts:** reused from the earlier sheets, plus one new blind sheet
+  (`judging/SUPPLEMENT-rag.md`) for candidates no earlier sheet showed.
+- **Result:** `evaluation/rag_results.md`, written by `evaluation/score_rag.py` once that
+  sheet is marked. Report it as measured, including every query where the first three beat
+  the LLM.
+
+One limitation must be stated beside the number. This was originally framed as "the LLM vs
+the top three by cosine similarity". That comparison was rejected before any pick was
+generated. `rag_candidates` lifts applicable jobs from lower ranks, so the comparison would
+have measured that re-partition and the LLM together.

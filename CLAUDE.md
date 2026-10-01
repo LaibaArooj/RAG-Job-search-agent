@@ -62,6 +62,9 @@ python verify_agent.py                           # prove the pipeline and the fe
 python verify_live.py                            # prove it against the REAL Adzuna/Remotive/Groq + rendered pages
 python verify_all.py                             # run all six, one summary. --offline skips the quota-spending one
 python evaluation/score.py                       # re-score the judged sheets into evaluation/results.md (--check: validate only)
+python evaluation/build_rag_supplement.py        # RAG stage: blind sheet of candidates no earlier sheet showed (refuses to overwrite)
+python evaluation/generate_rag_picks.py          # RAG stage: freeze 3 LLM runs per query (~117 Groq calls, ~45 min; refuses to overwrite)
+python evaluation/score_rag.py                   # RAG stage: precision@3 into evaluation/rag_results.md (--check: validate only)
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.

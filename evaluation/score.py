@@ -141,20 +141,22 @@ def top_lists(entry):
     return lists
 
 
-def precision(top, verdicts, duplicate_of):
-    """precision@5: relevant listings in the top 5, over 5, counting a duplicate only once (C3, C5)."""
+def precision(top, verdicts, duplicate_of, k=TOP_N):
+    """precision@k: relevant listings in the top k, over k, counting a duplicate only once (C3, C5)."""
+    # k is a parameter for score_rag.py, which measures precision@3 (queries.md § 8.2). Every
+    # call in this file leaves it at 5, so results.md is unchanged by it.
     seen, hits = set(), 0
-    for job_id in top[:TOP_N]:
+    for job_id in top[:k]:
         if verdicts[job_id] and duplicate_of.get(job_id) not in seen:
             hits += 1
         seen.add(job_id)
-    return hits / TOP_N
+    return hits / k
 
 
-def eligible(top, candidates, duplicate_of):
-    """eligible@5: distinct vacancies in the top 5 the seeker could apply for, from data."""
+def eligible(top, candidates, duplicate_of, k=TOP_N):
+    """eligible@k: distinct vacancies in the top k the seeker could apply for, from data."""
     seen, count = set(), 0
-    for job_id in top[:TOP_N]:
+    for job_id in top[:k]:
         if candidates[job_id]["eligibility"] in APPLICABLE and duplicate_of.get(job_id) not in seen:
             count += 1
         seen.add(job_id)

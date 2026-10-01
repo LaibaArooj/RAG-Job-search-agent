@@ -126,6 +126,27 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
 - **"Who judged?"** You, once, not blind to the project but blind to the system. Name it as
   the main threat to validity before they do.
 
+### The RAG stage (added 2026-10-01; result in `evaluation/rag_results.md`)
+
+- **"Does the LLM actually improve anything, or is it decoration?"** That's what the
+  RAG-stage evaluation measures. Lead with the precision@3 number, whatever it is.
+- **"Why compare against the first three of the five, not the top three by cosine?"**
+  Because both systems then get identical inputs, so any difference comes from the LLM alone.
+  `rag_candidates` lifts applicable jobs from lower ranks; comparing against the cosine top 3
+  would mix that re-partition into the LLM's score.
+- **"The LLM is random. How do you know you didn't get a lucky run?"** Three frozen runs
+  per query, the mean reported with the per-run spread, and the model pinned so the fallback
+  chain couldn't switch models mid-experiment. Picks are never regenerated.
+- **"What if Groq failed during the evaluation?"** A failed run scores as K, because K is
+  what the product shows when Groq fails (FR-018). It's never retried, because retrying only
+  the failures would change the rule. The count is in the results.
+- **"How do you know the judging wasn't influenced by which jobs the LLM picked?"** The new
+  sheet was built and committed before any pick existed; the git history shows it. The
+  candidates don't depend on the LLM, so the sheet couldn't leak them.
+- **"The prompt tells it to prefer jobs you can apply for. Doesn't that skew it?"** Yes, and
+  it's pre-registered as a confound. Relevance excludes eligibility, so an LLM that obeys its
+  prompt can lose on precision@3 and win on eligible@3. Both are reported side by side.
+
 ## Live demo — rehearse the failure paths too
 
 Panels love asking you to break your own system.

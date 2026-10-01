@@ -4,6 +4,11 @@
 RAG-stage comparison (`evaluation/queries.md` § 8). Nothing on this sheet says which
 jobs the LLM picked, and nothing could: the candidates were chosen without calling it.
 
+**Status:** unmarked
+
+Change `unmarked` to `marked` when every card is done. `score_rag.py` refuses to score
+until then, because a blank box would otherwise be read as a verdict.
+
 Mark each `[x]` if RELEVANT under R1–R5 in `evaluation/queries.md` § 3, **read with the
 clarifications C1–C4 in § 7**. Leave `[ ]` if not. When a rule is genuinely ambiguous,
 leave it unmarked and note why.
