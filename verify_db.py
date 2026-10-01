@@ -175,6 +175,12 @@ def main():
           str(u["category_scores"]))
     check("TC-013  saved_jobs holds one entry", len(u["saved_jobs"]) == 1, str(len(u["saved_jobs"])))
 
+    # The feed excludes saved jobs using this projection. Checked against Atlas because the
+    # dotted-path projection is MongoDB's behaviour, which no stub can prove.
+    ctx = db.get_user_context(TEST_USER)
+    check("get_user_context carries saved job ids for the feed",
+          ctx.get("saved_jobs") == [{"job_id": JOB["job_id"]}], str(ctx.get("saved_jobs")))
+
     other = dict(JOB, job_id="verify-job-0002", title="Backend Engineer")
     db.reject_job(TEST_USER, other, "technology")
     u = db.get_user(TEST_USER)

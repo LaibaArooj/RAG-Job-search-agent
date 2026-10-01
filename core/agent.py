@@ -396,7 +396,8 @@ class JobSearchAgent:
         # below then drops it. A job has to earn its way into the feed by its own text.
         jobs = self.classify(jobs, None)
 
-        jobs = self._filter_feed(jobs, categories, context.get("rejected_jobs"))
+        saved_ids = {s.get("job_id") for s in context.get("saved_jobs") or []}
+        jobs = self._filter_feed(jobs, categories, context.get("rejected_jobs"), saved_ids)
 
         if not jobs:
             error = MSG_SOURCE_DOWN if failed_sources else MSG_FEED_NONE_FOUND
@@ -426,8 +427,8 @@ class JobSearchAgent:
         }
 
     @staticmethod
-    def _filter_feed(jobs, categories, rejected_jobs):
-        """Keep only jobs in the user's top categories that they have not already rejected."""
+    def _filter_feed(jobs, categories, rejected_jobs, saved_ids=None):
+        """Keep only jobs in the user's top categories that they have not rejected or saved."""
         # TC-012 says rejected categories are ABSENT from the feed, not merely ranked last —
         # and "last of twelve on one page" is still present. A fetch for "writing" routinely
         # returns jobs that classify as technology, so without this a user with tech = -2
@@ -441,10 +442,15 @@ class JobSearchAgent:
         # Rejections are matched on job_id. That is what deviation 4 from SRS v1.0 bought —
         # rejected_jobs stores ids rather than titles, so rejecting one "Software Engineer"
         # hides that employer's listing and not every job sharing the title.
+        #
+        # Saved jobs are dropped too (added 2026-10-01, open item 3 from 09-23). The feed is
+        # for finding jobs the user has NOT seen; a saved one already sits on their profile,
+        # and its Save button would do nothing, because save_job is idempotent (TC-013).
+        hidden = rejected | set(saved_ids or ())
         return [
             job
             for job in jobs
-            if job.get("category") in allowed and job.get("job_id") not in rejected
+            if job.get("category") in allowed and job.get("job_id") not in hidden
         ]
 
     @staticmethod

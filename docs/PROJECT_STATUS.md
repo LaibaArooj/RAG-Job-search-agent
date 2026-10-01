@@ -42,8 +42,10 @@ as measured. Do not soften it.**
    answer the two open comprehension-check questions out loud.
 4. **Tell the supervisor** about the null result, the § 7 clarifications, and the deviations
    still unreported since 09-23.
-5. Still open from the table below: item 3 (feed ≠ saved jobs). The database is still empty
-   after the 09-23 deletion, so register a fresh account before any demo.
+5. ~~Item 3 (feed ≠ saved jobs).~~ **Closed 2026-10-01.** Saved jobs no longer reappear in
+   the feed. That the feed searches category names rather than the saved jobs' content is
+   kept as a stated limitation: changing it would redesign what TC-012/TC-014 prove. The
+   database is still empty after the 09-23 deletion, so register a fresh account before any demo.
 6. Optional, unstarted: the RAG-stage evaluation in `docs/EVALUATION.md` — are the LLM's
    three picks better than the top three by similarity? It uses the same fixtures.
 
@@ -60,7 +62,7 @@ says" and "the product does what a user needs".
 |---|---|---|---|
 | 1 | "My user isn't in MongoDB" | Not a bug — login only reads; was looking at the wrong DB name | Closed |
 | 2 | AI picks have no Save/Reject buttons | Design gap — `RAGPipeline` returned prose | Fixed 2026-09-25 |
-| 3 | Feed ≠ saved jobs | Working as designed, plus two design gaps | **Open** |
+| 3 | Feed ≠ saved jobs | Working as designed, plus two design gaps: (a) saved jobs reappeared in the feed; (b) the feed searches category names, not what was saved | (a) fixed 2026-10-01; (b) **kept as a stated limitation** |
 | 4 | Searched software, got a `design` score | **Bug** — `"ui"` matched inside "suited" | Fixed 2026-09-22 |
 | 5 | Profile "View" reloads the page | **Bug** — template read `job.url`, DB stores `source_url` | Fixed 2026-09-22 |
 

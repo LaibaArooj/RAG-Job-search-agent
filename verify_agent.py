@@ -1377,6 +1377,8 @@ def test_feed_personalised():
         "experience": "entry",
         "category_scores": {"writing": 5, "technology": -2},
         "rejected_jobs": [JobCard.make_job_id("Content Writer", "Acme")],
+        # Shaped as get_user_context projects it: saved_jobs.job_id only.
+        "saved_jobs": [{"job_id": JobCard.make_job_id("Copy Editor", "Acme")}],
     }
     # The "writing" fetch returns a tech job too, which is exactly what happens in production:
     # a keyword search for one category routinely returns jobs belonging to another.
@@ -1385,6 +1387,7 @@ def test_feed_personalised():
             card("Technical Writer", description="writing documentation"),
             card("Backend Developer", description="python software engineering"),
             card("Content Writer", description="content and copywriting"),
+            card("Copy Editor", description="editing and copywriting"),
         ]
     }
     ag, db, fetch, rag = feed_agent(["writing"], context, by_variant)
@@ -1400,6 +1403,9 @@ def test_feed_personalised():
     # TC-012 says rejected jobs are absent, and this is the assertion that deviation 4 --
     # storing job_id rather than title in rejected_jobs -- exists to make possible.
     check("an already-rejected job is absent", "Content Writer" not in titles)
+    # Open item 3 from 09-23: the feed is for jobs the user has not seen yet. "Technical
+    # Writer" still being present (asserted above) shows the filter is not just emptying it.
+    check("an already-saved job is absent", "Copy Editor" not in titles)
     check("top_categories is reported to the template", result["top_categories"] == ["writing"])
     check("no error on a populated feed", result["error"] is None)
     # The feed deliberately makes no Groq call: it is a browse surface, not a question.

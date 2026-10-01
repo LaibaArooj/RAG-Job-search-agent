@@ -170,6 +170,9 @@ class DatabaseManager:
                 "preferred_work": 1,
                 "category_scores": 1,
                 "rejected_jobs": 1,
+                # Ids only: the feed needs to know WHICH jobs are saved so it can leave them
+                # out, not the stored title, company and timestamp of each one.
+                "saved_jobs.job_id": 1,
             },
         )
 
