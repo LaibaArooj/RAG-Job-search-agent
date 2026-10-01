@@ -1,0 +1,1349 @@
+{
+  "queries": {
+    "Q01": {
+      "query": "something creative I can do from my bedroom",
+      "pools": {
+        "adzuna": [
+          "b54e498d3da9a74e",
+          "c0171758175d6667",
+          "dab178e6a22560f1"
+        ],
+        "all": [
+          "4c394bd43ea5f22e",
+          "f44bedc905322e3c",
+          "503de9a24c4cf269",
+          "416746f92d2f021b",
+          "4a6607d527b4e4f7"
+        ]
+      },
+      "candidates": {
+        "b54e498d3da9a74e": {
+          "title": "Creative Lead",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c0171758175d6667": {
+          "title": "Creative Lead",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "dab178e6a22560f1": {
+          "title": "Creative Media Design Advisor (Edgewing)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4c394bd43ea5f22e": {
+          "title": "Conceptual Copywriter",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "f44bedc905322e3c": {
+          "title": "Conceptual Art Director",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "503de9a24c4cf269": {
+          "title": "Creative (Motion Design)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "416746f92d2f021b": {
+          "title": "Contract Senior Front End Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "4a6607d527b4e4f7": {
+          "title": "Senior Full Stack Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        }
+      }
+    },
+    "Q02": {
+      "query": "a job where I help people all day",
+      "pools": {
+        "adzuna": [
+          "e2007c275e0c50ce",
+          "3bc21514a3970c01",
+          "f4a3e5c3ab9d56f7",
+          "3c671be25ade023e",
+          "2364b96e72049842"
+        ],
+        "all": [
+          "398e388835905f7f",
+          "9f28d579d2e919aa",
+          "a502205cefd054fd",
+          "5fbe46489e2a5dbf",
+          "bd25a3ecb3b60dd0"
+        ]
+      },
+      "candidates": {
+        "e2007c275e0c50ce": {
+          "title": "Help Desk Administrator",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "3bc21514a3970c01": {
+          "title": "Director of Technology, Innovation and Insight",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "f4a3e5c3ab9d56f7": {
+          "title": "Social Worker - Family Help",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "3c671be25ade023e": {
+          "title": "Social Worker - Family Help Pilot Team",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "2364b96e72049842": {
+          "title": "Family Help Practitioner",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "398e388835905f7f": {
+          "title": "Cloud Professional Services Manager",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "9f28d579d2e919aa": {
+          "title": "Solution Architecture Manager",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "a502205cefd054fd": {
+          "title": "Senior Infrastructure Security Software Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "5fbe46489e2a5dbf": {
+          "title": "Solution Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "bd25a3ecb3b60dd0": {
+          "title": "Community Engineer (multiple roles and seniority levels)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q03": {
+      "query": "work with numbers but not boring",
+      "pools": {
+        "adzuna": [
+          "58bb64c8b66450dc"
+        ],
+        "all": [
+          "58bb64c8b66450dc"
+        ]
+      },
+      "candidates": {
+        "58bb64c8b66450dc": {
+          "title": "Operations Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q04": {
+      "query": "I want to get into tech but I have no degree",
+      "pools": {
+        "all": [
+          "0ec92293bb2290c2",
+          "5a9ee101d1fe7c90",
+          "6b0e73d978654754",
+          "cf8622afbf310db6",
+          "b5236bf18d66b048"
+        ]
+      },
+      "candidates": {
+        "0ec92293bb2290c2": {
+          "title": "Software Engineering Director",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "5a9ee101d1fe7c90": {
+          "title": "Technical Author (multiple roles and seniority levels)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "6b0e73d978654754": {
+          "title": "Embedded Linux Field Engineer for Devices/IoT",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "cf8622afbf310db6": {
+          "title": "Software Engineer - Solutions Engineering",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "b5236bf18d66b048": {
+          "title": "Engineering Manager - Solutions Engineering",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q05": {
+      "query": "somewhere I can use my writing and actually get paid",
+      "pools": {
+        "adzuna": [
+          "98162b028bc28b29",
+          "81e6b9d9466f65e6",
+          "26e3d9afa06b80e5",
+          "208c57f0dbd3594f",
+          "c42a241f375f28d9"
+        ],
+        "all": [
+          "98162b028bc28b29",
+          "81e6b9d9466f65e6",
+          "26e3d9afa06b80e5",
+          "208c57f0dbd3594f",
+          "c42a241f375f28d9"
+        ]
+      },
+      "candidates": {
+        "98162b028bc28b29": {
+          "title": "Creative Writing Expert - Published Author",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "81e6b9d9466f65e6": {
+          "title": "Live-In Care Assistant to a Creative Writing University Student",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "26e3d9afa06b80e5": {
+          "title": "Care Assistant to a recent Creative Writing Uni Graduate at Home",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "208c57f0dbd3594f": {
+          "title": "Writing in the Sciences",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c42a241f375f28d9": {
+          "title": "Manager Proposal Writing",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q06": {
+      "query": "junior frontend developer react remote",
+      "pools": {
+        "adzuna": [
+          "ee8e028037d1e725",
+          "122d094d7de1d6db",
+          "fe598bc67d5432ca",
+          "36ee77403bfd7f00",
+          "974f11479f1e4286"
+        ],
+        "all": [
+          "aabb8761b36cd6c6",
+          "4a6607d527b4e4f7",
+          "aafceba37cb837cc",
+          "2d13ff699e3ee183",
+          "07e59d263bd8e7a1"
+        ]
+      },
+      "candidates": {
+        "ee8e028037d1e725": {
+          "title": "Senior Systems Developer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "122d094d7de1d6db": {
+          "title": "Kerry Internship Programme 2027 - Research, Development & Application (RDA)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "fe598bc67d5432ca": {
+          "title": "Technical Assurance Lead",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "36ee77403bfd7f00": {
+          "title": "Coupa Configuration Consultant",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "974f11479f1e4286": {
+          "title": "Business Development Executive (Sussex/Kent)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "aabb8761b36cd6c6": {
+          "title": "Web Frontend Engineer - JS, CSS, React, Flutter",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "4a6607d527b4e4f7": {
+          "title": "Senior Full Stack Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "aafceba37cb837cc": {
+          "title": "Software Engineer - Auth",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "2d13ff699e3ee183": {
+          "title": "Postgres Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        },
+        "07e59d263bd8e7a1": {
+          "title": "Ubuntu Engineering Lead",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        }
+      }
+    },
+    "Q07": {
+      "query": "registered nurse night shift",
+      "pools": {
+        "adzuna": [
+          "2bdc6a522d0afbcb",
+          "7c200756907a1da4",
+          "9f2ba867091b3a7b",
+          "4bdf80e0f0435bce",
+          "0b4700da1dce7961"
+        ],
+        "all": [
+          "2bdc6a522d0afbcb",
+          "7c200756907a1da4",
+          "9f2ba867091b3a7b",
+          "4bdf80e0f0435bce",
+          "0b4700da1dce7961"
+        ]
+      },
+      "candidates": {
+        "2bdc6a522d0afbcb": {
+          "title": "Night Nurse",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "7c200756907a1da4": {
+          "title": "Registered General Nurse",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "9f2ba867091b3a7b": {
+          "title": "Female Registered Nurse Night Shift \u2013 BN41 | \u00a341.82/hr | \u00a3400 Bonus",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4bdf80e0f0435bce": {
+          "title": "Registered Nurse",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "0b4700da1dce7961": {
+          "title": "Night Registered General Nurse",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q08": {
+      "query": "graphic designer figma branding",
+      "pools": {
+        "adzuna": [
+          "0278522ffe832ce2",
+          "0543d778d1659834",
+          "8e395b59407b1007",
+          "094bf856bb167474",
+          "bd84aad16f911087"
+        ],
+        "all": [
+          "4c394bd43ea5f22e",
+          "503de9a24c4cf269",
+          "4a6607d527b4e4f7",
+          "76fe1d50f90c3552",
+          "db33274f761bb771"
+        ]
+      },
+      "candidates": {
+        "0278522ffe832ce2": {
+          "title": "Graphic Designer (Brand & Digital)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "0543d778d1659834": {
+          "title": "Graphic Designer Brand & Digital",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "8e395b59407b1007": {
+          "title": "Graphic Designer - Retail & Brand Experience",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "094bf856bb167474": {
+          "title": "Graphic Designer & Character Animator for Children\u2019s Brand",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "bd84aad16f911087": {
+          "title": "Design Lead Brand & Studio",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4c394bd43ea5f22e": {
+          "title": "Conceptual Copywriter",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        },
+        "503de9a24c4cf269": {
+          "title": "Creative (Motion Design)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "4a6607d527b4e4f7": {
+          "title": "Senior Full Stack Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "76fe1d50f90c3552": {
+          "title": "Product Growth Strategist",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "db33274f761bb771": {
+          "title": "Python and Kubernetes Software Engineer - Data, Workflows, AI/ML & Analytics",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 5
+        }
+      }
+    },
+    "Q09": {
+      "query": "financial analyst excel modelling",
+      "pools": {
+        "adzuna": [
+          "40987b6c4b4c4a7b"
+        ],
+        "all": [
+          "c1ac85c62517dd3d",
+          "8a6e95e2a76d3e9a",
+          "329a8041a4a6ba65",
+          "796de72b87a2fcec",
+          "40987b6c4b4c4a7b"
+        ]
+      },
+      "candidates": {
+        "40987b6c4b4c4a7b": {
+          "title": "Financial Analyst",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c1ac85c62517dd3d": {
+          "title": "1775 RPG/AS400 & JD Edwards EnterpriseOne Developer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "8a6e95e2a76d3e9a": {
+          "title": "Staff Software Engineer (SRE)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "329a8041a4a6ba65": {
+          "title": "Senior Software Engineer, Backend (Money Movement)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "796de72b87a2fcec": {
+          "title": "Software Engineer, Frontend / Full Stack (Identity Platform)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q10": {
+      "query": "primary school teaching assistant",
+      "pools": {
+        "adzuna": [
+          "0bd1306944ac803d",
+          "24483b0b2cbaac65",
+          "1c261af38e933ef9",
+          "212417c761b9cc74",
+          "fee8787ba1b4d9d9"
+        ],
+        "all": [
+          "1827b02bf2d9dc9f",
+          "0a3b2398776b742a",
+          "0bd1306944ac803d",
+          "24483b0b2cbaac65",
+          "1c261af38e933ef9"
+        ]
+      },
+      "candidates": {
+        "0bd1306944ac803d": {
+          "title": "Aspiring Primary Teacher - Primary SEN Teaching Assistant",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "24483b0b2cbaac65": {
+          "title": "Primary Supply Teachers and Teaching Assistants",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "1c261af38e933ef9": {
+          "title": "Primary Teachers & TA's - (PR8 / PR9)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "212417c761b9cc74": {
+          "title": "Primary Supply Teachers and Teaching Assistants",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "fee8787ba1b4d9d9": {
+          "title": "Oxbridge Graduates - Aspiring Primary Teacher",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "1827b02bf2d9dc9f": {
+          "title": "Early Childhood Teacher (PT)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "0a3b2398776b742a": {
+          "title": "Remote Office Assistant",
+          "eligibility": "open",
+          "source": "Remotive",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q11": {
+      "query": "entry level marketing role no degree required",
+      "pools": {
+        "adzuna": [
+          "848e92616163ce0b",
+          "1b5bc0ac188b8ca2",
+          "4e329677b8f98daa",
+          "b6357f92e6c0a9bc",
+          "b0b82e7ec016f2bd"
+        ],
+        "all": [
+          "a6999a4da4b1dc93",
+          "bd25a3ecb3b60dd0",
+          "4af1d794d1b02fd9",
+          "4c394bd43ea5f22e",
+          "8a0655af28e5fe94"
+        ]
+      },
+      "candidates": {
+        "848e92616163ce0b": {
+          "title": "Marketing Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "1b5bc0ac188b8ca2": {
+          "title": "Head of Marketing",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4e329677b8f98daa": {
+          "title": "Trade Marketing Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "b6357f92e6c0a9bc": {
+          "title": "Marketing Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "b0b82e7ec016f2bd": {
+          "title": "Head of Marketing",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "a6999a4da4b1dc93": {
+          "title": "Account Director",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "bd25a3ecb3b60dd0": {
+          "title": "Community Engineer (multiple roles and seniority levels)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 5
+        },
+        "4af1d794d1b02fd9": {
+          "title": "Enterprise Account Executive",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        },
+        "4c394bd43ea5f22e": {
+          "title": "Conceptual Copywriter",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "8a0655af28e5fe94": {
+          "title": "Senior Performance Marketer (Full Remote - Worldwide)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        }
+      }
+    },
+    "Q12": {
+      "query": "part time customer support work from home",
+      "pools": {
+        "adzuna": [
+          "363afa788ba972a4",
+          "c23935fe0886dcc8",
+          "b21c93e3f1173a2b",
+          "49aa5bca53134cff",
+          "f268b03a6c6ae8d0"
+        ],
+        "all": [
+          "4c394bd43ea5f22e",
+          "398e388835905f7f",
+          "5dbc138f8179c933",
+          "2d13ff699e3ee183",
+          "20ed159fdb992783"
+        ]
+      },
+      "candidates": {
+        "363afa788ba972a4": {
+          "title": "Customer Support Coordinator",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c23935fe0886dcc8": {
+          "title": "Customer Support Coordinator",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "b21c93e3f1173a2b": {
+          "title": "Customer Support Administrator",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "49aa5bca53134cff": {
+          "title": "Customer Support Agent",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "f268b03a6c6ae8d0": {
+          "title": "Customer Support Technician",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4c394bd43ea5f22e": {
+          "title": "Conceptual Copywriter",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 5
+        },
+        "398e388835905f7f": {
+          "title": "Cloud Professional Services Manager",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "5dbc138f8179c933": {
+          "title": "Product Manager - Marketplace",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "2d13ff699e3ee183": {
+          "title": "Postgres Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        },
+        "20ed159fdb992783": {
+          "title": "Product Lead - Infrastructure",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        }
+      }
+    },
+    "Q13": {
+      "query": "paralegal position no prior experience",
+      "pools": {
+        "adzuna": [
+          "25205cef562c6053",
+          "62861b6e29930e8c",
+          "6955e3b3998bed0a",
+          "e101c3e7f3579cf5",
+          "aef5750a3208d41a"
+        ],
+        "all": [
+          "25205cef562c6053",
+          "62861b6e29930e8c",
+          "6955e3b3998bed0a",
+          "e101c3e7f3579cf5",
+          "aef5750a3208d41a"
+        ]
+      },
+      "candidates": {
+        "25205cef562c6053": {
+          "title": "Senior Paralegal",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "62861b6e29930e8c": {
+          "title": "Conveyancing paralegal",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "6955e3b3998bed0a": {
+          "title": "Litigation Paralegal",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "e101c3e7f3579cf5": {
+          "title": "Private Client Paralegal",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "aef5750a3208d41a": {
+          "title": "Senior Conveyancing Paralegal",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q14": {
+      "query": "remote data entry job that hires worldwide",
+      "pools": {
+        "adzuna": [
+          "32ffd8ace1f09d21",
+          "cbac2d5f9fa2fd14",
+          "c3d613cf4c5f54af",
+          "c74634739dfa1a5e",
+          "7f8d7e6a96c85582"
+        ],
+        "all": [
+          "1589686e4196542b",
+          "6b0e73d978654754",
+          "db33274f761bb771",
+          "90704c673bf802b4",
+          "329a8041a4a6ba65"
+        ]
+      },
+      "candidates": {
+        "32ffd8ace1f09d21": {
+          "title": "Data Engineer (Cloud Architecture)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "cbac2d5f9fa2fd14": {
+          "title": "Data Architect",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c3d613cf4c5f54af": {
+          "title": "Delivery Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c74634739dfa1a5e": {
+          "title": "Voice Engineer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "7f8d7e6a96c85582": {
+          "title": "Route Surveyor",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "1589686e4196542b": {
+          "title": "Freelance Software Tester With Apple Vision Pro (Remote Worldwide)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "6b0e73d978654754": {
+          "title": "Embedded Linux Field Engineer for Devices/IoT",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "db33274f761bb771": {
+          "title": "Python and Kubernetes Software Engineer - Data, Workflows, AI/ML & Analytics",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "90704c673bf802b4": {
+          "title": "Cloud Field Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "329a8041a4a6ba65": {
+          "title": "Senior Software Engineer, Backend (Money Movement)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        }
+      }
+    },
+    "Q15": {
+      "query": "freelance copywriting contract short term",
+      "pools": {
+        "adzuna": [
+          "afcd20005157bd97",
+          "1d25c9e5bce44c65",
+          "48a4b91ba50e1e2a",
+          "35ff2fe1648539da",
+          "7f6341a3fcec09fd"
+        ],
+        "all": [
+          "cda4b695b1cbb94a",
+          "f2cc762084afc4ff",
+          "aaaedc552b37e51f",
+          "30b925c2d69c4076",
+          "afcd20005157bd97"
+        ]
+      },
+      "candidates": {
+        "afcd20005157bd97": {
+          "title": "Copywriter",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "1d25c9e5bce44c65": {
+          "title": "Copywriter",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "48a4b91ba50e1e2a": {
+          "title": "Copywriters",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "35ff2fe1648539da": {
+          "title": "Copywriting",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "7f6341a3fcec09fd": {
+          "title": "Copywriter",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "cda4b695b1cbb94a": {
+          "title": "Dutch Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "f2cc762084afc4ff": {
+          "title": "Slovak Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        },
+        "aaaedc552b37e51f": {
+          "title": "Ukrainian Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "30b925c2d69c4076": {
+          "title": "Hebrew Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        }
+      }
+    },
+    "Q16": {
+      "query": "job where I write stuff but not journalism",
+      "pools": {
+        "adzuna": [
+          "98162b028bc28b29",
+          "01e19f630983089e",
+          "790cf018551ddc92",
+          "dc694be5a5b6cb17",
+          "4c87d844b94fb1fa"
+        ],
+        "all": [
+          "30b925c2d69c4076",
+          "cda4b695b1cbb94a",
+          "aaaedc552b37e51f",
+          "f2cc762084afc4ff",
+          "98162b028bc28b29"
+        ]
+      },
+      "candidates": {
+        "98162b028bc28b29": {
+          "title": "Creative Writing Expert - Published Author",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "01e19f630983089e": {
+          "title": "Associate Lecturer: BA English & Creative Writing",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "790cf018551ddc92": {
+          "title": "Technical Writer with Active Secret Security Clearance - Onsite in Portsmouth, VA",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "dc694be5a5b6cb17": {
+          "title": "English Teacher | Camden (Independent Secondary)",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4c87d844b94fb1fa": {
+          "title": "English Graduate Teacher",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "30b925c2d69c4076": {
+          "title": "Hebrew Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "cda4b695b1cbb94a": {
+          "title": "Dutch Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "aaaedc552b37e51f": {
+          "title": "Ukrainian Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "f2cc762084afc4ff": {
+          "title": "Slovak Sports Localization Specialist (Football)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        }
+      }
+    },
+    "Q17": {
+      "query": "not sales but still talking to customers",
+      "pools": {
+        "adzuna": [
+          "0019571df9464729",
+          "dc15da7ceed9a369",
+          "cb9e8e830c628674",
+          "73cebd1564c3d7c2"
+        ],
+        "all": [
+          "9492ef69de6f440b",
+          "a7276b8a6453f59f",
+          "3fce55d6ac3f7254",
+          "9f28d579d2e919aa",
+          "ba07180ca17742a1"
+        ]
+      },
+      "candidates": {
+        "0019571df9464729": {
+          "title": "Sales Operator",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "dc15da7ceed9a369": {
+          "title": "Sales Associate",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "cb9e8e830c628674": {
+          "title": "Sales Advisor",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "73cebd1564c3d7c2": {
+          "title": "Sales Representative",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "9492ef69de6f440b": {
+          "title": "Inside Sales Contractor",
+          "eligibility": "open",
+          "source": "Remotive",
+          "judged_on": "main"
+        },
+        "a7276b8a6453f59f": {
+          "title": "Ubuntu Sales Engineer (Entry-Level)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        },
+        "3fce55d6ac3f7254": {
+          "title": "Embedded Devices Software Solution Sales - All Roles",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 4
+        },
+        "9f28d579d2e919aa": {
+          "title": "Solution Architecture Manager",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 3
+        },
+        "ba07180ca17742a1": {
+          "title": "Senior/Staff/Principal Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        }
+      }
+    },
+    "Q18": {
+      "query": "something in HR that isn't recruitment",
+      "pools": {
+        "adzuna": [
+          "5345c91de5e04983",
+          "d39a2d6c161e2634",
+          "b73e42326ae9f864",
+          "5e3a7fb4eca3c264",
+          "90f4542b4bf56ba8"
+        ],
+        "all": [
+          "6824d077d7adbea8",
+          "0d61f42780f3a42d",
+          "5345c91de5e04983",
+          "d39a2d6c161e2634",
+          "b73e42326ae9f864"
+        ]
+      },
+      "candidates": {
+        "5345c91de5e04983": {
+          "title": "Recruitment Resourcer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "d39a2d6c161e2634": {
+          "title": "Recruitment Resourcer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "b73e42326ae9f864": {
+          "title": "Recruitment Consultant",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "5e3a7fb4eca3c264": {
+          "title": "Recruitment Resourcer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "90f4542b4bf56ba8": {
+          "title": "Recruitment Consultant",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "6824d077d7adbea8": {
+          "title": "DevOps Engineer (Intern)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "0d61f42780f3a42d": {
+          "title": "AWS DevOps Engineer (Senior)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        }
+      }
+    },
+    "Q19": {
+      "query": "coding job that isn't web development",
+      "pools": {
+        "adzuna": [
+          "c562d175798faa72",
+          "00d0d5a32160579b",
+          "62e418073ba50812",
+          "37822344507b5f73",
+          "277225ca3f5e14c4"
+        ],
+        "all": [
+          "96a55d12722b1a0b",
+          "c562d175798faa72",
+          "1cdaf0a6ba1b56a4",
+          "00d0d5a32160579b",
+          "62e418073ba50812"
+        ]
+      },
+      "candidates": {
+        "c562d175798faa72": {
+          "title": "Website Design & Programming Work Experience",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "00d0d5a32160579b": {
+          "title": "Software Developer Trainee",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "62e418073ba50812": {
+          "title": "Front End Developer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "37822344507b5f73": {
+          "title": "Build, Host & Manage WordPress Websites using AI [10Web]",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "277225ca3f5e14c4": {
+          "title": "AS400 Lead",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "adzuna"
+        },
+        "96a55d12722b1a0b": {
+          "title": "Engineering Manager",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "1cdaf0a6ba1b56a4": {
+          "title": "Frontend Web Application Developer",
+          "eligibility": "regional",
+          "source": "Remotive",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q20": {
+      "query": "design work that doesn't need a portfolio",
+      "pools": {
+        "adzuna": [
+          "ef7b8ab60f36452a",
+          "33d691e57ea0eee5",
+          "c1b0249a2635b879",
+          "e75d6600854be926"
+        ],
+        "all": [
+          "4c394bd43ea5f22e",
+          "503de9a24c4cf269",
+          "e8c204ef1bfbce68",
+          "ab8c6e64dadb0f56",
+          "9441e085ef61b8c1"
+        ]
+      },
+      "candidates": {
+        "ef7b8ab60f36452a": {
+          "title": "Wastewater Designer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "33d691e57ea0eee5": {
+          "title": "Expression of Interest - Design Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "c1b0249a2635b879": {
+          "title": "Gas Design Manager",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "e75d6600854be926": {
+          "title": "Design Engineer",
+          "eligibility": "local",
+          "source": "Adzuna",
+          "judged_on": "main"
+        },
+        "4c394bd43ea5f22e": {
+          "title": "Conceptual Copywriter",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "503de9a24c4cf269": {
+          "title": "Creative (Motion Design)",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "e8c204ef1bfbce68": {
+          "title": "Site Reliability / Gitops Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "main"
+        },
+        "ab8c6e64dadb0f56": {
+          "title": "Site Reliability Engineer",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 1
+        },
+        "9441e085ef61b8c1": {
+          "title": "Enterprise Project Manager",
+          "eligibility": "open",
+          "source": "Jobicy",
+          "judged_on": "rag",
+          "rag_n": 2
+        }
+      }
+    }
+  }
+}
