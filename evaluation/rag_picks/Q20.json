@@ -1,0 +1,126 @@
+{
+  "query_id": "Q20",
+  "query": "design work that doesn't need a portfolio",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "ef7b8ab60f36452a",
+        "33d691e57ea0eee5",
+        "c1b0249a2635b879",
+        "e75d6600854be926"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "ef7b8ab60f36452a",
+              "reason": "This role is limited to candidates who can work on\u2011site in Rusholme, Manchester. It focuses on technical wastewater design work, which typically does not require a portfolio and offers on\u2011the\u2011job skill development."
+            },
+            {
+              "job_id": "c1b0249a2635b879",
+              "reason": "This position is restricted to candidates able to work in Firswood, Manchester. It involves gas system design and detailed drawing production, tasks that rely on engineering competence rather than a portfolio."
+            },
+            {
+              "job_id": "e75d6600854be926",
+              "reason": "This job is limited to candidates who can work in Silfield, Wymondham. It is a design engineer role in structures and geotechnical engineering, where practical experience is valued over a portfolio."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "ef7b8ab60f36452a",
+              "reason": "This role is limited to candidates who can work on\u2011site in Rusholme, Manchester. It is a design position that focuses on technical wastewater design, which often relies on engineering qualifications rather than a portfolio."
+            },
+            {
+              "job_id": "c1b0249a2635b879",
+              "reason": "This position requires the ability to work in Firswood, Manchester. It involves gas system design and emphasizes technical expertise and on\u2011the\u2011job learning, making a portfolio less critical."
+            },
+            {
+              "job_id": "e75d6600854be926",
+              "reason": "This job is restricted to candidates able to work in Silfield, Wymondham. It is a design engineer role in structures and geotechnical work where formal qualifications and experience are valued over a visual portfolio."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "ef7b8ab60f36452a",
+              "reason": "This role is limited to candidates who can work on\u2011site in Rusholme, Manchester. Wastewater design positions often focus on technical competency and on\u2011the\u2011job training, so a portfolio is not typically required."
+            },
+            {
+              "job_id": "c1b0249a2635b879",
+              "reason": "This position is restricted to candidates able to work in Firswood, Manchester. As a Gas Designer, the employer emphasizes learning and mentorship rather than a pre\u2011existing portfolio."
+            },
+            {
+              "job_id": "e75d6600854be926",
+              "reason": "This job is limited to candidates who can work on\u2011site in Silfield, Wymondham. Design Engineer roles in structures and geotechnical fields usually assess engineering knowledge and problem\u2011solving skills over a portfolio."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "4c394bd43ea5f22e",
+        "503de9a24c4cf269",
+        "e8c204ef1bfbce68",
+        "ab8c6e64dadb0f56",
+        "9441e085ef61b8c1"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The role is fully remote with no geographic restriction, allowing anyone to apply. Conceptual copywriting generally does not require a visual portfolio, making it suitable for a seeker without a design portfolio."
+            },
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "This position is also remote and open worldwide, so location is not a barrier. Motion design typically expects a strong visual portfolio, so it may not fit the seeker\u2019s requirement to avoid a portfolio."
+            },
+            {
+              "job_id": "e8c204ef1bfbce68",
+              "reason": "The job is remote with no geographic limits, so it is accessible globally. However, it is a site reliability engineering role, not a design position, so it likely does not meet the seeker\u2019s design\u2011focused goals."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "This is a remote motion design role with no geographic restriction, matching the desire for design work. Motion design positions usually require a portfolio, so you may still need to provide one despite the query."
+            },
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The conceptual copywriter position is remote and focuses on creative writing, which often only needs writing samples rather than a full design portfolio. It aligns with the seeker\u2019s preference for work that doesn\u2019t strictly require a design portfolio."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "This is a motion design role that involves creating visual assets, but such positions typically expect a portfolio of previous work. It is remote with no geographic hiring restrictions, so you can apply from anywhere."
+            },
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "Conceptual copywriting is a creative role that often does not require a design portfolio, focusing instead on writing samples. It is fully remote, allowing you to apply regardless of location."
+            },
+            {
+              "job_id": "e8c204ef1bfbce68",
+              "reason": "While not a design position, this site reliability role is remote and has no geographic hiring limits, offering a tech alternative if design work without a portfolio proves difficult. It may be a viable option if you are open to non\u2011design technical work."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

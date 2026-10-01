@@ -1,0 +1,126 @@
+{
+  "query_id": "Q17",
+  "query": "not sales but still talking to customers",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "0019571df9464729",
+        "dc15da7ceed9a369",
+        "cb9e8e830c628674",
+        "73cebd1564c3d7c2"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "0019571df9464729",
+              "reason": "This position is limited to candidates who can work on\u2011site in Hillhead, Glasgow City Centre. It involves regular customer interaction and may suit someone who wants to talk to customers without a primary sales quota."
+            },
+            {
+              "job_id": "dc15da7ceed9a369",
+              "reason": "This role is restricted to candidates able to work on\u2011site in Coedpenmaen, Pontypridd. While titled a Sales Associate, the job focuses on customer service and could fit a seeker who prefers talking to customers rather than pure sales."
+            },
+            {
+              "job_id": "cb9e8e830c628674",
+              "reason": "This opening also requires candidates to be based in Hillhead, Glasgow City Centre. The Sales Advisor role emphasizes engaging with customers and may be appropriate for someone looking for a customer\u2011facing position that isn\u2019t strictly sales\u2011driven."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "0019571df9464729",
+              "reason": "This position is limited to candidates who can work on\u2011site in Hillhead, Glasgow City Centre. It involves regular customer interaction, which aligns with your desire to talk to customers even though it is framed as a sales role."
+            },
+            {
+              "job_id": "dc15da7ceed9a369",
+              "reason": "This role requires you to be based in Coedpenmaen, Pontypridd, so it has a geographic restriction. It focuses on engaging with customers in a contact\u2011centre environment, matching your interest in customer\u2011facing work without a pure sales focus."
+            },
+            {
+              "job_id": "cb9e8e830c628674",
+              "reason": "The job is restricted to candidates able to work in Hillhead, Glasgow City Centre. It offers extensive customer communication, which may satisfy your preference for talking to customers despite the sales title."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "0019571df9464729",
+              "reason": "This role involves frequent direct interaction with customers, which matches your desire to talk to people. However, it is a sales position and is limited to candidates who can work on\u2011site in Hillhead, Glasgow City Centre."
+            },
+            {
+              "job_id": "dc15da7ceed9a369",
+              "reason": "The job requires regular customer contact, giving you plenty of speaking opportunities. It is still a sales role and is restricted to candidates able to work on\u2011site in Coedpenmaen, Pontypridd."
+            },
+            {
+              "job_id": "cb9e8e830c628674",
+              "reason": "You will be engaging with customers throughout the day, aligning with your interest in customer interaction. Note that this is a sales\u2011focused position and only open to candidates who can work on\u2011site in Hillhead, Glasgow City Centre."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "9492ef69de6f440b",
+        "a7276b8a6453f59f",
+        "3fce55d6ac3f7254",
+        "9f28d579d2e919aa",
+        "ba07180ca17742a1"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "9f28d579d2e919aa",
+              "reason": "The role focuses on solution architecture and helping customers implement open\u2011source solutions, which involves deep technical interaction without a primary sales quota. It is remote with no geographic hiring restrictions, matching the seeker\u2019s flexibility."
+            },
+            {
+              "job_id": "ba07180ca17742a1",
+              "reason": "As a senior engineer you will work on advanced technology projects and may consult with customers on technical matters, offering customer contact without a sales focus. The position is fully remote and open to applicants worldwide."
+            },
+            {
+              "job_id": "a7276b8a6453f59f",
+              "reason": "A sales engineer role blends technical support with customer discussions, allowing you to talk to clients while not being a pure sales position. It is remote with no geographic hiring limits, so you can apply from anywhere."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "ba07180ca17742a1",
+              "reason": "This senior engineering role is focused on product development and technical problem solving, which often involves collaborating with customers to understand requirements and integrate feedback. It does not center on selling, making it a good fit for someone who wants to talk to customers without a sales focus."
+            },
+            {
+              "job_id": "9f28d579d2e919aa",
+              "reason": "The Solution Architecture Manager position helps customers design and implement open\u2011source solutions, emphasizing technical guidance over revenue generation. It involves extensive customer interaction while remaining primarily a technical leadership role."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "9f28d579d2e919aa",
+              "reason": "This role focuses on solution architecture and helping customers implement open source solutions, so it involves extensive customer interaction without being a sales position. It also has no geographic hiring restrictions, matching the seeker\u2019s flexibility."
+            },
+            {
+              "job_id": "ba07180ca17742a1",
+              "reason": "Senior/Staff/Principal Engineer roles often require collaborating with customers on technical implementations, providing a non\u2011sales way to talk to clients. The position is remote\u2011friendly with worldwide hiring."
+            },
+            {
+              "job_id": "a7276b8a6453f59f",
+              "reason": "The Ubuntu Sales Engineer role blends technical expertise with customer discussions, but it is still classified as a sales position, which may not fully meet the \u2018not sales\u2019 preference. It does offer global remote hiring, so the seeker can apply from anywhere."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

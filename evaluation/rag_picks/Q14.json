@@ -1,0 +1,92 @@
+{
+  "query_id": "Q14",
+  "query": "remote data entry job that hires worldwide",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "32ffd8ace1f09d21",
+        "cbac2d5f9fa2fd14",
+        "c3d613cf4c5f54af",
+        "c74634739dfa1a5e",
+        "7f8d7e6a96c85582"
+      ],
+      "runs": [
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [],
+          "failed": true
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "1589686e4196542b",
+        "6b0e73d978654754",
+        "db33274f761bb771",
+        "90704c673bf802b4",
+        "329a8041a4a6ba65"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "1589686e4196542b",
+              "reason": "This role is fully remote and hires worldwide, so you can apply from any location. However, it is a software testing position that requires an Apple Vision Pro device, not a data entry job."
+            },
+            {
+              "job_id": "6b0e73d978654754",
+              "reason": "The job is remote with no geographic restriction, matching the seeker\u2019s location flexibility. It is an Embedded Linux Field Engineer role, which is technical engineering work rather than data entry."
+            },
+            {
+              "job_id": "db33274f761bb771",
+              "reason": "It offers worldwide remote work, meeting the location requirement. The position is a Python and Kubernetes Software Engineer role, focused on development and analytics, not data entry."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "1589686e4196542b",
+              "reason": "This role is fully remote with no geographic restriction, allowing worldwide applicants. However, it focuses on software testing rather than data entry, so the tasks are more technical."
+            },
+            {
+              "job_id": "6b0e73d978654754",
+              "reason": "The position is open to candidates from any country, offering complete remote work. It involves embedded Linux and IoT engineering, which does not match typical data entry responsibilities."
+            },
+            {
+              "job_id": "db33274f761bb771",
+              "reason": "Hiring is unrestricted globally and the job can be performed remotely. The work centers on Python and Kubernetes development, not data entry, so it may not meet the seeker\u2019s specific interest."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "1589686e4196542b",
+              "reason": "This role is remote and hires worldwide, so you can apply from any location. However, it is a freelance software testing position that requires specific hardware, not a data entry job."
+            },
+            {
+              "job_id": "6b0e73d978654754",
+              "reason": "The job is fully remote with no geographic restriction, allowing global applicants. It focuses on embedded Linux and IoT engineering, which does not involve typical data entry tasks."
+            },
+            {
+              "job_id": "db33274f761bb771",
+              "reason": "This position is remote and open to candidates worldwide. It is a software engineering role centered on Python and Kubernetes, not a data entry position."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

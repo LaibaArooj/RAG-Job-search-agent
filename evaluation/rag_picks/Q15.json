@@ -1,0 +1,131 @@
+{
+  "query_id": "Q15",
+  "query": "freelance copywriting contract short term",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "afcd20005157bd97",
+        "1d25c9e5bce44c65",
+        "48a4b91ba50e1e2a",
+        "35ff2fe1648539da",
+        "7f6341a3fcec09fd"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "afcd20005157bd97",
+              "reason": "The position is limited to candidates who can work in Holywood, North Down, so it may not suit a remote freelancer. It does involve diverse copywriting tasks across social media, sales pages, and ads, matching the skill set sought."
+            },
+            {
+              "job_id": "1d25c9e5bce44c65",
+              "reason": "This role is restricted to candidates already able to work in the UK, which could be a barrier for a location\u2011independent freelancer. It offers a broad range of copywriting responsibilities, including brand storytelling and educational content, aligning with the seeker\u2019s expertise."
+            },
+            {
+              "job_id": "35ff2fe1648539da",
+              "reason": "The job requires candidates to be based in Home Meadow, Worcester, so it is not a remote or freelance opportunity. It focuses on creating travel\u2011related website and blog copy, which fits the copywriting focus of the seeker."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "1d25c9e5bce44c65",
+              "reason": "This role is limited to candidates who can work in the UK, so you would need to be based there or able to work remotely from the UK. Better Proposals describes a versatile copywriting position that could be suited to short\u2011term or project\u2011based work, making it a plausible freelance match."
+            },
+            {
+              "job_id": "35ff2fe1648539da",
+              "reason": "The hiring restriction is to candidates able to work in Home Meadow, Worcester, which may limit remote applicants. The travel\u2011focused copywriting role appears project\u2011oriented and could be taken on as a short\u2011term contract, aligning with freelance interests."
+            },
+            {
+              "job_id": "afcd20005157bd97",
+              "reason": "Only candidates already able to work in Holywood, North Down are considered, so geographic eligibility is required. The agency setting often offers contract or freelance assignments, so this could fit a short\u2011term copywriting need."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "1d25c9e5bce44c65",
+              "reason": "This role is limited to candidates who can work in the UK, so it may require you to be based there or able to work remotely from the UK. It involves varied copywriting tasks that could be suitable for a short\u2011term contract if the employer is open to freelance arrangements."
+            },
+            {
+              "job_id": "afcd20005157bd97",
+              "reason": "The position is restricted to candidates able to work in Holywood, North Down, meaning you would need to be local or willing to commute. The job\u2019s focus on creating copy for multiple platforms aligns well with freelance short\u2011term project work."
+            },
+            {
+              "job_id": "7f6341a3fcec09fd",
+              "reason": "This opening is only for candidates who can work in London, UK, so geographic eligibility is required. The copywriting responsibilities are broad and could potentially be scoped as a contract assignment for a limited period."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "cda4b695b1cbb94a",
+        "f2cc762084afc4ff",
+        "aaaedc552b37e51f",
+        "30b925c2d69c4076",
+        "afcd20005157bd97"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "afcd20005157bd97",
+              "reason": "This role is limited to candidates who can work on\u2011site in Holywood, North Down, so it may not suit a remote freelancer. It is a copywriting position, which aligns directly with the seeker\u2019s skill set."
+            },
+            {
+              "job_id": "cda4b695b1cbb94a",
+              "reason": "The position is remote with no geographic restriction, making it accessible to a worldwide freelancer. Although it focuses on sports localization rather than pure copywriting, it involves content creation that could match short\u2011term contract work."
+            },
+            {
+              "job_id": "f2cc762084afc4ff",
+              "reason": "The role is also remote and open to applicants from anywhere, fitting a freelance arrangement. While centered on sports localization, it requires writing and adapting copy, which may suit a short\u2011term copywriting contract."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "afcd20005157bd97",
+              "reason": "This position is a dedicated copywriter role, matching the seeker\u2019s skill set. However, it is limited to candidates who can work on\u2011site in Holywood, North Down, so geographic flexibility is restricted."
+            },
+            {
+              "job_id": "cda4b695b1cbb94a",
+              "reason": "The role is remote with no geographic restriction, aligning with the seeker\u2019s preference for location flexibility. It focuses on sports localization rather than copywriting, so the content work may differ from a typical copywriting contract."
+            },
+            {
+              "job_id": "f2cc762084afc4ff",
+              "reason": "This job also offers remote work without geographic limits, meeting the seeker\u2019s desire for flexibility. Like the other localization positions, it centers on sports translation, which may not directly involve freelance copywriting tasks."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "afcd20005157bd97",
+              "reason": "This role is explicitly a copywriter position, matching the seeker\u2019s skill set. However, it is limited to candidates who can work on\u2011site in Holywood, North Down, which may not suit a remote freelancer."
+            },
+            {
+              "job_id": "cda4b695b1cbb94a",
+              "reason": "The Dutch Sports Localization Specialist is a remote position with no geographic restriction, which could be taken as a short\u2011term contract. It focuses on localization rather than pure copywriting, so the fit is partial."
+            },
+            {
+              "job_id": "f2cc762084afc4ff",
+              "reason": "The Slovak Sports Localization Specialist also offers remote work without location limits, potentially as a contract gig. Like the other localization roles, it is not a pure copywriting job, so relevance is limited."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

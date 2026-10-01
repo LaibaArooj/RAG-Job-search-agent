@@ -1,0 +1,131 @@
+{
+  "query_id": "Q07",
+  "query": "registered nurse night shift",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "2bdc6a522d0afbcb",
+        "7c200756907a1da4",
+        "9f2ba867091b3a7b",
+        "4bdf80e0f0435bce",
+        "0b4700da1dce7961"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "4bdf80e0f0435bce",
+              "reason": "This role is open to any candidate who can work anywhere in the UK, so there is no city\u2011specific limitation. It offers a night\u2011shift RN position with above\u2011award rates and solid benefits, matching the seeker\u2019s criteria."
+            },
+            {
+              "job_id": "9f2ba867091b3a7b",
+              "reason": "The position is limited to candidates able to work in Fishersgate, Portslade, so geographic eligibility is required. It provides a night\u2011shift RN role with a high hourly rate (\u00a341.82) plus a \u00a3400 bonus, which strongly aligns with the seeker\u2019s preferences."
+            },
+            {
+              "job_id": "2bdc6a522d0afbcb",
+              "reason": "Applicants must already be able to work in Mansfield, Nottinghamshire, so there is a location restriction. It offers a 12\u2011hour night shift (8\u202fpm\u20118\u202fam) at \u00a320 per hour, fitting the seeker\u2019s night\u2011shift RN search."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "9f2ba867091b3a7b",
+              "reason": "This role is limited to candidates who can already work in Fishersgate, Portslade, so you must be locally eligible. It offers a high hourly rate of \u00a341.82 plus a \u00a3400 total bonus, making it a financially attractive night\u2011shift nursing position."
+            },
+            {
+              "job_id": "4bdf80e0f0435bce",
+              "reason": "This position requires you to be able to work anywhere in the UK, which is a geographic restriction but covers the whole country. It provides above\u2011award rates, five weeks of annual leave and a stable environment in a growing care organization, matching a night\u2011shift RN\u2019s priorities."
+            },
+            {
+              "job_id": "2bdc6a522d0afbcb",
+              "reason": "This opening is restricted to candidates who can work in Mansfield, Nottinghamshire. It offers a standard \u00a320 per hour for 12\u2011hour night shifts and is with Skycare, a provider focused on complex care, which aligns with your night\u2011shift RN search."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4bdf80e0f0435bce",
+              "reason": "This role is open to any candidate who can work anywhere in the UK, so there is no narrow geographic limitation. It offers a night\u2011shift position for a registered nurse with above\u2011award rates and strong support, matching the seeker\u2019s criteria."
+            },
+            {
+              "job_id": "9f2ba867091b3a7b",
+              "reason": "The position is limited to candidates able to work in Fishersgate, Portslade, so the seeker must be willing to relocate or already reside there. It provides a night\u2011shift RN role with a high hourly rate, a \u00a3400 bonus package, and paid training, which aligns well with the search."
+            },
+            {
+              "job_id": "2bdc6a522d0afbcb",
+              "reason": "This job is restricted to candidates who can work in Mansfield, Nottinghamshire, so geographic eligibility is required. It offers a 12\u2011hour night shift (8\u202fpm\u20118\u202fam) for a registered nurse at \u00a320 per hour, directly matching the night\u2011shift RN request."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "2bdc6a522d0afbcb",
+        "7c200756907a1da4",
+        "9f2ba867091b3a7b",
+        "4bdf80e0f0435bce",
+        "0b4700da1dce7961"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "9f2ba867091b3a7b",
+              "reason": "This role is limited to candidates who can work in Fishersgate, Portslade, so you must be locally eligible. It offers a high hourly rate of \u00a341.82 plus a \u00a3400 bonus package, making it financially attractive for night\u2011shift nurses."
+            },
+            {
+              "job_id": "4bdf80e0f0435bce",
+              "reason": "The position is restricted to candidates who can work anywhere in the UK, which is a broader geographic requirement. It provides above\u2011award rates, five weeks of annual leave, and a supportive environment for night\u2011shift nursing."
+            },
+            {
+              "job_id": "2bdc6a522d0afbcb",
+              "reason": "This job is only open to candidates able to work in Mansfield, Nottinghamshire, so it has a local geographic limit. It offers a standard night\u2011shift schedule (8\u202fpm\u20118\u202fam) at \u00a320 per hour, suitable for nurses seeking consistent night work."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "9f2ba867091b3a7b",
+              "reason": "This role is limited to candidates who can work in Fishersgate, Portslade, so you must be locally based or willing to relocate. It offers a high night\u2011shift rate of \u00a341.82 per hour plus a \u00a3400 total bonus, matching your night\u2011shift RN search."
+            },
+            {
+              "job_id": "4bdf80e0f0435bce",
+              "reason": "The position is open to anyone who can work anywhere in the UK, which is the broadest geographic allowance among the listings. It provides above\u2011award night\u2011shift rates, generous leave, and a supportive environment for registered nurses."
+            },
+            {
+              "job_id": "2bdc6a522d0afbcb",
+              "reason": "This job is restricted to candidates able to work in Mansfield, Nottinghamshire, so it requires local availability. It matches your criteria for a night\u2011shift registered nurse role with a 12\u2011hour shift and a \u00a320 per hour rate."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4bdf80e0f0435bce",
+              "reason": "This role is open to any candidate who can work anywhere in the UK, so there is no local restriction. It offers night\u2011shift work for a registered nurse with above\u2011award rates and good benefits, matching the seeker\u2019s night\u2011shift preference."
+            },
+            {
+              "job_id": "9f2ba867091b3a7b",
+              "reason": "This position is limited to candidates who can work in Fishersgate, Portslade. It provides a high hourly rate of \u00a341.82 plus a \u00a3400 bonus, making it an attractive night\u2011shift opportunity for experienced nurses."
+            },
+            {
+              "job_id": "2bdc6a522d0afbcb",
+              "reason": "This role is restricted to candidates able to work in Mansfield, Nottinghamshire. It offers 12\u2011hour night shifts (8\u202fpm\u20118\u202fam) at \u00a320 per hour, aligning with the seeker\u2019s desire for night\u2011shift nursing work."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

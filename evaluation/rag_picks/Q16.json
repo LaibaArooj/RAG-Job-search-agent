@@ -1,0 +1,131 @@
+{
+  "query_id": "Q16",
+  "query": "job where I write stuff but not journalism",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "98162b028bc28b29",
+        "01e19f630983089e",
+        "790cf018551ddc92",
+        "dc694be5a5b6cb17",
+        "4c87d844b94fb1fa"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can work in London, UK, even though it is remote. It focuses on reviewing and refining AI\u2011generated content, which is pure writing without any journalism duties."
+            },
+            {
+              "job_id": "790cf018551ddc92",
+              "reason": "This position requires candidates to be able to work in the UK, as indicated by the hiring restriction. It involves creating and maintaining technical documentation, a writing\u2011focused job that is not journalism."
+            },
+            {
+              "job_id": "01e19f630983089e",
+              "reason": "Applicants must be able to work in Penryn, Cornwall, per the hiring restriction. The role involves teaching creative writing and English, allowing you to write and mentor others without engaging in journalism."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can work in London, UK, so you must be based there or able to relocate. It focuses on reviewing and refining AI\u2011generated content, which is pure writing without any journalism duties."
+            },
+            {
+              "job_id": "790cf018551ddc92",
+              "reason": "This position is restricted to candidates who can work in the UK, and it may require on\u2011site presence in Portsmouth, VA. It involves creating technical documentation, a writing\u2011focused job that is unrelated to journalism."
+            },
+            {
+              "job_id": "01e19f630983089e",
+              "reason": "This job is limited to candidates who can work in Penryn, Cornwall, so you need to be local or willing to move. As an associate lecturer in creative writing, you will design and deliver writing\u2011focused curriculum, which aligns with a writing career though it includes teaching duties."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can already work in London, UK, so you must be based there or have the right to work locally. It involves reviewing and refining AI\u2011generated content, which is writing\u2011focused but not journalism."
+            },
+            {
+              "job_id": "790cf018551ddc92",
+              "reason": "The position requires you to already be able to work in the UK, so it is geographically restricted. As a technical writer you will create and maintain documentation, a writing\u2011centric job that is distinct from journalism."
+            },
+            {
+              "job_id": "01e19f630983089e",
+              "reason": "This role is limited to candidates who can work in Penryn, Cornwall, so you need to be local or able to relocate. It involves teaching creative writing and English, allowing you to write and mentor without doing journalistic work."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "30b925c2d69c4076",
+        "cda4b695b1cbb94a",
+        "aaaedc552b37e51f",
+        "f2cc762084afc4ff",
+        "98162b028bc28b29"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "30b925c2d69c4076",
+              "reason": "This role is remote with no geographic restriction, so you can apply from anywhere. It focuses on sports localization and content adaptation, which involves writing and translation rather than journalism."
+            },
+            {
+              "job_id": "cda4b695b1cbb94a",
+              "reason": "The position is fully remote and open to candidates worldwide, eliminating location barriers. It requires creating localized sports content, a writing\u2011focused task that is not journalism."
+            },
+            {
+              "job_id": "aaaedc552b37e51f",
+              "reason": "You can work from any location because the job has no geographic limits. It centers on sports localization, meaning you\u2019ll write and adapt content, not produce journalistic articles."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "30b925c2d69c4076",
+              "reason": "This role involves creating and adapting sports-related copy for multilingual audiences, which is writing-focused but not journalism. It is remote with no geographic restriction, so you can apply from anywhere."
+            },
+            {
+              "job_id": "cda4b695b1cbb94a",
+              "reason": "Similar to the first, this position requires writing and localizing football content for Dutch\u2011speaking markets, offering a writing career outside of traditional journalism. It is also fully remote with worldwide eligibility."
+            },
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This contract asks you to review and refine AI\u2011generated creative writing, providing a pure writing task without journalistic duties. However, it is limited to candidates who can work in London, UK, so you would need to be based there."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "30b925c2d69c4076",
+              "reason": "This role involves writing and adapting sports content for different languages, which matches your desire to write without being a journalist. It is fully remote with no geographic restriction, so you can apply from anywhere."
+            },
+            {
+              "job_id": "cda4b695b1cbb94a",
+              "reason": "The position requires creating localized football copy in Dutch, offering a writing-focused job that isn\u2019t journalism. It is remote and open to candidates worldwide, eliminating location constraints."
+            },
+            {
+              "job_id": "aaaedc552b37e51f",
+              "reason": "You will write and localize Ukrainian football material, providing a writing-centric role outside of journalism. The job is remote with no geographic limits, allowing you to apply from any location."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

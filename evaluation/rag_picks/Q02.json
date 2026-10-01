@@ -1,0 +1,131 @@
+{
+  "query_id": "Q02",
+  "query": "a job where I help people all day",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "e2007c275e0c50ce",
+        "3bc21514a3970c01",
+        "f4a3e5c3ab9d56f7",
+        "3c671be25ade023e",
+        "2364b96e72049842"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "f4a3e5c3ab9d56f7",
+              "reason": "This role is limited to candidates who can work in Brockmoor, Brierley Hill, so you must be locally based or willing to relocate. As a Social Worker in Family Help you will spend the day providing direct support to families, assessing needs and delivering assistance."
+            },
+            {
+              "job_id": "3c671be25ade023e",
+              "reason": "This position only accepts candidates able to work in Westbourne, Bournemouth, so location is a requirement. The Social Worker role on the Family Help Pilot Team involves daily interaction with families, offering guidance and interventions to improve their wellbeing."
+            },
+            {
+              "job_id": "2364b96e72049842",
+              "reason": "The Family Help Practitioner role is restricted to candidates who can work in The Ridgeway, Enfield. In this job you will help families facing homelessness by assessing their situation and connecting them with resources, making it a people\u2011focused, hands\u2011on position."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "f4a3e5c3ab9d56f7",
+              "reason": "This role is limited to candidates who can work in Brockmoor, Brierley Hill. It involves providing direct support to families in need, which aligns with your goal of helping people all day."
+            },
+            {
+              "job_id": "3c671be25ade023e",
+              "reason": "This role is limited to candidates who can work in Westbourne, Bournemouth. As a qualified social worker on the Family Help Pilot Team, you would spend your day assisting families with complex challenges."
+            },
+            {
+              "job_id": "2364b96e72049842",
+              "reason": "This role is limited to candidates who can work in The Ridgeway, Enfield. The Family Help Practitioner position focuses on supporting families facing homelessness, offering daily opportunities to help people."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "f4a3e5c3ab9d56f7",
+              "reason": "This role is limited to candidates who can work in Brockmoor, Brierley Hill, so you must be local or willing to relocate. As a Social Worker on the Family Help service you will spend your day directly supporting families with challenges, providing advice, advocacy and practical assistance."
+            },
+            {
+              "job_id": "3c671be25ade023e",
+              "reason": "This position only accepts candidates able to work in Westbourne, Bournemouth, so it is geographically restricted. The Qualified Social Worker role on the Family Help Pilot Team involves daily, hands\u2011on work helping vulnerable families, making it a strong fit for someone who wants to help people all day."
+            },
+            {
+              "job_id": "2364b96e72049842",
+              "reason": "The Family Help Practitioner role is restricted to candidates who can work in The Ridgeway, Enfield. In this job you will assess families at risk of homelessness and deliver practical support throughout the day, aligning closely with a desire to help people continuously."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "398e388835905f7f",
+        "9f28d579d2e919aa",
+        "a502205cefd054fd",
+        "5fbe46489e2a5dbf",
+        "bd25a3ecb3b60dd0"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "398e388835905f7f",
+              "reason": "This role involves leading a Professional Services team that works directly with customers to understand and implement open source solutions, meaning you\u2019ll be helping people throughout the day. It is fully remote with no geographic restrictions, so you can apply from anywhere."
+            },
+            {
+              "job_id": "9f28d579d2e919aa",
+              "reason": "As a Solution Architecture Manager you would guide field engineers in assisting customers with complex cloud and open\u2011source deployments, providing continuous, hands\u2011on help. The position is remote with worldwide eligibility, so location is not a barrier."
+            },
+            {
+              "job_id": "bd25a3ecb3b60dd0",
+              "reason": "Community Engineer roles focus on serving and growing the open\u2011source ecosystem, which means daily interaction and support for developers and users. This job is also remote with no geographic limits, allowing you to apply globally."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "398e388835905f7f",
+              "reason": "This role leads a Professional Services team that assists customers in implementing open source cloud solutions, meaning you spend the day directly helping people solve technical challenges. It also has no geographic hiring restrictions, so you can apply from anywhere."
+            },
+            {
+              "job_id": "9f28d579d2e919aa",
+              "reason": "As a Solution Architecture Manager you would guide customers through designing and deploying Canonical's solutions, providing continuous, hands\u2011on assistance. The position is remote with worldwide eligibility, matching the seeker\u2019s location flexibility."
+            },
+            {
+              "job_id": "bd25a3ecb3b60dd0",
+              "reason": "Community Engineers focus on supporting and growing the open source community, offering daily interaction and help to developers and users. This remote role also welcomes applicants from any country, removing geographic barriers."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "398e388835905f7f",
+              "reason": "This role leads a Professional Services team that works directly with customers to understand and implement open source solutions, meaning you spend the day helping people solve technical challenges. It is remote with no geographic restriction, so you can apply from anywhere."
+            },
+            {
+              "job_id": "bd25a3ecb3b60dd0",
+              "reason": "As a Community Engineer you will build and manage community programs, providing support and guidance to open source contributors on a daily basis. The position is fully remote with worldwide eligibility, matching your desire to help people everywhere."
+            },
+            {
+              "job_id": "9f28d579d2e919aa",
+              "reason": "The Solution Architecture Manager runs a field engineering team that assists customers in deploying complex open source solutions, offering constant interaction and assistance. It is also remote with no geographic limits, allowing you to help people globally."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

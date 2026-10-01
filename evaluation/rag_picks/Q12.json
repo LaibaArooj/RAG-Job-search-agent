@@ -1,0 +1,131 @@
+{
+  "query_id": "Q12",
+  "query": "part time customer support work from home",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "363afa788ba972a4",
+        "c23935fe0886dcc8",
+        "b21c93e3f1173a2b",
+        "49aa5bca53134cff",
+        "f268b03a6c6ae8d0"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "363afa788ba972a4",
+              "reason": "This role is limited to candidates who can work on\u2011site in Hengrove, Bristol, so it is not a work\u2011from\u2011home position. It is a customer support coordinator role, but it is full\u2011time rather than part\u2011time, which may still be of interest if you are open to on\u2011site work."
+            },
+            {
+              "job_id": "c23935fe0886dcc8",
+              "reason": "This role is limited to candidates who can work on\u2011site in Brentry, Bristol, so it is not a work\u2011from\u2011home position. It is a customer support coordinator role, but it is full\u2011time rather than part\u2011time, which may still be of interest if you are open to on\u2011site work."
+            },
+            {
+              "job_id": "b21c93e3f1173a2b",
+              "reason": "This role is limited to candidates who can work on\u2011site in Craigavon, Northern Ireland, so it is not a work\u2011from\u2011home position. It is a customer support administrator role, but it is full\u2011time rather than part\u2011time, which may still be of interest if you are open to on\u2011site work."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "363afa788ba972a4",
+              "reason": "This role is limited to candidates who can work on\u2011site in Hengrove, Bristol, so it does not meet the work\u2011from\u2011home requirement. It is a customer support position, which aligns with the seeker\u2019s field of interest."
+            },
+            {
+              "job_id": "c23935fe0886dcc8",
+              "reason": "This position also requires the applicant to be able to work locally in Brentry, Bristol, meaning it is not remote. It offers a customer support coordinator role, matching the desired job type."
+            },
+            {
+              "job_id": "49aa5bca53134cff",
+              "reason": "The job is restricted to candidates who can work in Exeter, Devon, so it is not a work\u2011from\u2011home opportunity. It is a full\u2011time customer support agent role, which is relevant to the seeker\u2019s experience."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "363afa788ba972a4",
+              "reason": "This role is limited to candidates who can work on\u2011site in Hengrove, Bristol, so it is not a work\u2011from\u2011home opportunity. It is a customer support position, though it appears to be full\u2011time rather than part\u2011time."
+            },
+            {
+              "job_id": "b21c93e3f1173a2b",
+              "reason": "This position requires candidates to be based in Craigavon, Northern Ireland, so it cannot be done remotely. It is a customer support administrator role, but it is listed as full\u2011time permanent."
+            },
+            {
+              "job_id": "f268b03a6c6ae8d0",
+              "reason": "The job is restricted to candidates able to work in Charlestown, Weymouth, meaning it is not remote. It is a customer support technician role, however it is advertised as full\u2011time."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "4c394bd43ea5f22e",
+        "398e388835905f7f",
+        "5dbc138f8179c933",
+        "2d13ff699e3ee183",
+        "20ed159fdb992783"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "This role is fully remote with no geographic restriction, so you can work from home. However, it is a conceptual copywriting position, not a part\u2011time customer support role."
+            },
+            {
+              "job_id": "398e388835905f7f",
+              "reason": "The position is remote worldwide, meeting the work\u2011from\u2011home requirement. It is a professional services manager role, which does not involve part\u2011time customer support duties."
+            },
+            {
+              "job_id": "5dbc138f8179c933",
+              "reason": "This job is also remote with no location limits, allowing you to apply from anywhere. It is a product manager role, not a customer support position, and is likely full\u2011time."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The role is fully remote with no geographic restriction, matching the work\u2011from\u2011home requirement. However, it is a full\u2011time copywriting position rather than a part\u2011time customer support job."
+            },
+            {
+              "job_id": "398e388835905f7f",
+              "reason": "This position is also remote worldwide, satisfying the location preference. It focuses on professional services management, not part\u2011time customer support, so the duties differ from the seeker\u2019s query."
+            },
+            {
+              "job_id": "5dbc138f8179c933",
+              "reason": "The job is remote with no location limits, aligning with the desire to work from home. It is a product management role, not a part\u2011time customer support position, so it may not meet the specific functional need."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The role is fully remote with no geographic restriction, so you can apply from anywhere. However, it is a full\u2011time conceptual copywriting position, not a part\u2011time customer support job."
+            },
+            {
+              "job_id": "398e388835905f7f",
+              "reason": "This job is also remote worldwide, meeting the location requirement. It is a senior cloud professional services manager role, which is unrelated to part\u2011time customer support."
+            },
+            {
+              "job_id": "5dbc138f8179c933",
+              "reason": "It offers remote work without location limits, fitting the work\u2011from\u2011home preference. The position is a product manager for a marketplace, not a customer support or part\u2011time role."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

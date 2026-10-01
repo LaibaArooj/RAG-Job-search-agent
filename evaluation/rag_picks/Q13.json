@@ -1,0 +1,118 @@
+{
+  "query_id": "Q13",
+  "query": "paralegal position no prior experience",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "25205cef562c6053",
+        "62861b6e29930e8c",
+        "6955e3b3998bed0a",
+        "e101c3e7f3579cf5",
+        "aef5750a3208d41a"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "25205cef562c6053",
+              "reason": "This role is restricted to candidates who can already work in the UK, so you would need the right work authorization. It is a senior position that expects significant experience, which does not match a no\u2011experience seeker."
+            },
+            {
+              "job_id": "62861b6e29930e8c",
+              "reason": "The job is limited to candidates who can work in Stockport, Greater Manchester, so geographic eligibility is required. It asks for a minimum of two years of conveyancing experience, which exceeds a no\u2011experience level."
+            },
+            {
+              "job_id": "6955e3b3998bed0a",
+              "reason": "Applicants must already be able to work in Amington, Tamworth, making it geographically restricted. The position is for a litigation paralegal and expects prior legal experience, not suitable for someone without experience."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "25205cef562c6053",
+              "reason": "This role is fully remote but explicitly requires candidates who are already able to work in the UK and have senior\u2011level experience, so it does not match a no\u2011experience seeker."
+            },
+            {
+              "job_id": "62861b6e29930e8c",
+              "reason": "The position is limited to candidates who can work on\u2011site in Stockport, Greater Manchester and requires a minimum of two years of conveyancing experience, which exceeds the seeker\u2019s experience level."
+            },
+            {
+              "job_id": "6955e3b3998bed0a",
+              "reason": "This job is restricted to candidates able to work in Amington, Tamworth and is aimed at experienced litigation paralegals, not entry\u2011level applicants."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "25205cef562c6053",
+              "reason": "This role is fully remote, so there is no location barrier for you. However, it is advertised as a Senior Paralegal position and expects significant experience, which may not align with a no\u2011experience background."
+            },
+            {
+              "job_id": "62861b6e29930e8c",
+              "reason": "The position is limited to candidates who can work in Stockport, Greater Manchester, so you would need to be based there or relocate. It also requires at least two years of conveyancing experience, which exceeds a no\u2011experience level."
+            },
+            {
+              "job_id": "6955e3b3998bed0a",
+              "reason": "This job is restricted to candidates able to work in Amington, Tamworth, so it is location\u2011specific. It is a Litigation Paralegal role that typically expects prior legal or paralegal experience, making it a stretch for someone without experience."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "25205cef562c6053",
+        "62861b6e29930e8c",
+        "6955e3b3998bed0a",
+        "e101c3e7f3579cf5",
+        "aef5750a3208d41a"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "25205cef562c6053",
+              "reason": "This role is fully remote, which makes it accessible regardless of location, but it is limited to candidates who already have the right to work in the UK. It also requires senior\u2011level experience, so it may not be suitable for someone with no prior paralegal background."
+            },
+            {
+              "job_id": "62861b6e29930e8c",
+              "reason": "The position is on\u2011site in Stockport, Greater Manchester, so you must already be able to work there. It requires at least two years of conveyancing experience, which exceeds a no\u2011experience profile."
+            },
+            {
+              "job_id": "6955e3b3998bed0a",
+              "reason": "The role is based in Amington, Tamworth and is limited to candidates who can work locally. It is a litigation paralegal position that expects prior experience, making it a poor fit for a newcomer."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [
+            {
+              "job_id": "25205cef562c6053",
+              "reason": "This role is limited to candidates who can already work in the UK, either remotely or on\u2011site. It is a senior paralegal position that expects significant experience, so it may not be suitable for someone with no prior experience."
+            },
+            {
+              "job_id": "62861b6e29930e8c",
+              "reason": "This position is restricted to candidates who can work in Stockport, Greater Manchester. It requires at least two years of conveyancing experience, which does not match a seeker with no prior experience."
+            },
+            {
+              "job_id": "6955e3b3998bed0a",
+              "reason": "This job is only open to candidates able to work in Amington, Tamworth. It is a litigation paralegal role that expects relevant experience, making it a poor fit for a candidate without any background."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}
