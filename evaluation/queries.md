@@ -243,3 +243,76 @@ The Adzuna-only comparison is structurally weaker than planned: Q04 has no Adzun
 Q01, Q03, Q09, Q12, Q17 and Q20 have five or fewer, so all three systems return the same set
 and tie by construction. The headline therefore discriminates on at most 13 queries. State
 that beside the number.
+
+---
+
+## 8. RAG-stage evaluation — pre-registered 2026-10-01, before any pick was generated
+
+**Everything above this line is unchanged, and so are the 20 queries and the frozen pools.**
+This section asks a second question of the same data: given the five jobs the AI panel is
+handed, are the LLM's three picks more relevant than simply taking the first three? It was
+written and committed before `generate_rag_picks.py` made a single Groq call.
+
+### 8.1 Systems
+
+Both systems start from the same five **candidates**: `JobSearchAgent.rag_candidates` applied
+to system B's ranking (§ 4, the synthetic profile and the 0.02 boost). These are exactly the
+five jobs production hands the LLM.
+
+| System | Definition |
+|---|---|
+| **K — first three** | The first three candidates, in order |
+| **L — LLM picks** | The jobs `RAGPipeline.run` picks from the same five, mapped from index to `job_id` |
+
+Both systems have the same inputs, so any difference comes from the LLM alone. The ranking is
+not under test here; § 4 already measured it. The LLM gets the raw query string, as it does
+in production (`JobSearchAgent.run`).
+
+### 8.2 Metric
+
+**precision@3**: relevant listings in the list ÷ 3. The divisor is **always 3**, the same
+logic as C5. If the LLM returns fewer than three valid picks, the missing ones score 0, and
+if the pool has fewer than three jobs, both systems are divided by 3 all the same.
+
+R1–R5 apply as written, read with C1–C4. Each job keeps the verdict it was given on the main
+sheet or the Adzuna supplement, because a job's relevance to a query does not depend on which
+system surfaced it. C3's six duplicate pairs apply. If a candidate judged for the first time
+on the RAG sheet (§ 8.4) is a copy of another candidate in the same query under C3's
+definition, the pair is declared in this section before `score_rag.py` is first run.
+
+### 8.3 Runs, failures and model
+
+- **The model is pinned** to `openai/gpt-oss-120b` via `RAGPipeline(model=...)`, so the fallback
+  chain cannot switch models silently mid-experiment. The script probes the model once before
+  it starts. If the model has been retired, it stops, and the stop is recorded here.
+- **Three runs per query and pool.** The model is sampled at temperature 0.3 with no seed, so
+  one run is one sample of a stochastic system. A query's L score is the mean over its three
+  runs. The report gives the per-run spread and how many runs picked exactly K's set.
+- **A failed run** (`run` returns `None`) is scored as K, because K is what the product shows
+  when Groq fails (FR-018), so a failure always scores as a tie. Failed runs are **not retried**,
+  because retrying only the failures would change that rule. The count of failed runs is reported.
+- Calls are spaced 20 s apart to stay inside the free tier's per-minute token limit, so rate
+  limiting does not create artificial failures.
+
+### 8.4 Pools
+
+- **Headline: Adzuna-only**, Q04 excluded. Every Adzuna listing is `local`, so
+  `rag_candidates` reduces to B's Adzuna-only top 5, and every candidate already has a verdict
+  in `key_adzuna.json`. No new judging is needed. A pool of three or fewer Adzuna jobs gives K
+  and L the same set, so they tie by construction; such queries are marked † and also
+  reported separately.
+- **Secondary: all-sources.** `rag_candidates` lifts applicable jobs from anywhere in B's
+  ranking, so some candidates rank 6th or lower and were never judged. They are judged blind on
+  `judging/SUPPLEMENT-rag.md`, built by `build_rag_supplement.py`. The sheet lists candidates
+  only. Which ones were picks is not on it and cannot be: the candidates do not depend on
+  the LLM.
+
+### 8.5 Reported alongside
+
+- **eligible@3**, computed from the data, all-sources only. **This is a known confound.** The
+  prompt tells the LLM to prefer roles the seeker can apply for, but relevance excludes
+  eligibility (settled 2026-09-26). An LLM that follows its prompt can therefore lower
+  precision@3 while raising eligible@3. Report both, side by side.
+- Wins, ties and losses, plus the two-sided exact sign test over non-tied queries. Every query
+  where K beats L is named.
+- **The result is reported whatever it is.**
