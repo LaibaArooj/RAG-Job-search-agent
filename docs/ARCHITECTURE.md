@@ -159,7 +159,8 @@ top-scoring categories stand in for the query, so **the learned preference is th
 input** — this is the only screen where that is true.
 
 1. `@require_auth` — anonymous requests redirect to `/login` (TC-005)
-2. `get_user_context` — profile, `category_scores` and `rejected_jobs` in one read
+2. `get_user_context` — profile, `category_scores`, `rejected_jobs` and the saved job ids
+   (`saved_jobs.job_id` only) in one read
 3. `get_top_categories(n=3)` — **positive scores only**. A category the user has rejected more
    than saved is not in this list, which is TC-012's "tech jobs absent" enforced at the source
 4. **No categories → return immediately.** No fetch, no embedding, no LLM call
@@ -170,7 +171,8 @@ input** — this is the only screen where that is true.
    whose text names no category lands in `"other"` and is filtered out at step 7. A job earns
    its place in the feed by its own text
 7. `_filter_feed` — keep only jobs whose **self-assigned** category is in the top categories,
-   and drop any `job_id` in `rejected_jobs`
+   and drop any `job_id` in `rejected_jobs` **or in `saved_jobs`** (added 2026-10-01: the feed is
+   for jobs the user has not seen, and a saved job's Save button would do nothing, per TC-013)
 8. `encode(enrich_query(" ".join(categories), context))` — the preferences are the query vector
 9. `rank()` → `CATEGORY_BOOST` applies, so within the feed a category scored 5 outranks one
    scored 1 at equal similarity → truncate to 12
@@ -270,6 +272,13 @@ evaluation/                     the precision@5 evaluation — offline, outside 
                                 sheets and key.json
     build_supplement.py         the blind Adzuna-only supplement sheet and key_adzuna.json
     score.py                    unblinds the sheets against both keys, writes results.md
+    build_rag_supplement.py     RAG stage (queries.md § 8): blind sheet SUPPLEMENT-rag.md and
+                                key_rag.json for candidates no earlier sheet showed; never
+                                calls the LLM
+    generate_rag_picks.py       RAG stage: the ONLY evaluation script that calls Groq, via
+                                RAGPipeline; freezes 3 runs per query into rag_picks/
+    score_rag.py                RAG stage: precision@3 of the LLM's picks vs the first three
+                                candidates, reusing score.py's rules; writes rag_results.md
     model_comparison.py,        earlier one-off measurements (embedding model, query
     enrichment_comparison.py    enrichment), kept so their numbers can be re-derived
 ```

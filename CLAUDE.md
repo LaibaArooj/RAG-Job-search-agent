@@ -69,8 +69,8 @@ python evaluation/score_rag.py                   # RAG stage: precision@3 into e
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 528 assertions, about 290 seconds --
-485 of them offline, measured 2026-09-26; verify_live.py contributes the other 43. Use
+**`python verify_all.py` is the pre-demo check.** 530 assertions, about 290 seconds --
+487 of them offline, measured 2026-10-01; verify_live.py contributes the other 43. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.

@@ -11,6 +11,60 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-10-01 — Saved jobs leave the feed; the RAG-stage evaluation is built and waiting to be judged
+
+### Fixed
+
+- **A job you have saved no longer comes back in your For You feed.** The feed already hid
+  rejected jobs, but it never loaded the saved ones, so a saved job could be offered again as
+  a suggestion with a Save button that did nothing (saving twice is a deliberate no-op,
+  TC-013). `get_user_context` now also reads the saved job ids, and the feed filter drops
+  them. Closes half of open item 3 from 2026-09-23. A new assertion in `verify_agent.py` fails
+  without the fix and passes with it. `verify_db.py` proves the projection against Atlas.
+  There are 487 offline checks, all green.
+
+### Decided
+
+- **The other half of item 3 stays a stated limitation.** The feed searches the names of
+  your top categories, not the content of the jobs you saved, so it will not "look like" your
+  saved jobs. Changing that would redesign the feature TC-012 and TC-014 prove. The
+  `build_feed` docstring already says so in plain words.
+
+### Added — the RAG-stage evaluation (protocol and data; no result yet)
+
+This answers the question an examiner is likely to ask: does the LLM's choice of three jobs
+beat simply showing the first three? Everything was committed in an order the git history
+can prove.
+
+1. **Pre-registered first.** `evaluation/queries.md` § 8 was written before any LLM output
+   existed. It fixes the following:
+   - The baseline K is the first three of the five candidates the AI panel is handed. The LLM
+     picks L from the same five. Identical inputs, so any difference comes from the LLM alone.
+   - The metric is precision@3, always divided by 3.
+   - There are three runs per query, with the model pinned.
+   - A failed run scores as K, because that is what the product shows, and it is never
+     retried.
+   - Adzuna-only is the headline.
+   - eligible@3 is reported as a known confound.
+2. **A blind judging sheet, built before any pick.** `SUPPLEMENT-rag.md` holds the 42
+   all-sources candidates no earlier sheet showed. It is built without calling the LLM, so it
+   cannot reveal which jobs were picked. The Adzuna-only candidates were all judged already;
+   the script checks this rather than assuming it.
+3. **A scorer that refuses to run early.** `score_rag.py` reuses `score.py`'s rules. It will
+   not score until the sheet's Status line says `marked`, so a blank box is never read as a
+   verdict. `score.precision` gained a `k` parameter, and `results.md` is byte-identical
+   after the change.
+4. **Picks frozen.** 117 calls to `openai/gpt-oss-120b`, spaced 20 s apart. **9 runs (7.7%)
+   failed, all with "no usable picks in reply"**: the model answered, but its reply held
+   nothing usable. None were rate limits or outages. In production, these are searches where
+   the AI panel silently disappears, so this is a reliability figure for FR-018's fallback,
+   worth reporting on its own. Per § 8.3 they score as K.
+
+**Not yet scored.** Where the failures fell, and which jobs were picked, stay unopened until
+the sheet is marked.
+
+---
+
 ## 2026-09-30 — The precision@5 evaluation is measured: a null result
 
 The project's central claim now has a number. **Semantic re-ranking was indistinguishable

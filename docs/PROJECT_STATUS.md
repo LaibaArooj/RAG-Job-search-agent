@@ -1,6 +1,58 @@
-Last updated: 2026-09-30 (**M4 in progress — precision@5 is measured.** The result is a
-null: semantic re-ranking 0.32 vs keyword baseline 0.31 on the Adzuna-only headline. What
-remains in M4 is the write-up, the demo, and the two open design gaps below.)
+Last updated: 2026-10-05 (**M4 in progress. Precision@5 is measured, and it was a null result. The
+RAG-stage evaluation is built, pre-registered and has its picks frozen. It is blocked on one
+thing: the developer judging `evaluation/judging/SUPPLEMENT-rag.md`.**)
+
+## Where we left off — 2026-10-05 (RAG stage waiting on judging)
+
+### The one blocking step
+
+**Mark `evaluation/judging/SUPPLEMENT-rag.md`.** It has 42 cards, judged under R1–R5 in
+`evaluation/queries.md` § 3, read with C1–C4 in § 7. The rules were restated in the session
+of 2026-10-05.
+- Note any same-vacancy pairs (C3's definition). They have to be declared in § 8.2, as
+  `RAG_DUPLICATES` in `score_rag.py`, **before** the scorer first runs.
+- Then change the sheet's `**Status:** unmarked` line to `marked`. `score_rag.py` refuses to
+  score until you do.
+- **Do not open `evaluation/rag_picks/` before then.** It is the same rule as `key.json` on
+  09-30. Which queries the 9 failed runs fell on is also withheld until then.
+
+After marking:
+1. `python evaluation/score_rag.py --check`
+2. Declare any pairs.
+3. `python evaluation/score_rag.py` writes `evaluation/rag_results.md`.
+4. Write it up as measured.
+
+### What happened on 2026-10-01 (details in `docs/CHANGELOG.md`)
+
+- **Feed fix**, `feat/feed-saved-filter` (`2657fbc`): saved jobs no longer reappear in the
+  For You feed. That closes open item 3 below. Half of it was fixed; the other half (the feed
+  searches category names, not saved-job content) is kept as a stated limitation.
+- **RAG-stage evaluation**, `feat/rag-eval`, branched from the feed branch. Committed in
+  provable order:
+  1. § 8 pre-registered (`3de4689`)
+  2. the blind sheet (`b3bba6e`)
+  3. the scorer (`4b5ecc9`)
+  4. the frozen picks (`d9ec581`): 117 calls, 9 failed runs, all "no usable picks in reply"
+- Neither branch is merged or pushed.
+
+### Next actions
+
+1. **Judge the RAG sheet**, as above. This is the only thing blocking.
+2. Score it, and add the RAG-stage paragraph to the report beside the precision@5 one.
+3. **Report the 7.7% failure rate on its own.** It is how often production's AI panel would
+   silently vanish (FR-018's fallback), and it holds whatever precision@3 shows.
+4. **Unchanged from 09-30:**
+   - Write the report's evaluation section.
+   - Rehearse `docs/VIVA_PREP.md`, which now has a RAG-stage block.
+   - Tell the supervisor.
+5. Register a fresh demo account. While doing so, save two jobs and confirm neither appears
+   on `/feed`. This is the feed fix's only unverified check, and it was skipped so as not to
+   leave a test account in Atlas.
+6. Merge `feat/feed-saved-filter` and `feat/rag-eval` via PR once the RAG result is in.
+7. Answer the open comprehension-check questions out loud: two on the feed fix (why the
+   projection, and what TC-013 has to do with it), plus the two from 09-30.
+
+---
 
 ## Where we left off — 2026-09-30 (evaluation scored)
 
