@@ -316,3 +316,25 @@ definition, the pair is declared in this section before `score_rag.py` is first 
 - Wins, ties and losses, plus the two-sided exact sign test over non-tied queries. Every query
   where K beats L is named.
 - **The result is reported whatever it is.**
+
+### 8.6 Clarifications made after judging, before `score_rag.py` first ran — 2026-10-11
+
+**Everything above in § 8 is unchanged.** No pick had been opened when these were written.
+
+- **One evidence base: the card.** Every verdict on the earlier sheets was made on the card
+  (title, company, location, the first 240 characters). The RAG sheet's first pass judged
+  Q11.2 against the live posting on external job boards. That posting may not match the frozen
+  advert, and no other verdict used it. Q11.2 was therefore re-judged on its card alone:
+  **relevant** (R2 plausible, silent on seniority and degree under C1). The external reading,
+  not relevant, is reported as a sensitivity check. The Welocalize cards (Q15.1–4 and
+  Q16.1–4) were also read externally, but they are not relevant on either reading, so nothing
+  changes.
+- **Q10.1 on `SUPPLEMENT-adzuna.md` keeps its blind 09-30 verdict (relevant).** On
+  2026-10-11 the judge re-read it as not relevant: R2 is ambiguous, because the card describes
+  a graduate pathway into primary teaching and never states "teaching assistant". That
+  re-reading came **after** `results.md` was published. Applying it would change a verdict
+  after unblinding, which is what pre-registration exists to prevent. So, as with Q20 under
+  C2, the headline uses the blind verdict, and the re-reading is scored beside it for both
+  precision@5 (Adzuna-only) and precision@3.
+- **Duplicates:** the judge found no C3 pairs among the RAG-sheet candidates, so
+  `RAG_DUPLICATES` stays empty.

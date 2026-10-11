@@ -23,6 +23,8 @@ employer would hire you from your country.
 
 - [x] relevant
 
+Note: supporting families at risk of homelessness is a plausible click for "help people all day" (R2). Nothing states a contradiction.
+
 ## Q06 — `junior frontend developer react remote`
 
 ### Q06.1. Development & Applications Chef II
@@ -33,6 +35,8 @@ employer would hire you from your country.
 
 - [ ] relevant
 
+Note: R2 — food development chef, not frontend.
+
 ### Q06.2. Sales Engineer
 
 - **Company:** Develop
@@ -40,6 +44,8 @@ employer would hire you from your country.
 - Sales Engineer Cybersecurity SaaS Location: South-West London / Greater London Hybrid Salary: £50,000£100,000 bonus depending on experience Job Type: Permanent A fast-growing cybersecurity SaaS organisation is looking for a Sales Engineer /
 
 - [ ] relevant
+
+Note: R2 — sales engineering, not frontend. Hybrid also contradicts "remote" (R4).
 
 ### Q06.3. Kerry Internship Programme 2027 - Research, Development & Application (RDA)
 
@@ -49,6 +55,8 @@ employer would hire you from your country.
 
 - [ ] relevant
 
+Note: R2 — food science internship, not frontend. States full-time, on-site, which contradicts "remote" (R4).
+
 ### Q06.4. Technical Assurance Lead
 
 - **Company:** Develop
@@ -56,6 +64,8 @@ employer would hire you from your country.
 - Technical Assurance Lead Location: Reading 2 days per week on-site Employment Type: Permanent Clearance: Active SC Clearance required Start Date: October/November 2026 We are currently recruiting for a Technical Assurance Lead to join a lea
 
 - [ ] relevant
+
+Note: R3 — Lead contradicts "junior". R2 — assurance, not frontend. On-site days contradict "remote" (R4).
 
 ### Q06.5. Business Development Executive (Sussex/Kent)
 
@@ -65,6 +75,8 @@ employer would hire you from your country.
 
 - [ ] relevant
 
+Note: R2 — field sales, not frontend. Field-based contradicts "remote" (R4).
+
 ### Q06.6. Coupa Configuration Consultant
 
 - **Company:** Develop
@@ -73,6 +85,8 @@ employer would hire you from your country.
 
 - [ ] relevant
 
+Note: R2 — procurement software configuration, not frontend. Remote-first passes R4, but the role type fails.
+
 ### Q06.7. Senior Systems Developer
 
 - **Company:** Brightwell
@@ -80,6 +94,8 @@ employer would hire you from your country.
 - Senior Systems Developer Join Our Team as Senior Systems Developer Location: Chesterfield An exciting opportunity has become available for a Senior Systems Developer to join our Member Services team. Reporting to the Senior System Developme
 
 - [ ] relevant
+
+Note: R3 — Senior contradicts "junior". R2 — systems development, not frontend/React.
 
 ## Q10 — `primary school teaching assistant`
 
@@ -90,12 +106,9 @@ employer would hire you from your country.
 - Oxbridge Graduates - Aspiring Primary Teacher Q - Have you recently graduated from Oxford, Cambridge or a Russell Group University and are looking to get into a career in Primary Teaching? A fantastic Primary School in the Borough of Tower 
 
 - [x] relevant
-Note: R2 ambiguous — same agency (EdEx) and "Aspiring [Primary] Teacher" phrasing
-as Q10 #3 on the main sheet, which was judged relevant because its title explicitly
-named a TA role. This listing's visible text doesn't state "teaching assistant"
-outright, only a graduate pathway into primary teaching. Leaned relevant based on
-the pattern from Q10 #3, but the visible text alone doesn't confirm it's a TA
-role rather than a different kind of entry-level teaching post.
+
+Note (2026-10-11, AFTER results.md was published, so NOT applied to the headline): on re-reading, the judge would mark this not relevant. The box keeps the blind 09-30 verdict; the re-reading is reported as a sensitivity check (queries.md § 8.6). Reasoning: R2 genuinely ambiguous, so marked not relevant per the tie-break. Visible text describes a graduate pathway into primary teaching at an agency-advertised school and never states a teaching assistant role. The earlier tick rested on the pattern from Q10 #3 on the main sheet, which is not a merits judgment (C3). If the full advert states TA or teaching assistant, change to [x].
+
 ## Q14 — `remote data entry job that hires worldwide`
 
 ### Q14.1. Head of Financial Planning & Analysis
@@ -106,6 +119,8 @@ role rather than a different kind of entry-level teaching post.
 
 - [ ] relevant
 
+Note: R2 — senior finance leadership, not data entry. States hybrid working, which contradicts "remote" (R4).
+
 ## Q19 — `coding job that isn't web development`
 
 ### Q19.1. AS400 Lead
@@ -115,11 +130,9 @@ role rather than a different kind of entry-level teaching post.
 - Experience with modernizing AS/400 applications, such as refactoring legacy code, implementing web services, or integrating with other platforms. Knowledge of IBM iSeries operating system and administration tasks. Familiarity with software 
 
 - [x] relevant
-Note: R5 — core role is legacy mainframe (AS/400/iSeries) modernization and
-admin, categorically distinct from web development. Snippet mentions "implementing
-web services" as one listed skill among several, which touches the excluded
-category without making the role itself web development. Judged relevant on
-that basis; flagging since this is the closest boundary case on this sheet.
+
+Note: boundary case. Core role is legacy AS/400 and iSeries modernization, a coding role (R2) outside web development (R5). "Implementing web services" is one listed skill, not the role's definition, and the query states no seniority, so "Lead" does not fail R3. Silence passes R5.
+
 ### Q19.2. Consultant - Forensics - National - ASU - Forensics - Investigations & Compliance - Gurgaon
 
 - **Company:** ey
@@ -128,6 +141,8 @@ that basis; flagging since this is the closest boundary case on this sheet.
 
 - [ ] relevant
 
+Note: R2 — forensic consulting, not a coding job.
+
 ### Q19.3. UX Visual Designer, Amazon Advertising - Brand Innovation Lab
 
 - **Company:** Amazon UK Services Ltd.
@@ -135,3 +150,14 @@ that basis; flagging since this is the closest boundary case on this sheet.
 - The Amazon Ads Brand Innovation Lab (BIL) is seeking a UX Designer who is passionate about creating engaging, user-centered digital experiences for some of the world's most innovative brands. In this role, you will design and build interact
 
 - [ ] relevant
+
+Note: R2 — UX visual design, not a coding job. The "design and build interactive" experiences wording also leans web/digital, but R2 already fails.
+
+---
+
+## Judging notes
+
+- Ticked (2): Q02.1 and Q19.1.
+- Re-read after unblinding: Q10.1 would change from [x] to [ ], but the box keeps the blind verdict; reported as a sensitivity check only (R2 ambiguous, tie-break applied; see its note).
+- Duplicates (C3): none. The two Kerry cards (Q06.1, Q06.3) have different titles, and the two Develop cards in Q06 (Q06.2, Q06.4) also differ. No pairs to declare.
+- Queries with no relevant candidate on this sheet: Q06, Q14. They score 0 in the mean (C4 applies to scoring; "no relevant candidate" means none among those judged).
