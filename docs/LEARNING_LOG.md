@@ -102,6 +102,8 @@ here becomes a silence in the viva.
 | Repeated sampling of a stochastic system | | | Added 2026-10-01. The RAG-stage evaluation runs the LLM 3 times per query, because temperature 0.3 with no seed means one run is one sample. Why is the mean of 3 runs fairer than 1 run? Why are the picks frozen and never regenerated? Why does a failed run count as K instead of being retried or dropped? |
 | Isolating one stage of a pipeline | | | Added 2026-10-01. The RAG-stage baseline is "the first 3 of the same 5 candidates", not "the top 3 by cosine". Why does handing both systems identical inputs mean any difference comes from the LLM alone? What would the other baseline have mixed in? |
 | Forced-count prompts, and decline vs failure | | | Added 2026-10-11. Why does asking an LLM for "the three best" produce anti-recommendations when nothing fits? Why must "the model said no match" ([]) and "the call failed" (None) be different states, and what does each render? Why was re-measuring the new prompt on the same 20 queries ruled out? |
+| Cohen's kappa | | | Added 2026-10-11. Agreement between two judges, corrected for the agreement you'd get by chance. Compute it from a 2×2 table by hand. Why isn't raw agreement enough? What does kappa = 0 mean? |
+| The kappa paradox | | | Added 2026-10-11. Relevant cards are rare here (13 of 58 in the sample, by your verdicts). Why can kappa be low when two judges agree on 90% of cards? Why is positive agreement, 2a / (2a + b + c), reported beside it? |
 | Sign test | | | Added 2026-09-30. `score.py` reports one. Why does it ignore ties? Why is it a better fit than a t-test for 0.0–1.0 scores in steps of 0.2 over ~13 queries? Why is a high p-value here *not* evidence that the ranker doesn't help? |
 
 ---

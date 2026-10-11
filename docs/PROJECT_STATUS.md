@@ -4,6 +4,18 @@ of the same five without ever losing a query, but the Adzuna-only headline is no
 significant (precision@3 0.43 vs 0.37, p = 0.25). What remains is the write-up, the demo and
 the merges.)
 
+## Where we left off — 2026-10-11, latest (second judge ready to send)
+
+Branch `feat/second-judge` (from `feat/ai-panel-no-match`). § 9 is pre-registered, and the
+sample is drawn: 6 queries, 58 cards. **Next: find an independent judge** (a classmate)
+and send them `evaluation/second_judge/`, and nothing else. Not `queries.md`, not the
+earlier sheets, not any results. Ask them to set `**Status:** marked` when done, then put
+the returned SHEET.md back in that folder and run `python evaluation/score_agreement.py`.
+Don't discuss the cards with them before it comes back.
+
+Merge order is now: `feat/feed-saved-filter` → `feat/rag-eval` → `feat/ai-panel-no-match`
+→ `feat/second-judge`.
+
 ## Where we left off — 2026-10-11, later (AI panel no-match fix)
 
 Branch `feat/ai-panel-no-match` (from `feat/rag-eval`) adds deviation 9. The AI panel gives

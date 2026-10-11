@@ -65,6 +65,8 @@ python evaluation/score.py                       # re-score the judged sheets in
 python evaluation/build_rag_supplement.py        # RAG stage: blind sheet of candidates no earlier sheet showed (refuses to overwrite)
 python evaluation/generate_rag_picks.py          # RAG stage: freeze 3 LLM runs per query (~117 Groq calls, ~45 min; refuses to overwrite)
 python evaluation/score_rag.py                   # RAG stage: precision@3 into evaluation/rag_results.md (--check: validate only)
+python evaluation/build_second_judge.py          # second judge: draw 6 queries (seed in queries.md § 9), write evaluation/second_judge/ (refuses to overwrite)
+python evaluation/score_agreement.py             # second judge: Cohen's kappa into evaluation/agreement_results.md (--check: validate only)
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.

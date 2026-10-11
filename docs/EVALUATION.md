@@ -117,3 +117,19 @@ One limitation must be stated beside the number. This was originally framed as "
 the top three by cosine similarity". That comparison was rejected before any pick was
 generated. `rag_candidates` lifts applicable jobs from lower ranks, so the comparison would
 have measured that re-partition and the LLM together.
+
+## Second judge — pre-registered 2026-10-11, awaiting a judge
+
+Both results rest on one judge, the developer. This measures how much the verdicts depend on
+who judged.
+
+- **Protocol:** `evaluation/queries.md` § 9. The seed was committed before the draw.
+- **Sample:** 6 random queries (Q16, Q12, Q20, Q11, Q09, Q01), 58 cards, each identical to
+  the card judge 1 saw.
+- **Measures:** Cohen's kappa, reported with raw and positive agreement. Then whether
+  B − A and L − K keep their direction under judge 2's verdicts.
+- **To do:** send `evaluation/second_judge/` (RULES.md and SHEET.md, nothing else) to an
+  independent judge.
+  - The judge must not see `queries.md`, the earlier sheets or any results.
+  - Run `python evaluation/score_agreement.py` once the sheet comes back marked. It writes
+    `evaluation/agreement_results.md`.

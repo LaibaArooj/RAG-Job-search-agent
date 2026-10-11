@@ -11,6 +11,32 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-10-11 (later still) — A second judge is pre-registered, and the sheet is ready to send
+
+### Added
+
+- **An independent agreement check on the judging.** Both evaluations rest on one judge, the
+  developer. A second judge will mark a random sample blind, and the two will be compared
+  with Cohen's kappa.
+  - **Pre-registered first** in `evaluation/queries.md` § 9. The draw seed was committed
+    before the draw ran, so the sample could not be chosen after seeing it.
+  - **The sample:** Q16, Q12, Q20, Q11, Q09 and Q01, with every card judged for them. That is
+    58 cards, each checked identical to the card judge 1 saw.
+  - **`evaluation/second_judge/`** is self-contained: `RULES.md` and `SHEET.md`. The rules
+    restate R1–R5 and the clarifications without naming a single card, system, source or
+    result. `queries.md` must not be given to the judge, because § 7 and § 8.6 name cards and
+    judge 1's verdicts on them.
+  - **`score_agreement.py`** reports kappa with raw and positive agreement, because relevant
+    cards are rare and kappa alone can mislead. It also lists every disagreement, and shows
+    whether B − A and L − K keep their direction under judge 2. It refuses an unmarked sheet.
+  - **Checked** against hand-worked kappa values, plus an identity run, kept in the
+    scratchpad and not committed, that gave kappa 1.0 and sample means matching the published
+    tables. Both published results regenerate byte-identical.
+
+**Waiting on:** someone to judge. Nothing is scored until the sheet comes back.
+
+---
+
 ## 2026-10-11 (later) — The AI panel can say "no strong match"
 
 ### Fixed

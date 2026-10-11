@@ -125,6 +125,10 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
   detected.
 - **"Who judged?"** You, once, not blind to the project but blind to the system. Name it as
   the main threat to validity before they do.
+- **"So how do you know the verdicts aren't just your opinion?"** A second, independent judge
+  marked a random sample blind (`queries.md` § 9). Quote the kappa, and then the raw and
+  positive agreement, because relevant cards are rare and kappa alone can mislead. If it's
+  not done yet, say what was pre-registered and that the sample was drawn from a committed seed.
 
 ### The RAG stage (added 2026-10-01; result in `evaluation/rag_results.md`)
 
