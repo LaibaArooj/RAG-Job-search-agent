@@ -23,6 +23,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+import score as score_module  # noqa: E402
 from score import (  # noqa: E402
     APPLICABLE, DUPLICATES, JUDGING, SheetError, compare, eligible, fmt, load_main_verdicts,
     load_supplement_verdicts, mean, parse_cards, precision, read_box,
@@ -40,6 +41,15 @@ K = 3  # § 8.2: precision@3, always divided by 3.
 RAG_DUPLICATES = {}
 
 POOL_NAMES = {"adzuna": "Adzuna-only", "all": "all-sources"}
+
+# § 8.6: alternative readings scored BESIDE the headline, never instead of it. Each is
+# (label, query, job_id, verdict under that reading).
+SENSITIVITY = [
+    ("Q10.1 (Adzuna supplement) re-read after unblinding as not relevant", "Q10",
+     "fee8787ba1b4d9d9", False),
+    ("Q11.2 (RAG sheet) on the external posting instead of the card: not relevant", "Q11",
+     "4c394bd43ea5f22e", False),
+]
 
 
 def sheet_is_marked(text):
@@ -153,6 +163,40 @@ def main():
         print("REFUSING TO SCORE -- picks are missing. Run generate_rag_picks.py first.")
         return 1
 
+    rows, eligible_rows = score_all(picks, verdicts, positions, key_rag)
+
+    # § 8.6: the same scoring under each alternative reading, one at a time.
+    sensitivity = []
+    pairs = {qid: [(positions[qid][a], positions[qid][b]) for a, b in pp]
+             for qid, pp in DUPLICATES.items()}
+    for label, qid, job_id, verdict in SENSITIVITY:
+        assert job_id in verdicts[qid], f"{label}: {job_id} is not a RAG candidate"
+        alt = {q: dict(v) for q, v in verdicts.items()}
+        alt[qid][job_id] = verdict
+        alt_rows, _ = score_all(picks, alt, positions, key_rag)
+        # precision@5 too, where the job is in the Adzuna-only lists results.md scored.
+        p5 = None
+        if job_id in adzuna_verdicts.get(qid, {}):
+            alt_adz = {q: dict(v) for q, v in adzuna_verdicts.items()}
+            alt_adz[qid][job_id] = verdict
+            p5 = (score_p5(key_adzuna, adzuna_verdicts, pairs),
+                  score_p5(key_adzuna, alt_adz, pairs))
+        sensitivity.append((label, alt_rows, p5))
+
+    write_results(key_rag, rows, eligible_rows, sensitivity)
+    print(f"Scored {len(rows['adzuna'])} queries Adzuna-only and {len(rows['all'])} all-sources.")
+    print(f"Written to {RESULTS.relative_to(HERE.parent)}.")
+    return 0
+
+
+def score_p5(key_adzuna, adzuna_verdicts, pairs):
+    """Mean Adzuna-only precision@5 per system, as results.md computes it."""
+    rows = score_module.score(key_adzuna, adzuna_verdicts, pairs)
+    return {s: mean(r[s] for r in rows.values()) for s in score_module.SYSTEMS}
+
+
+def score_all(picks, verdicts, positions, key_rag):
+    """Score every query in both pools; return (rows by pool, eligible@3 rows)."""
     rows, eligible_rows = {}, {}
     for pool in POOL_NAMES:
         rows[pool] = {}
@@ -170,11 +214,7 @@ def main():
                     "K": eligible(frozen["candidates"][:K], cands, dup, k=K),
                     "L": mean(eligible(p, cands, dup, k=K) for p in row["picked_lists"]),
                 }
-
-    write_results(key_rag, rows, eligible_rows)
-    print(f"Scored {len(rows['adzuna'])} queries Adzuna-only and {len(rows['all'])} all-sources.")
-    print(f"Written to {RESULTS.relative_to(HERE.parent)}.")
-    return 0
+    return rows, eligible_rows
 
 
 def means_block(rows, label):
@@ -212,7 +252,7 @@ def pool_section(pool, rows, queries):
     return out
 
 
-def write_results(key_rag, rows, eligible_rows):
+def write_results(key_rag, rows, eligible_rows, sensitivity):
     """Write evaluation/rag_results.md: tables and facts only; interpretation is the report's."""
     queries = {q: e["query"] for q, e in key_rag["queries"].items()}
     all_runs = [r for pool in rows.values() for row in pool.values() for r in row["runs"]]
@@ -264,6 +304,32 @@ def write_results(key_rag, rows, eligible_rows):
         out.append(f"| {q} | {r['K']} | {r['L']:.2f} |")
     out += ["", f"Mean eligible@3: K {fmt(mean(r['K'] for r in eligible_rows.values()))}, "
                 f"L {fmt(mean(r['L'] for r in eligible_rows.values()))} (out of 3)."]
+
+    out += [
+        "",
+        "## Sensitivity — alternative readings (§ 8.6)",
+        "",
+        "Each row changes ONE verdict and re-scores. The headline above uses the verdicts as",
+        "committed; these are reported beside it, never instead of it.",
+        "",
+        "| Reading | Adzuna-only K | L | L − K | All-sources K | L | L − K |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    def pool_means(r):
+        k, l = mean(x["K"] for x in r.values()), mean(x["L"] for x in r.values())
+        return f"{fmt(k)} | {fmt(l)} | {fmt(l - k)}"
+    out.append(f"| Headline (as committed) | {pool_means(rows['adzuna'])} | {pool_means(rows['all'])} |")
+    for label, alt_rows, _ in sensitivity:
+        out.append(f"| {label} | {pool_means(alt_rows['adzuna'])} | {pool_means(alt_rows['all'])} |")
+    for label, _, p5 in sensitivity:
+        if p5 is None:
+            continue
+        before, after = p5
+        out += ["", f"Adzuna-only precision@5 (`results.md`) under the same reading — {label}:", "",
+                "| | A | B | C | B − A |", "|---|---|---|---|---|"]
+        for name, m in (("As published", before), ("Re-read", after)):
+            out.append(f"| {name} | {fmt(m['A'])} | {fmt(m['B'])} | {fmt(m['C'])} | "
+                       f"{fmt(m['B'] - m['A'])} |")
     RESULTS.write_text("\n".join(out) + "\n", encoding="utf-8")
 
 
