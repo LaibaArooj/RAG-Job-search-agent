@@ -1,0 +1,275 @@
+{
+  "draw_seed": 20261011,
+  "drawn": [
+    "Q16",
+    "Q12",
+    "Q20",
+    "Q11",
+    "Q09",
+    "Q01"
+  ],
+  "queries": {
+    "Q16": {
+      "query": "job where I write stuff but not journalism",
+      "cards": {
+        "1": {
+          "job_id": "01e19f630983089e",
+          "title": "Associate Lecturer: BA English & Creative Writing"
+        },
+        "2": {
+          "job_id": "98162b028bc28b29",
+          "title": "Creative Writing Expert - Published Author"
+        },
+        "3": {
+          "job_id": "c6901544b9c130b0",
+          "title": "Inbound Marketing Manager"
+        },
+        "4": {
+          "job_id": "827eb03b6c05e18d",
+          "title": "Aspiring English Teacher Program - \u00a328,000"
+        },
+        "5": {
+          "job_id": "4c87d844b94fb1fa",
+          "title": "English Graduate Teacher"
+        },
+        "6": {
+          "job_id": "f2cc762084afc4ff",
+          "title": "Slovak Sports Localization Specialist (Football)"
+        },
+        "7": {
+          "job_id": "d279f1d129da6d53",
+          "title": "English Teacher \u2013 Outstanding Secondary School in Watford"
+        },
+        "8": {
+          "job_id": "30b925c2d69c4076",
+          "title": "Hebrew Sports Localization Specialist (Football)"
+        },
+        "9": {
+          "job_id": "cda4b695b1cbb94a",
+          "title": "Dutch Sports Localization Specialist (Football)"
+        },
+        "10": {
+          "job_id": "aaaedc552b37e51f",
+          "title": "Ukrainian Sports Localization Specialist (Football)"
+        },
+        "11": {
+          "job_id": "dc694be5a5b6cb17",
+          "title": "English Teacher | Camden (Independent Secondary)"
+        },
+        "12": {
+          "job_id": "790cf018551ddc92",
+          "title": "Technical Writer with Active Secret Security Clearance - Onsite in Portsmouth, VA"
+        }
+      }
+    },
+    "Q12": {
+      "query": "part time customer support work from home",
+      "cards": {
+        "1": {
+          "job_id": "5dbc138f8179c933",
+          "title": "Product Manager - Marketplace"
+        },
+        "2": {
+          "job_id": "398e388835905f7f",
+          "title": "Cloud Professional Services Manager"
+        },
+        "3": {
+          "job_id": "c23935fe0886dcc8",
+          "title": "Customer Support Coordinator"
+        },
+        "4": {
+          "job_id": "20ed159fdb992783",
+          "title": "Product Lead - Infrastructure"
+        },
+        "5": {
+          "job_id": "4c394bd43ea5f22e",
+          "title": "Conceptual Copywriter"
+        },
+        "6": {
+          "job_id": "49aa5bca53134cff",
+          "title": "Customer Support Agent"
+        },
+        "7": {
+          "job_id": "363afa788ba972a4",
+          "title": "Customer Support Coordinator"
+        },
+        "8": {
+          "job_id": "2d13ff699e3ee183",
+          "title": "Postgres Engineer"
+        },
+        "9": {
+          "job_id": "f268b03a6c6ae8d0",
+          "title": "Customer Support Technician"
+        },
+        "10": {
+          "job_id": "b21c93e3f1173a2b",
+          "title": "Customer Support Administrator"
+        }
+      }
+    },
+    "Q20": {
+      "query": "design work that doesn't need a portfolio",
+      "cards": {
+        "1": {
+          "job_id": "e8c204ef1bfbce68",
+          "title": "Site Reliability / Gitops Engineer"
+        },
+        "2": {
+          "job_id": "ef7b8ab60f36452a",
+          "title": "Wastewater Designer"
+        },
+        "3": {
+          "job_id": "4c394bd43ea5f22e",
+          "title": "Conceptual Copywriter"
+        },
+        "4": {
+          "job_id": "c1b0249a2635b879",
+          "title": "Gas Design Manager"
+        },
+        "5": {
+          "job_id": "5bd6fff32a4f762a",
+          "title": "Engineering Manager - MLOps & Analytics"
+        },
+        "6": {
+          "job_id": "503de9a24c4cf269",
+          "title": "Creative (Motion Design)"
+        },
+        "7": {
+          "job_id": "9441e085ef61b8c1",
+          "title": "Enterprise Project Manager"
+        },
+        "8": {
+          "job_id": "e75d6600854be926",
+          "title": "Design Engineer"
+        },
+        "9": {
+          "job_id": "33d691e57ea0eee5",
+          "title": "Expression of Interest - Design Manager"
+        },
+        "10": {
+          "job_id": "ab8c6e64dadb0f56",
+          "title": "Site Reliability Engineer"
+        }
+      }
+    },
+    "Q11": {
+      "query": "entry level marketing role no degree required",
+      "cards": {
+        "1": {
+          "job_id": "4af1d794d1b02fd9",
+          "title": "Enterprise Account Executive"
+        },
+        "2": {
+          "job_id": "bd25a3ecb3b60dd0",
+          "title": "Community Engineer (multiple roles and seniority levels)"
+        },
+        "3": {
+          "job_id": "1b5bc0ac188b8ca2",
+          "title": "Head of Marketing"
+        },
+        "4": {
+          "job_id": "848e92616163ce0b",
+          "title": "Marketing Manager"
+        },
+        "5": {
+          "job_id": "f16cc8a1ec5b1b51",
+          "title": "Shopper Marketing Manager"
+        },
+        "6": {
+          "job_id": "b0b82e7ec016f2bd",
+          "title": "Head of Marketing"
+        },
+        "7": {
+          "job_id": "8a0655af28e5fe94",
+          "title": "Senior Performance Marketer (Full Remote - Worldwide)"
+        },
+        "8": {
+          "job_id": "a6999a4da4b1dc93",
+          "title": "Account Director"
+        },
+        "9": {
+          "job_id": "4e329677b8f98daa",
+          "title": "Trade Marketing Manager"
+        },
+        "10": {
+          "job_id": "4c394bd43ea5f22e",
+          "title": "Conceptual Copywriter"
+        },
+        "11": {
+          "job_id": "0388b8d90d0ae6d4",
+          "title": "Marketing Specialist"
+        },
+        "12": {
+          "job_id": "b6357f92e6c0a9bc",
+          "title": "Marketing Manager"
+        }
+      }
+    },
+    "Q09": {
+      "query": "financial analyst excel modelling",
+      "cards": {
+        "1": {
+          "job_id": "329a8041a4a6ba65",
+          "title": "Senior Software Engineer, Backend (Money Movement)"
+        },
+        "2": {
+          "job_id": "c1ac85c62517dd3d",
+          "title": "1775 RPG/AS400 & JD Edwards EnterpriseOne Developer"
+        },
+        "3": {
+          "job_id": "8a6e95e2a76d3e9a",
+          "title": "Staff Software Engineer (SRE)"
+        },
+        "4": {
+          "job_id": "796de72b87a2fcec",
+          "title": "Software Engineer, Frontend / Full Stack (Identity Platform)"
+        },
+        "5": {
+          "job_id": "40987b6c4b4c4a7b",
+          "title": "Financial Analyst"
+        }
+      }
+    },
+    "Q01": {
+      "query": "something creative I can do from my bedroom",
+      "cards": {
+        "1": {
+          "job_id": "b54e498d3da9a74e",
+          "title": "Creative Lead"
+        },
+        "2": {
+          "job_id": "dab178e6a22560f1",
+          "title": "Creative Media Design Advisor (Edgewing)"
+        },
+        "3": {
+          "job_id": "416746f92d2f021b",
+          "title": "Contract Senior Front End Engineer"
+        },
+        "4": {
+          "job_id": "503de9a24c4cf269",
+          "title": "Creative (Motion Design)"
+        },
+        "5": {
+          "job_id": "c0171758175d6667",
+          "title": "Creative Lead"
+        },
+        "6": {
+          "job_id": "4a6607d527b4e4f7",
+          "title": "Senior Full Stack Engineer"
+        },
+        "7": {
+          "job_id": "8a0655af28e5fe94",
+          "title": "Senior Performance Marketer (Full Remote - Worldwide)"
+        },
+        "8": {
+          "job_id": "4c394bd43ea5f22e",
+          "title": "Conceptual Copywriter"
+        },
+        "9": {
+          "job_id": "f44bedc905322e3c",
+          "title": "Conceptual Art Director"
+        }
+      }
+    }
+  }
+}
