@@ -338,3 +338,49 @@ definition, the pair is declared in this section before `score_rag.py` is first 
   precision@5 (Adzuna-only) and precision@3.
 - **Duplicates:** the judge found no C3 pairs among the RAG-sheet candidates, so
   `RAG_DUPLICATES` stays empty.
+
+---
+
+## 9. Second judge — pre-registered 2026-10-11, before the sample was drawn
+
+**Everything above is unchanged.** This section measures how far the verdicts used in § 3–8
+depend on who judged. It was committed before `build_second_judge.py` first ran, so the
+sample below could not be chosen after seeing it.
+
+### 9.1 Sample
+
+- **6 of the 20 queries**, drawn with `random.Random(20261011).sample(["Q01", …, "Q20"], 6)`.
+  The seed is fixed here and is not to be changed.
+- **Every card judged for a drawn query is included**, from the main sheet, the Adzuna
+  supplement and the RAG sheet, deduplicated by job. The number of cards depends on the draw
+  and is reported, whatever it is.
+
+### 9.2 What judge 2 sees
+
+- `evaluation/second_judge/RULES.md` and `SHEET.md` only. Judge 2 must **not** read this
+  file: § 7 and § 8.6 name specific cards and judge 1's verdicts on them.
+- Each card is exactly as judge 1 saw it: title, company, location, and the first 240
+  characters of readable text. Cards are shuffled within each query.
+- No ranks, systems, sources, first-judge marks or notes, and no project results.
+- **The rules given are R1–R5**, plus "silence is not a contradiction", "eligibility is not
+  relevance", C1, C2, the card-only rule of § 8.6, and the tie-break (genuinely ambiguous
+  means not relevant).
+  - **A known asymmetry:** judge 1 received C1 and C2 after marking, as clarifications.
+    Judge 2 receives them before. It is stated, not corrected.
+- Duplicates (C3) are not judge 2's job. The scorer applies the same declared pairs.
+
+### 9.3 Measures
+
+- **Judge 1's verdicts** are the committed headline verdicts (§ 8.6: Q10.1 blind, Q11.2 on
+  the card).
+- **Primary:** Cohen's kappa over the shared (query, job) cards. It is reported with raw
+  agreement and positive agreement, 2a / (2a + b + c).
+  - Relevant cards are rare, and at low prevalence kappa can be low even when agreement is
+    high (the "kappa paradox"). So all three are reported, and no single one is the
+    conclusion.
+  - The Landis–Koch bands are cited as conventions, not thresholds.
+- **Secondary:** on the 6 sampled queries only, precision@5 (Adzuna-only and all-sources,
+  A/B/C) and precision@3 (K/L) are recomputed with judge 2's verdicts, beside judge 1's on the
+  same queries. Only the **direction** of B − A and L − K is compared. Six queries can show
+  no significance.
+- Every disagreement is listed by query and card. **The result is reported whatever it is.**
