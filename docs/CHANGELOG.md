@@ -11,6 +11,43 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-10-11 (later) — The AI panel can say "no strong match"
+
+### Fixed
+
+- **The AI panel no longer recommends jobs it says don't fit.** The prompt asked for "the three
+  best matches", so when nothing fitted, the model filled the slots anyway. Its reasons read
+  like "This is a recruitment-focused role, which does not meet the requirement of avoiding
+  recruitment", shown under an *AI Recommendations* header. The prompt now asks for up to
+  three genuine matches and tells the model how to decline.
+- **A decline is no longer mistaken for an outage.** Diagnosing the 9 failed runs from the
+  RAG-stage evaluation (by rerunning two of them with the raw reply captured) showed the model
+  was deliberately returning an empty list, and the panel treated that as a Groq failure.
+  There are now three states: `None` means Groq failed and the band is hidden (TC-009,
+  unchanged); `[]` means the model declined and the band says "None of the top results looks
+  like a strong match"; a list means picks.
+- A failed validation now logs the start of the raw reply to the server log, so the next
+  diagnosis doesn't need a rerun.
+
+### Observed, not measured
+
+On Q14 and Q18 the new prompt declined in 4 of 4 runs. On Q07, a control where every
+candidate is relevant, it still made three genuine picks in 2 of 2 runs. These are
+observations on three queries, not an evaluation result.
+
+### Recorded
+
+- **Deviation 9** in `docs/PROJECT_SPEC.md`: FR-016's "three top picks" is now "up to three,
+  or an explicit no-match". `CLAUDE.md` had listed seven deviations, against the spec's eight,
+  because it missed source selection. Both now say nine.
+- **The RAG-stage numbers describe the old prompt.** `evaluation/rag_results.md` was measured
+  with the prompt that forced three picks. The new prompt is deliberately **not** re-measured
+  on the same 20 queries, because they have been seen and that would be tuning to the test
+  set. Measuring it needs fresh pre-registered queries.
+- 500 offline checks green (13 new; 2 replaced that encoded the old rule).
+
+---
+
 ## 2026-10-11 — The RAG stage is measured: the LLM's picks never lost to the first three
 
 Full tables are in `evaluation/rag_results.md`. The protocol is `evaluation/queries.md` § 8,

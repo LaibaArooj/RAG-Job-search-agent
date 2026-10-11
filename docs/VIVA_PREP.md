@@ -160,6 +160,12 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
   pool, and one of two comparisons, with a single judge. Report it as significant at that
   level, but lead with the non-significant headline because that is what was
   pre-registered.
+- **"Did your LLM ever recommend a job it knew didn't fit?"** Yes, until 10-11, and you
+  found it by diagnosing the evaluation's failures, not by accident. The prompt demanded
+  "the three best", so when nothing fitted it complied, with reasons that said the job
+  didn't fit. Now it may pick up to three or decline. A decline shows "no strong match";
+  an outage still hides the band. Then the follow-up: "so your precision@3 number is for a
+  prompt you no longer ship?" Yes, and say why you didn't re-measure on the same queries.
 - **"You changed a verdict after seeing results."** No. On 10-11, Q10.1 was re-read *after*
   unblinding. The blind verdict stands, and the re-reading is scored only as a sensitivity
   check (`queries.md` § 8.6). It moves no mean by more than 0.02. Q11.2 was re-judged on

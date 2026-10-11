@@ -69,8 +69,8 @@ python evaluation/score_rag.py                   # RAG stage: precision@3 into e
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 530 assertions, about 290 seconds --
-487 of them offline, measured 2026-10-01; verify_live.py contributes the other 43. Use
+**`python verify_all.py` is the pre-demo check.** 543 assertions, about 290 seconds --
+500 of them offline, measured 2026-10-11; verify_live.py contributes the other 43. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.
@@ -87,9 +87,9 @@ rather than a regression; read which check failed before assuming the code broke
 - No emails, no notifications, no direct job applications, no employer features, no mobile app.
 - Ask before adding a dependency or changing the MongoDB schema.
 
-## Deviations from the SRS — seven
+## Deviations from the SRS — nine
 
-The SRS is v1.0 and authoritative, but seven changes have been made since — five deliberate,
+The SRS is v1.0 and authoritative, but nine changes have been made since — seven deliberate,
 two forced by Groq retiring models mid-implementation. All are recorded in
 `docs/PROJECT_SPEC.md` § Deviations with justifications. Don't revert to the SRS behaviour
 without asking:
@@ -105,6 +105,10 @@ without asking:
    employer will hire a candidate in a given country.
 7. The AI panel explains the top five jobs the seeker **can apply for**, not the top five by
    score. Ranking itself is unchanged.
+8. Only sources that can serve the user's country are queried (Adzuna has no market for most
+   countries). Requires the `country` field on the user document.
+9. The AI panel gives **up to three** picks, or an explicit "no strong match", not always
+   three (FR-016). Forcing three produced anti-recommendations; see 2026-10-11 in the changelog.
 
 Groq is therefore called **twice per search**. Both calls need try/except with a working
 fallback — FR-018 says the app never crashes when the LLM is unavailable, and that now applies

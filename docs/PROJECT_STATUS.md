@@ -4,6 +4,16 @@ of the same five without ever losing a query, but the Adzuna-only headline is no
 significant (precision@3 0.43 vs 0.37, p = 0.25). What remains is the write-up, the demo and
 the merges.)
 
+## Where we left off — 2026-10-11, later (AI panel no-match fix)
+
+Branch `feat/ai-panel-no-match` (from `feat/rag-eval`) adds deviation 9. The AI panel gives
+up to three picks or an explicit "no strong match", because the evaluation's 9 failures
+turned out to be the model declining, and forced picks were anti-recommendations. The
+precision@3 numbers describe the OLD prompt; say so in the report. There are 500 offline
+checks. The browser check of the no-match message waits for the demo account, as the
+feed check does. Merge order: `feat/feed-saved-filter` → `feat/rag-eval` →
+`feat/ai-panel-no-match`.
+
 ## Where we left off — 2026-10-11 (RAG stage scored)
 
 **Read `evaluation/rag_results.md`, then the 2026-10-11 changelog entry.** The RAG sheet was

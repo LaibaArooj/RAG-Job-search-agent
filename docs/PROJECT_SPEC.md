@@ -237,7 +237,7 @@ parsed keywords. A production system with its own crawled corpus would use a rea
 
 ## Deviations from the SRS — declare these in the final report
 
-The SRS is v1.0 and authoritative. Eight changes have been made since — six intentional, two
+The SRS is v1.0 and authoritative. Nine changes have been made since — seven intentional, two
 forced. Each needs a one-line justification in the report; supervisors generally accept
 documented deviations and penalise undocumented ones.
 
@@ -250,6 +250,7 @@ documented deviations and penalise undocumented ones.
 | **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + Remotive + **Jobicy** | Neither original source can answer "will this employer hire a candidate in my country?" — Adzuna has no such concept and Remotive is capped at 18 jobs. Jobicy filters eligibility server-side. Free, no key, no card, so the SRS cost constraint holds. See § Geographic eligibility below. |
 | **Source selection** | All sources queried for every user | **Only sources that can serve the user's country** | Adzuna is a country-market API with no `jobs/pk/search` endpoint (404, measured 2026-09-23). Querying it for a user it cannot serve spends quota to fetch jobs that reject them. Requires a `country` field on the user document. |
 | **AI panel selection** | Top 5 ranked jobs → LLM (FR-016) | Top 5 **the seeker can apply for** → LLM | Measured: all five top-ranked jobs were UK-local for a non-UK user, so every AI pick was unreachable. Ranking itself is unchanged — only which five reach the prompt. |
+| **AI panel size** | Three top picks (FR-016) | **Up to three, or an explicit "no strong match"** | Added 2026-10-11. All 9 failed runs in the RAG-stage evaluation were the model declining (`{"picks": []}`), which the panel treated as an outage. Forcing three also made it fill the slots with jobs it said did not fit ("This is a recruitment-focused role, which does not meet the requirement"). A decline now shows a message; a Groq failure still hides the band (TC-009 unchanged). |
 | `rejected_jobs` contents | `Array<String>` of job **titles** (§ Data model) | `Array<String>` of **`job_id`** | Titles are not unique across employers. TC-012 requires rejected jobs to be *absent* from the feed; keyed on title, rejecting one "Software Engineer" hides every job with that title from every company. `saved_jobs` already keys on `job_id` for the same reason (TC-013). Field type is unchanged — still an array of strings. |
 
 ### Geographic eligibility — added 2026-09-23

@@ -109,6 +109,9 @@ same five candidates it is handed. The ranking is held fixed, so this isolates t
     predicted.
   - 9 of 117 runs (7.7%) failed and scored as K.
   - The § 8.6 sensitivity readings move no mean by more than 0.02.
+  - **Measured with the pre-10-11 prompt**, which forced three picks. The prompt changed
+    the same day (deviation 9). It is deliberately not re-measured on these 20 queries:
+    they have been seen, so re-scoring them would be tuning to the test set.
 
 One limitation must be stated beside the number. This was originally framed as "the LLM vs
 the top three by cosine similarity". That comparison was rejected before any pick was
