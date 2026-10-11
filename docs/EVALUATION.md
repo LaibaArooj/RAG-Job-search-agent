@@ -95,9 +95,20 @@ same five candidates it is handed. The ranking is held fixed, so this isolates t
 - **Fixtures:** the same ones as precision@5.
 - **Verdicts:** reused from the earlier sheets, plus one new blind sheet
   (`judging/SUPPLEMENT-rag.md`) for candidates no earlier sheet showed.
-- **Result:** `evaluation/rag_results.md`, written by `evaluation/score_rag.py` once that
-  sheet is marked. Report it as measured, including every query where the first three beat
-  the LLM.
+- **Result (scored 2026-10-11, `evaluation/rag_results.md`):**
+
+  | | K (first three) | L (LLM picks) | Wins / ties / losses | Sign test p |
+  |---|---|---|---|---|
+  | Adzuna-only, the headline | 0.37 | 0.43 | 3 / 16 / 0 | 0.25 |
+  | All-sources, secondary | 0.23 | 0.36 | 7 / 13 / 0 | 0.016 |
+
+  - The LLM's picks lost to the first three on no query in either pool.
+  - The headline is not significant. The secondary result is, at p = 0.016, but it is one of
+    two pools.
+  - eligible@3 *fell*, from 2.20 to 1.75. That is the opposite of the confound § 8.5
+    predicted.
+  - 9 of 117 runs (7.7%) failed and scored as K.
+  - The § 8.6 sensitivity readings move no mean by more than 0.02.
 
 One limitation must be stated beside the number. This was originally framed as "the LLM vs
 the top three by cosine similarity". That comparison was rejected before any pick was

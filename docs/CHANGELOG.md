@@ -11,6 +11,46 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-10-11 — The RAG stage is measured: the LLM's picks never lost to the first three
+
+Full tables are in `evaluation/rag_results.md`. The protocol is `evaluation/queries.md` § 8,
+with § 8.6 added before scoring.
+
+| precision@3 | K (first three of the five) | L (LLM's picks, mean of 3 runs) | W / T / L | p |
+|---|---|---|---|---|
+| **Adzuna-only (headline)** | 0.37 | 0.43 | 3 / 16 / 0 | 0.25 |
+| All-sources (secondary) | 0.23 | 0.36 | 7 / 13 / 0 | 0.016 |
+
+### What the numbers show
+
+- **The direction is consistent, but the headline is not significant.** The LLM did worse
+  than K on no query in either pool. Over 19 queries, three wins and no losses cannot reach
+  significance.
+- **The predicted confound ran backwards.** eligible@3 *fell*, from 2.20 to 1.75. Where
+  `rag_candidates` lifted applicable but irrelevant jobs into the five, the LLM passed over
+  them for relevant local ones, despite a prompt that asks it to prefer applicable roles
+  (Q09 and Q10). The gain did not come from following the eligibility instruction. The LLM
+  partly undoes deviation 7. That tension belongs in the report.
+- **Picks were stable.** Only 2 of 39 query-pools changed their score between runs.
+- **Where the 9 failed runs fell:**
+  - All three runs of Q14 (Adzuna-only) and all three of Q18 (all-sources). Both are queries
+    with no relevant candidate, which suggests the model declines when nothing fits. That is
+    unverified, because raw replies were not kept.
+  - One run each of Q06 and Q11 (Adzuna-only) and Q13 (all-sources).
+
+### Judging, and two rulings made before scoring (§ 8.6)
+
+- The RAG sheet is marked: 3 of 42 relevant, and no duplicate pairs.
+- **Q11.2 was re-judged on its card**, because the first pass had used the live external
+  posting and every other verdict used the card. The external reading is a sensitivity row.
+- **Q10.1 on the Adzuna supplement keeps its blind 09-30 verdict.** The judge's re-reading
+  came after `results.md` was published, so it is scored only as sensitivity. It would move
+  the Adzuna-only precision@5 for B from 0.32 to 0.31 and for C from 0.31 to 0.29, which
+  makes B − A exactly 0.00. The 09-30 conclusion is unchanged.
+- Both sensitivity readings move every RAG mean by 0.02 or less.
+
+---
+
 ## 2026-10-01 — Saved jobs leave the feed; the RAG-stage evaluation is built and waiting to be judged
 
 ### Fixed

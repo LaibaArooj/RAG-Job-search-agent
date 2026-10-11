@@ -1,26 +1,27 @@
-Last updated: 2026-10-05 (**M4 in progress. Precision@5 is measured, and it was a null result. The
-RAG-stage evaluation is built, pre-registered and has its picks frozen. It is blocked on one
-thing: the developer judging `evaluation/judging/SUPPLEMENT-rag.md`.**)
+Last updated: 2026-10-11 (**M4 in progress. Both evaluations are measured.** Semantic re-ranking
+did not beat keyword order (precision@5, 09-30). The LLM's three picks beat the first three
+of the same five without ever losing a query, but the Adzuna-only headline is not
+significant (precision@3 0.43 vs 0.37, p = 0.25). What remains is the write-up, the demo and
+the merges.)
 
-## Where we left off — 2026-10-05 (RAG stage waiting on judging)
+## Where we left off — 2026-10-11 (RAG stage scored)
 
-### The one blocking step
+**Read `evaluation/rag_results.md`, then the 2026-10-11 changelog entry.** The RAG sheet was
+judged, § 8.6 recorded two rulings before scoring, and the scorer ran once.
 
-**Mark `evaluation/judging/SUPPLEMENT-rag.md`.** It has 42 cards, judged under R1–R5 in
-`evaluation/queries.md` § 3, read with C1–C4 in § 7. The rules were restated in the session
-of 2026-10-05.
-- Note any same-vacancy pairs (C3's definition). They have to be declared in § 8.2, as
-  `RAG_DUPLICATES` in `score_rag.py`, **before** the scorer first runs.
-- Then change the sheet's `**Status:** unmarked` line to `marked`. `score_rag.py` refuses to
-  score until you do.
-- **Do not open `evaluation/rag_picks/` before then.** It is the same rule as `key.json` on
-  09-30. Which queries the 9 failed runs fell on is also withheld until then.
+### Next actions
 
-After marking:
-1. `python evaluation/score_rag.py --check`
-2. Declare any pairs.
-3. `python evaluation/score_rag.py` writes `evaluation/rag_results.md`.
-4. Write it up as measured.
+1. **Write the report's evaluation section.** It now has two results: the null precision@5
+   (09-30) and the RAG stage. Your interpretation sentences are still unwritten. The point to
+   make is the reversed eligibility confound, where the LLM trades eligibility for relevance.
+2. **Rehearse `docs/VIVA_PREP.md`'s RAG block.** It has three new questions, including "you
+   changed a verdict after seeing results".
+3. **Tell the supervisor:** both results, the § 7 and § 8.6 rulings, and the deviations
+   unreported since 09-23.
+4. **Register a fresh demo account.** Save two jobs and confirm neither appears on `/feed`.
+   This is the feed fix's last unverified check.
+5. **Merge via PR:** `feat/feed-saved-filter`, then `feat/rag-eval`. Neither has been pushed.
+6. Comprehension checks are still open: the feed fix (two questions) and the RAG stage.
 
 ### What happened on 2026-10-01 (details in `docs/CHANGELOG.md`)
 

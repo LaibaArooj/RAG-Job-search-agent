@@ -128,8 +128,15 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
 
 ### The RAG stage (added 2026-10-01; result in `evaluation/rag_results.md`)
 
-- **"Does the LLM actually improve anything, or is it decoration?"** That's what the
-  RAG-stage evaluation measures. Lead with the precision@3 number, whatever it is.
+- **"Does the LLM actually improve anything, or is it decoration?"** Lead with the
+  numbers.
+  - Headline (Adzuna-only): precision@3 is 0.43 for the LLM's picks against 0.37 for the
+    first three. It won 3 queries, tied 16 and lost none (p = 0.25), so the result is not
+    significant.
+  - All-sources: 0.36 against 0.23, 7 wins and 0 losses, p = 0.016.
+  - Then contrast it with the ranker. The ranker's precision@5 was indistinguishable from
+    keyword order, but the LLM's choice of three never did worse than taking the first
+    three.
 - **"Why compare against the first three of the five, not the top three by cosine?"**
   Because both systems then get identical inputs, so any difference comes from the LLM alone.
   `rag_candidates` lifts applicable jobs from lower ranks; comparing against the cosine top 3
@@ -143,9 +150,20 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
 - **"How do you know the judging wasn't influenced by which jobs the LLM picked?"** The new
   sheet was built and committed before any pick existed; the git history shows it. The
   candidates don't depend on the LLM, so the sheet couldn't leak them.
-- **"The prompt tells it to prefer jobs you can apply for. Doesn't that skew it?"** Yes, and
-  it's pre-registered as a confound. Relevance excludes eligibility, so an LLM that obeys its
-  prompt can lose on precision@3 and win on eligible@3. Both are reported side by side.
+- **"The prompt tells it to prefer jobs you can apply for. Doesn't that skew it?"** It was
+  pre-registered as a confound, and the data ran the opposite way. eligible@3 *fell* from
+  2.20 to 1.75. Where `rag_candidates` lifted applicable but irrelevant jobs into the five,
+  the LLM passed over them for relevant local ones (Q09 and Q10 most clearly). So the
+  precision gain didn't come from obeying the eligibility instruction. Be ready for the
+  follow-up: this means the LLM partly undoes deviation 7.
+- **"Your secondary p is 0.016. Isn't that a significant result?"** It is the secondary
+  pool, and one of two comparisons, with a single judge. Report it as significant at that
+  level, but lead with the non-significant headline because that is what was
+  pre-registered.
+- **"You changed a verdict after seeing results."** No. On 10-11, Q10.1 was re-read *after*
+  unblinding. The blind verdict stands, and the re-reading is scored only as a sensitivity
+  check (`queries.md` § 8.6). It moves no mean by more than 0.02. Q11.2 was re-judged on
+  its card before any score existed, so that every verdict uses the same evidence.
 
 ## Live demo — rehearse the failure paths too
 
