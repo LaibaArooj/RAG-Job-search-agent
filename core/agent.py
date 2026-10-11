@@ -483,7 +483,7 @@ class JobSearchAgent:
 
     @staticmethod
     def join_picks(picks, candidates):
-        """Attach each LLM reason to the real job dict its index names, or return None."""
+        """Attach each LLM reason to its real job dict; [] stays [] (declined), None stays None."""
         # THE boundary that makes the AI panel safe to render as live job cards. The model
         # returns an index and a sentence; every other field on the resulting card -- url,
         # job_id, category, eligibility -- comes from the dict WE passed it. A hallucinated
@@ -491,7 +491,10 @@ class JobSearchAgent:
         #
         # The index is 1-based because the prompt numbers the jobs "Job 1:" upward, and
         # RAGPipeline.validate_picks has already guaranteed it is in range.
-        if not picks:
+        #
+        # None and [] are kept apart on purpose (2026-10-11): None means Groq failed and the
+        # band is hidden (TC-009); [] means the model declined and the band says so.
+        if picks is None:
             return None
         joined = []
         for pick in picks:
@@ -500,7 +503,7 @@ class JobSearchAgent:
             # below, and writing onto it would leak the AI reason onto a card that is not
             # supposed to carry one.
             joined.append(dict(job, ai_reason=pick["reason"]))
-        return joined or None
+        return joined
 
     # --- pipeline -----------------------------------------------------------------
 
@@ -599,9 +602,11 @@ class JobSearchAgent:
 
         jobs = self.rank(query_vector, jobs, context.get("category_scores"))
 
-        # Groq call #2. RAGPipeline.run returns None on failure, and the template hides the
-        # AI band when ai_recommendations is falsy, so a Groq outage costs the explanation
-        # and nothing else. The ranked list is still rendered in full (FR-018).
+        # Groq call #2. Three outcomes, each rendered differently by index.html:
+        #   None  -- Groq failed. The AI band is hidden, so an outage costs the explanation
+        #            and nothing else, and the ranked list is still rendered in full (FR-018).
+        #   []    -- the model declined because nothing fitted. The band says "no strong match".
+        #   list  -- up to three picks, rendered as real job cards.
         # The candidate list is held so the picks can be joined back onto it. RAGPipeline
         # returns indices INTO THIS LIST, so recomputing it here would risk the two drifting.
         rag_jobs = self.rag_candidates(jobs)

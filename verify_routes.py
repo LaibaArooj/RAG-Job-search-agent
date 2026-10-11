@@ -393,6 +393,8 @@ def main():
                 ai_recommendations=[dict(ranked[0], ai_reason="Matches your search.")],
                 **page_args
             )
+            # Added 2026-10-11: the model DECLINED. A third state, distinct from both.
+            declined_html = render_template("index.html", ai_recommendations=[], **page_args)
 
         check("TC-009  the AI Recommendations band is absent when Groq failed",
               "AI Recommendations" not in down_html)
@@ -422,6 +424,16 @@ def main():
         # description would make the user scroll past identical text twice.
         check("the AI card omits the description the ranked card shows",
               up_html.count("writes documentation") == 1)
+
+        # A decline is the model's answer, not an outage, so the band SHOWS and says so --
+        # where before 2026-10-11 it vanished exactly as it does when Groq is down.
+        check("a decline shows the AI band", "AI Recommendations" in declined_html)
+        check("a decline says no strong match was found", "strong match" in declined_html)
+        check("a decline renders no AI cards, only the ranked one",
+              declined_html.count("js-decision-group") == 1)
+        check("a decline is not dressed as an error", "alert-danger" not in declined_html)
+        check("picks and outages never show the no-match message",
+              "strong match" not in up_html and "strong match" not in down_html)
 
         print("\n7c. TC-007 — autocomplete, and TC-015 — result filters")
         # Rendered through the ROUTE, not directly, because the suggestion list is assembled

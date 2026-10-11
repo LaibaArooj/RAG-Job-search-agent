@@ -82,6 +82,9 @@ def one_run(pipeline, query, candidates):
     """Ask the LLM once and return {picks: [{job_id, reason}], failed}."""
     picks = pipeline.run(query, candidates)
     joined = JobSearchAgent.join_picks(picks, candidates)
+    # Frozen as run on 2026-10-01. Since 2026-10-11 a decline returns [] instead of None,
+    # and this check would still count it as failed, which matches how the 10-01 run scored
+    # it. The picks were generated with the pre-10-11 prompt, which forced three picks.
     if not joined:
         return {"picks": [], "failed": True}
     ids = {c["job_id"] for c in candidates}

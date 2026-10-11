@@ -177,7 +177,14 @@ class RAGPipeline:
             f'A job seeker searched for: "{query}"\n\n'
             f"These are the highest ranked results already retrieved and re-ranked "
             f"for that search:\n\n{job_context}\n"
-            f"Recommend the three best matches from the list above.\n"
+            # Changed 2026-10-11 from "Recommend the three best matches". Forcing three made
+            # the model fill the slots when nothing fitted, with reasons like "This is a
+            # recruitment-focused role, which does not meet the requirement" -- an
+            # anti-recommendation under an AI Recommendations header. Reproduced on Q14 and
+            # Q18 of the evaluation. Declining is now a stated, valid answer.
+            f"Recommend up to three jobs from the list above that genuinely fit the "
+            f"search. Do not recommend a job if your reason would say it does not fit. "
+            f'If none of them fits, reply {{"picks": []}}.\n'
             f'Reply with JSON only, in exactly this shape:\n'
             f'{{"picks": [{{"index": <the Job number above>, '
             f'"reason": "<two sentences on why it fits>"}}]}}\n'
@@ -220,6 +227,10 @@ class RAGPipeline:
         picks = raw.get("picks") if isinstance(raw, dict) else None
         if not isinstance(picks, list):
             raise ValueError("no picks list in reply")
+        if not picks:
+            # The model DECLINED: nothing fitted. A valid answer since 2026-10-11, returned as
+            # [] so the caller can tell it apart from None, which means Groq failed.
+            return []
 
         cleaned = []
         seen = set()
@@ -241,13 +252,13 @@ class RAGPipeline:
                 break
 
         if not cleaned:
-            # An empty list would render an AI band with nothing in it, which is worse than
-            # no band. Treated as a failed generation so the FR-018 fallback handles it.
+            # The model offered picks and every one was unusable. That is garbage, not a
+            # decline, so it takes the FR-018 fallback and the band is hidden.
             raise ValueError("no usable picks in reply")
         return cleaned
 
     def run(self, query, jobs):
-        """Return validated [{index, reason}] for the ranked jobs, or None if Groq fails."""
+        """Return validated picks, [] if the model declined, or None if Groq fails."""
         # STRUCTURED, not prose, as of 2026-09-25. The panel renders real job cards with
         # working Save/Reject buttons, so it needs to know WHICH jobs were picked -- prose
         # could only be printed. Strict by choice: a reply that will not parse yields None
@@ -257,6 +268,10 @@ class RAGPipeline:
         if not jobs:
             return self.fallback()
 
+        # Held outside the try so a failure can log what the model actually said. Added
+        # 2026-10-11: the 10-01 evaluation recorded 9 failures and no replies, so finding out
+        # that every one was a deliberate decline took a second round of calls.
+        text = ""
         try:
             text = complete(
                 self.client,
@@ -275,5 +290,6 @@ class RAGPipeline:
             # All three mean the same thing to the user -- no explanation available -- and
             # FR-018 says the app must never crash when the LLM is unavailable. TC-009
             # covers this path.
-            print(f"Groq RAG error: {e}")
+            # The raw reply goes to the server log only, never to the page.
+            print(f"Groq RAG error: {e}" + (f" -- reply began: {text[:200]!r}" if text else ""))
             return self.fallback()

@@ -833,8 +833,15 @@ def test_rag_structured_picks():
     check("a boolean index is refused", _raises(v, {"picks": [{"index": True, "reason": "x"}]}, 5))
     check("a blank reason is refused", _raises(v, {"picks": [{"index": 1, "reason": "  "}]}, 5))
     check("a missing picks list is refused", _raises(v, {"nope": 1}, 5))
-    # An empty list would render an AI band containing nothing, which is worse than no band.
-    check("an empty picks list is refused", _raises(v, {"picks": []}, 5))
+    # Changed 2026-10-11. This used to be refused. Diagnosing the 9 failed evaluation runs
+    # showed every one was the model DECLINING -- a deliberate {"picks": []} when nothing
+    # fitted -- and refusing it made a considered "no match" look exactly like an outage.
+    # An empty list is now a valid answer; the band renders a message, never empty cards.
+    check("an empty picks list is a valid decline, not a failure", v({"picks": []}, 5) == [])
+    # The other half of the line: a list that is non-empty but entirely unusable is still
+    # garbage, and garbage still takes the FR-018 fallback.
+    check("a list of only unusable picks still fails",
+          _raises(v, {"picks": [{"index": 9, "reason": "x"}, {"index": 1, "reason": ""}]}, 5))
     check("a duplicate index is dropped, not repeated",
           v({"picks": [{"index": 1, "reason": "a"}, {"index": 1, "reason": "b"}]}, 5)
           == [{"index": 1, "reason": "a"}])
@@ -858,9 +865,11 @@ def test_rag_structured_picks():
     # Copied, not mutated: the same dict is rendered again in the ranked list below, and it
     # must not pick up an AI reason it is not supposed to show.
     check("the original candidate dict is not mutated", "ai_reason" not in candidates[1])
-    check("no picks means no panel", JobSearchAgent.join_picks(None, candidates) is None)
-    check("an empty pick list means no panel",
-          JobSearchAgent.join_picks([], candidates) is None)
+    # Three states, and the template tells them apart: None = Groq failed (band hidden,
+    # TC-009), [] = the model declined (band shows "no strong match"), a list = picks.
+    check("a failure still means no panel", JobSearchAgent.join_picks(None, candidates) is None)
+    check("a decline stays an empty list, distinct from a failure",
+          JobSearchAgent.join_picks([], candidates) == [])
 
     # End to end through run(): the panel is a list of real jobs, not a string.
     jobs = [card("Alpha"), card("Beta")]
@@ -875,6 +884,31 @@ def test_rag_structured_picks():
           {"title", "url", "job_id", "category", "ai_reason"} <= set(panel[0]))
     check("the panel job is one the pipeline actually ranked",
           panel[0]["job_id"] in {j["job_id"] for j in result["jobs"]})
+
+    # A decline travels through run() intact, and costs the user nothing else.
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+    declined = JobSearchAgent(StubDB(), StubEngine({"Alpha": 0.9, "Beta": 0.5}),
+                              StubRAG(reply=[])).run("laiba", "q")
+    check("a decline reaches the page as an empty list", declined["ai_recommendations"] == [])
+    check("a decline raises no error banner", declined["error"] is None)
+    check("a decline still returns the full ranked list", len(declined["jobs"]) == 2)
+
+
+def test_rag_prompt_allows_no_match():
+    """The prompt must let the model decline rather than force three picks."""
+    print("\nRAG prompt — up to three, or none")
+
+    # Added 2026-10-11. "Recommend the three best matches" forced picks when nothing fitted,
+    # and the model complied with reasons like "This is a recruitment-focused role, which does
+    # not meet the requirement" -- an anti-recommendation under an AI Recommendations header.
+    from core.rag_pipeline import RAGPipeline
+
+    prompt = RAGPipeline(top_k=5).build_prompt("q", [{"title": "T", "description": "x"}])
+    check("the prompt asks for up to three, not exactly three", "up to three" in prompt)
+    check("the prompt no longer demands the three best", "the three best" not in prompt)
+    check("the prompt says how to decline", '{"picks": []}' in prompt)
+    check("the prompt forbids recommending a job that does not fit",
+          "does not fit" in prompt)
 
 
 def test_rag_prompt_states_eligibility():
@@ -1550,6 +1584,7 @@ def main():
         test_model_fallback_chain()
         test_rag_structured_picks()
         test_rag_prompt_states_eligibility()
+        test_rag_prompt_allows_no_match()
         test_rag_fallback()
         test_cache()
         test_enrich_query_does_not_swamp_the_query()

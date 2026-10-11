@@ -64,7 +64,9 @@
         <button type="submit" class="btn btn-primary px-4">Search</button>
     </form>
 
-    {% if ai_recommendations %}
+    {# Three states (2026-10-11): None = Groq failed, band hidden (TC-009); [] = the model
+       declined because nothing fitted, band shows a message; a list = picks as cards. #}
+    {% if ai_recommendations is not none %}
     <div class="card border-warning mb-4">
         <div class="card-header bg-warning text-dark fw-bold">
              AI Recommendations
@@ -81,6 +83,11 @@
                user scroll past the same text twice. #}
             {% for job in ai_recommendations %}
             {{ job_card(job, reason=job.ai_reason, badge="score", compact=True) }}
+            {% else %}
+            <p class="text-muted mb-0">
+                None of the top results looks like a strong match for "{{ query }}".
+                Try rephrasing, or browse the ranked results below.
+            </p>
             {% endfor %}
         </div>
     </div>
