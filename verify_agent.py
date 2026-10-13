@@ -159,8 +159,11 @@ class FetchRecorder:
         }
 
 
-def card(title, company="Acme", description="a job", source="Remotive", category=""):
+def card(title, company="Acme", description="a job", source="Fixture", category=""):
     """Build one JobCard with a real job_id, so dedupe is tested against the real hash."""
+    # source="Fixture" is deliberately NOT in SEARCHING_SOURCES. It stands for "a source that
+    # did not search", which is what the cache tests need the default to mean. Until
+    # 2026-10-13 the default was "Remotive", the real source that ignored its search parameter.
     return JobCard(
         job_id=JobCard.make_job_id(title, company),
         title=title,
@@ -286,7 +289,7 @@ def test_query_expansion():
 def test_deduplication():
     """TC-022: the same listing from both APIs appears exactly once."""
     print("\nTC-022 — cross-source dedupe")
-    same_from_remotive = card("Content Writer", "Acme Ltd", source="Remotive")
+    same_from_remotive = card("Content Writer", "Acme Ltd", source="Himalayas")
     # Same listing as Adzuna syndicates it: different case, padded, different description.
     same_from_adzuna = card("  content WRITER ", "acme ltd", description="other text",
                             source="Adzuna")
@@ -307,7 +310,7 @@ def test_deduplication():
         "laiba", "writer"
     )
     check("the syndicated job appears exactly once", len(result["jobs"]) == 1)
-    check("the first occurrence is the one kept", result["jobs"][0]["source"] == "Remotive")
+    check("the first occurrence is the one kept", result["jobs"][0]["source"] == "Himalayas")
 
     dropped = JobSearchAgent.deduplicate([{"title": "no id"}, {"job_id": "abc"}])
     check("a job with no job_id is dropped rather than passed on", len(dropped) == 1)
@@ -545,7 +548,7 @@ def test_country_source_selection():
 
     # The subtle one. A skipped source is not a failed source: failed_sources drives TC-018's
     # outage banner, which would otherwise fire on every search a Pakistan-based user ran.
-    recorder = FetchRecorder(by_variant={"q": [card("Remote Dev", source="Jobicy")]})
+    recorder = FetchRecorder(by_variant={"q": [card("Remote Dev", source="Himalayas")]})
     install(recorder, fixed_intent("q"))
     db = StubDB(context={"country": "pk"})
     result = JobSearchAgent(db, StubEngine({"Remote Dev": 0.9}), StubRAG()).run("laiba", "q")
@@ -581,7 +584,7 @@ def test_profile_fills_in_what_the_query_omits():
     # the user it exists for -- someone who does not know the search vocabulary.
     profile = {"experience": "entry level", "preferred_work": ["remote"], "country": "gb"}
 
-    recorder = FetchRecorder(by_variant={"q": [card("A", source="Jobicy")]})
+    recorder = FetchRecorder(by_variant={"q": [card("A", source="Himalayas")]})
     install(recorder, fixed_intent("q"))
     JobSearchAgent(StubDB(context=profile), StubEngine({"A": 0.5}), StubRAG()).run("laiba", "q")
     check("the profile's level reaches the fetch when the query is silent",
@@ -595,7 +598,7 @@ def test_profile_fills_in_what_the_query_omits():
         return {"work_type": "freelance", "experience": "senior", "category": "other",
                 "variants": ["q"], "source": "stub"}
 
-    recorder = FetchRecorder(by_variant={"q": [card("B", source="Jobicy")]})
+    recorder = FetchRecorder(by_variant={"q": [card("B", source="Himalayas")]})
     install(recorder, senior_intent)
     JobSearchAgent(StubDB(context=profile), StubEngine({"B": 0.5}), StubRAG()).run("laiba", "q")
     check("a level stated in the query overrides the profile",
@@ -604,7 +607,7 @@ def test_profile_fills_in_what_the_query_omits():
           recorder.work_types == ["freelance"])
 
     # A user with neither must not have a level invented for them.
-    recorder = FetchRecorder(by_variant={"q": [card("C", source="Jobicy")]})
+    recorder = FetchRecorder(by_variant={"q": [card("C", source="Himalayas")]})
     install(recorder, fixed_intent("q"))
     JobSearchAgent(StubDB(context={}), StubEngine({"C": 0.5}), StubRAG()).run("laiba", "q")
     check("no level is invented when neither query nor profile states one",
@@ -663,7 +666,8 @@ def test_cache_requires_a_searching_source():
     # This existed as a live-only check and therefore was not caught when it broke. The rule
     # used to be `"Adzuna" in empty_sources`; once Adzuna became skippable per country it was
     # never in empty_sources for those users, so the guard could not fire and their searches
-    # cached pools built from Remotive alone -- the source that ignores its search parameter.
+    # cached pools built from Remotive alone -- the source that ignored its search parameter.
+    # Remotive was removed on 2026-10-13; "Fixture" below stands in for any non-searching source.
     # Asserted offline now, because a rule only one script can see is a rule that rots.
     def cached_after(jobs, failed=None, empty=None):
         """Run one search with these canned sources and return what reached the cache."""
@@ -676,21 +680,21 @@ def test_cache_requires_a_searching_source():
 
     check("a pool with Adzuna in it is cached",
           len(cached_after([card("A", source="Adzuna")])) == 1)
-    check("a pool with Jobicy in it is cached",
-          len(cached_after([card("B", source="Jobicy")])) == 1)
-    # The regression. Remotive returns the same fixed list for every query, so a pool built
-    # from it alone is the "same 20 jobs for everything" state and must not be pinned for an
-    # hour. Before 2026-09-25 this was cached for any user whose country skipped Adzuna.
-    check("a pool built from Remotive alone is NOT cached",
-          len(cached_after([card("C", source="Remotive")])) == 0)
-    check("Remotive plus a searching source IS cached",
-          len(cached_after([card("D", source="Remotive"),
-                            card("E", source="Jobicy")])) == 1)
+    check("a pool with Himalayas in it is cached",
+          len(cached_after([card("B", source="Himalayas")])) == 1)
+    # The regression. A fixed-list source returns the same jobs for every query, so a pool
+    # built from it alone is the "same 20 jobs for everything" state and must not be pinned
+    # for an hour. Before 2026-09-25 this was cached for any user whose country skipped Adzuna.
+    check("a pool built from a non-searching source alone is NOT cached",
+          len(cached_after([card("C", source="Fixture")])) == 0)
+    check("a non-searching source plus a searching one IS cached",
+          len(cached_after([card("D", source="Fixture"),
+                            card("E", source="Himalayas")])) == 1)
     # A failed source still blocks the write, or an outage would outlive the API's recovery.
     check("a failed source still blocks the cache write",
-          len(cached_after([card("F", source="Jobicy")], failed=["Adzuna"])) == 0)
+          len(cached_after([card("F", source="Himalayas")], failed=["Adzuna"])) == 0)
     check("the searching-source list names the sources that really search",
-          agent_module.SEARCHING_SOURCES == frozenset({"Adzuna", "Jobicy"}))
+          agent_module.SEARCHING_SOURCES == frozenset({"Adzuna", "Himalayas"}))
 
 
 def test_adzuna_signal_terms():
@@ -930,11 +934,16 @@ def test_rag_prompt_states_eligibility():
          "candidate_location": "London, UK", "eligibility": "local", "description": "x"},
         {"title": "Mystery Dev", "company": "D", "location": "Remote",
          "candidate_location": "", "eligibility": "unknown", "description": "x"},
+        {"title": "PK Dev", "company": "E", "location": "Remote",
+         "candidate_location": "India, Pakistan", "eligibility": "country", "description": "x"},
     ]
     prompt = RAGPipeline(top_k=5).build_prompt("developer", jobs)
 
     check("the prompt carries a Hiring from line per job",
-          prompt.count("- Hiring from:") == 4)
+          prompt.count("- Hiring from:") == 5)
+    # Added 2026-10-13 with Himalayas' structured country lists.
+    check("a country-restricted job says the list includes the seeker's country",
+          "which include the seeker's: India, Pakistan" in prompt)
     check("an open job is described as unrestricted",
           "anywhere in the world, no geographic restriction" in prompt)
     check("a regional job names its restriction",
@@ -973,6 +982,37 @@ def test_rag_prompt_states_eligibility():
     all_local = [j("L1", "local"), j("L2", "local")]
     check("a result set with no applicable job still fills the panel",
           [p["title"] for p in JobSearchAgent.rag_candidates(all_local)] == ["L1", "L2"])
+
+    # Added 2026-10-13. "country" is applicable by construction, and "local" becomes applicable
+    # when the user has a country, because sources are now chosen per country and every local
+    # job is in the user's own one. The default stays False so the evaluation scripts keep
+    # reproducing the system that was evaluated.
+    mixed = [j("L1", "local"), j("C1", "country"), j("R1", "regional"), j("O1", "open")]
+    check("a job open to the user's country is applicable",
+          [p["title"] for p in JobSearchAgent.rag_candidates(mixed)][:2] == ["C1", "O1"])
+    check("local jobs count as applicable when the user has a country",
+          [p["title"] for p in JobSearchAgent.rag_candidates(mixed, local_applicable=True)]
+          == ["L1", "C1", "O1", "R1"])
+    check("the default is unchanged, so the evaluation reproduces the evaluated system",
+          [p["title"] for p in JobSearchAgent.rag_candidates(mixed)] == ["C1", "O1", "L1", "R1"])
+
+    # End to end: run() turns this on for a user with a country, and only then.
+    def handed(country):
+        """Titles the AI panel is handed for a search by a user in this country."""
+        local = JobCard(job_id="l1", title="UK Local", source="Adzuna", eligibility="local")
+        euro = JobCard(job_id="r1", title="Euro Only", source="Himalayas",
+                       eligibility="regional")
+        install(FetchRecorder(by_variant={"q": [local, euro]}), fixed_intent("q"))
+        rag = StubRAG()
+        context = {"country": country} if country else {}
+        JobSearchAgent(StubDB(context=context), StubEngine({"UK Local": 0.8, "Euro Only": 0.9}),
+                       rag).run("laiba", "q")
+        return [x["title"] for x in rag.received]
+
+    check("run() treats local jobs as applicable for a user with a country",
+          handed("gb") == ["UK Local", "Euro Only"])
+    check("but not for a legacy user with no country",
+          handed(None) == ["Euro Only", "UK Local"])
 
     # The job's own text decides, never the query's category. TC-011 depends on this: a tech
     # job rejected during a writing search must lower the TECH score.
@@ -1109,10 +1149,10 @@ def test_rag_fallback():
 def test_cache():
     """The job cache is read before fetching and written after a clean fetch."""
     print("\nJob cache")
-    # source="Jobicy" matters: since 2026-09-25 a pool no SEARCHING source contributed to is
+    # source="Himalayas" matters: since 2026-09-25 a pool no SEARCHING source contributed to is
     # not cached at all, and card()'s default source is Remotive, which ignores its search
     # parameter. See test_cache_requires_a_searching_source for the rule itself.
-    fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]})
+    fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]})
     install(fetch, fixed_intent("q"))
     db = StubDB()
 
@@ -1122,7 +1162,7 @@ def test_cache():
 
     # Feed what was just written back in as the cache contents.
     key, results = next(iter(db.cache_writes.items()))
-    warm_fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]})
+    warm_fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]})
     install(warm_fetch, fixed_intent("q"))
     warm = JobSearchAgent(StubDB(cached={key: {"results": results}}),
                           StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
@@ -1130,7 +1170,7 @@ def test_cache():
     check("a cache hit still returns the jobs", len(warm["jobs"]) == 1)
 
     # A failed fetch must not be cached, or the outage outlives the API's recovery.
-    failing = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]},
+    failing = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]},
                             failed_sources=["Adzuna"])
     install(failing, fixed_intent("q"))
     db3 = StubDB()
@@ -1162,19 +1202,44 @@ def test_job_card():
     check("a missing location object does not raise", bare.location == "Unknown")
     check("an empty raw result does not raise", JobCard.from_adzuna({}).title == "Unknown Title")
 
-    remotive = JobCard.from_remotive({
+    himalayas = JobCard.from_himalayas({
         "title": "Writer",
-        "company_name": "Beta",
-        "candidate_required_location": "",
-        "description": "x" * 900,
-        "url": "https://example.com/2",
-    })
-    check("Remotive blank location falls back to a readable string",
-          remotive.location.startswith("Remote"))
-    check("Remotive description is truncated to 500 chars", len(remotive.description) == 500)
+        "companyName": "Beta",
+        "locationRestrictions": [],
+        "excerpt": "x" * 900,
+        "applicationLink": "https://example.com/2",
+    }, "Pakistan")
+    check("Himalayas jobs are labelled remote", himalayas.location == "Remote")
+    check("Himalayas description is truncated to 500 chars", len(himalayas.description) == 500)
+    check("Himalayas url is the application link", himalayas.url == "https://example.com/2")
     check("to_dict gives the dict shape the templates read",
-          remotive.to_dict()["title"] == "Writer")
-    check("every card carries a job_id", bool(adzuna.job_id) and bool(remotive.job_id))
+          himalayas.to_dict()["title"] == "Writer")
+    check("every card carries a job_id", bool(adzuna.job_id) and bool(himalayas.job_id))
+    check("an empty Himalayas result does not raise",
+          JobCard.from_himalayas({}).title == "Unknown Title")
+
+    # Eligibility from a STRUCTURED list (added 2026-10-13). An empty list is Himalayas' own
+    # encoding of "no restriction"; a list naming the user's country is "country"; anything
+    # else is shown as regional rather than guessed at.
+    def elig(restrictions, country="Pakistan"):
+        """Eligibility of a Himalayas job with these restrictions, for a user in country."""
+        return JobCard.from_himalayas({"title": "T", "locationRestrictions": restrictions},
+                                      country).eligibility
+
+    check("an empty restriction list is open worldwide", elig([]) == "open")
+    check("a list naming the user's country is 'country'", elig(["India", "Pakistan"]) == "country")
+    check("matching ignores case and padding", elig([" pakistan "]) == "country")
+    check("a list without the user's country is regional", elig(["Germany"]) == "regional")
+    check("with no known country a restricted job is regional, never guessed",
+          elig(["Pakistan"], None) == "regional")
+    # The rule that stays: free text is never matched against a country. A region name is
+    # not a country name, so "APAC" does not become "country" for a Pakistan user.
+    check("a region name is not treated as the user's country", elig(["APAC"]) == "regional")
+    shown = JobCard.from_himalayas({"title": "T", "locationRestrictions": ["India", "Pakistan"]},
+                                   "Pakistan")
+    check("the raw list is kept for display", shown.candidate_location == "India, Pakistan")
+    check("an unrestricted job displays as Worldwide",
+          JobCard.from_himalayas({"title": "T"}, "Pakistan").candidate_location == "Worldwide")
 
 
 # --- intent parser still intact ------------------------------------------------------
@@ -1268,53 +1333,170 @@ def test_adzuna_work_type_params():
           fetch.experiences == ["entry level"])
 
 
-def test_remotive_filtering():
-    """Remotive's fixed feed is filtered locally, because it ignores its own search param."""
-    print("\nRemotive local filtering")
-    feed = [{"title": t} for t in
-            ["Senior Data Scientist", "Freelance Copywriter", "Engineering Lead",
-             "Cardiac Nurse", "Smart Home Installer"]]
-    titles = lambda q: [j["title"] for j in api_client._filter_remotive(q, feed)]
+def test_narrowed_retry_rule():
+    """One retry rule for every source: only ever narrow to words that name a field (2026-10-13)."""
+    print("\nRetry rule — narrow to a field word or do not retry")
+    attempts = api_client._narrowed_attempts
 
-    check("an unrelated query keeps nothing", titles("graphic designer") == [])
-    check("a matching job survives", titles("freelance copywriter") == ["Freelance Copywriter"])
-    check("an inflected title still matches", titles("engineer role") == ["Engineering Lead"])
-    # A bare prefix match was tried first and matched "car" against "Cardiac Nurse".
-    check("a word is not matched inside a longer one", titles("car sales") == [])
-    check("nor at the start of one", titles("art director") == [])
-    check("a query with no meaningful words leaves the feed alone", len(titles("a job")) == len(feed))
+    # The defect, reproduced 2026-10-13 as a Pakistan user: Jobicy retried on the LONGEST
+    # word, so these two queries searched for "people" and "degree" and both returned the
+    # same four interpreter jobs.
+    check("Q02 never retries on 'people'",
+          all("people" != a for a in attempts("a job where I help people all day")))
+    check("Q04 never retries on 'degree'",
+          all("degree" != a for a in attempts("I want to get into tech but I have no degree")))
+    # A query naming no field gets exactly one attempt: no guess, an honest empty result.
+    check("a query naming no field is tried once, with no retry",
+          attempts("work with numbers but not boring") == ["numbers but not boring"])
+    check("a query naming a field retries on that field word",
+          attempts("somewhere I can use my writing and actually get paid")[-1] == "writing")
+    check("a short query that is already narrow is not retried",
+          attempts("graphic designer") == ["graphic designer"])
+    check("work-type words are stripped before the first attempt",
+          attempts("remote customer service")[0] == "customer service")
+    # Added 2026-10-13. "no degree" is a condition, not a search word: as a keyword it emptied
+    # every AND match ("tech degree" -> 0) and meant the opposite of what was typed.
+    check("'degree' is never sent as a keyword",
+          all("degree" not in a for a in attempts("tech jobs no degree")
+              + attempts("I want to get into tech but I have no degree")))
+    check("at most two attempts, ever",
+          all(len(attempts(q)) <= 2 for q in
+              ["a job where I help people all day", "paralegal position no prior experience",
+               "something creative I can do from my bedroom", ""]))
+    # The same rule for both sources, so there is one thing to defend.
+    check("Adzuna and Himalayas share the rule",
+          "_narrowed_attempts" in api_client._fetch_adzuna_raw.__code__.co_names
+          and "_narrowed_attempts" in api_client._fetch_himalayas_raw.__code__.co_names)
 
 
-def test_remotive_level_filtering():
-    """A stated level stops Remotive injecting jobs at the wrong seniority."""
-    print("\nRemotive level filtering")
-    # The reported 2026-09-20 bug in miniature: "Senior Golang Developer" passes the topic
-    # test because an expanded variant contained "developer", so the title token filter alone
-    # keeps it and a beginner search shows senior roles.
+class _FakeResponse:
+    """Minimal stand-in for requests.Response: a status code and a JSON body."""
+
+    def __init__(self, status, body=None):
+        self.status_code = status
+        self._body = body if body is not None else {}
+
+    def json(self):
+        """Return the canned body."""
+        return self._body
+
+
+def test_himalayas_fetch():
+    """Himalayas: failures, empty results, the country fallback and the retry, all offline."""
+    print("\nHimalayas fetch")
+    real_get = api_client.requests.get
+    calls = []
+
+    def serve(responses):
+        """Patch requests.get to return these responses in order and record the params."""
+        queue = list(responses)
+
+        def fake_get(url, params=None, timeout=None):
+            calls.append(dict(params or {}))
+            item = queue.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
+        api_client.requests.get = fake_get
+
+    job = {"title": "Customer Service Representative", "companyName": "A",
+           "locationRestrictions": ["Pakistan"]}
+    try:
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [job]})])
+        raw, ok = api_client._fetch_himalayas_raw("customer service", "pk")
+        check("a hit returns the jobs and ok", ok and len(raw) == 1)
+        check("the country is sent as an upper-case ISO code", calls[0].get("country") == "PK")
+        check("the variant is sent as keywords", calls[0].get("q") == "customer service")
+
+        # TC-018: a rate limit is a FAILED source, so the outage banner can show.
+        calls.clear()
+        serve([_FakeResponse(429), _FakeResponse(429)])
+        raw, ok = api_client._fetch_himalayas_raw("a job where I help people all day", "pk")
+        check("a 429 is reported as a failure, not as an empty result", not ok and raw == [])
+
+        # A 200 with nothing in it is an empty result, not an outage.
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": []})])
+        raw, ok = api_client._fetch_himalayas_raw("numbers but not boring", "pk")
+        check("an empty 200 is ok-but-empty", ok and raw == [])
+        check("and a query naming no field is NOT retried", len(calls) == 1)
+
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": []}), _FakeResponse(200, {"jobs": [job]})])
+        raw, ok = api_client._fetch_himalayas_raw(
+            "somewhere I can use my writing and actually get paid", "pk")
+        check("an empty first attempt retries on the field word",
+              len(calls) == 2 and calls[1]["q"] == "writing" and len(raw) == 1)
+
+        # A country Himalayas does not recognise falls back to worldwide jobs, which the user
+        # can still apply for, instead of failing the source.
+        calls.clear()
+        serve([_FakeResponse(400, {"ok": False, "errors": "Invalid country"}),
+               _FakeResponse(200, {"jobs": [job]})])
+        raw, ok = api_client._fetch_himalayas_raw("writing", "xx")
+        check("an unrecognised country falls back to worldwide-only",
+              ok and calls[1].get("worldwide") == "true" and "country" not in calls[1])
+
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [job]})])
+        api_client._fetch_himalayas_raw("writing", None)
+        check("a user with no country gets worldwide-only jobs",
+              calls[0].get("worldwide") == "true" and "country" not in calls[0])
+
+        calls.clear()
+        serve([ConnectionError("down"), ConnectionError("down")])
+        raw, ok = api_client._fetch_himalayas_raw("writing gigs", "pk")
+        check("a network error is a failure and never raises", not ok and raw == [])
+
+        # fetch_variant for a Pakistan user: Adzuna skipped (neither failed nor empty),
+        # Himalayas queried, and the country name reaches the eligibility rule.
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [job]})])
+        result = api_client.fetch_variant("customer service", "id", "key", country="pk")
+        check("a Pakistan search makes no Adzuna call", len(calls) == 1 and "q" in calls[0])
+        check("the skipped Adzuna is neither failed nor empty",
+              "Adzuna" not in result["failed_sources"] + result["empty_sources"])
+        check("a job naming Pakistan is badged for the user's country",
+              result["jobs"][0].eligibility == "country")
+
+        calls.clear()
+        serve([_FakeResponse(429), _FakeResponse(429)])
+        result = api_client.fetch_variant("customer service", "id", "key", country="pk")
+        check("a rate-limited Himalayas is a failed source", result["failed_sources"] == ["Himalayas"])
+
+        # The level filter applies to Himalayas the same as Adzuna.
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [
+            {"title": "Senior Customer Service Lead", "companyName": "A"},
+            {"title": "Customer Service Representative", "companyName": "B"}]})])
+        result = api_client.fetch_variant("customer service", "id", "key",
+                                          experience="entry level", country="pk")
+        check("an entry-level search drops senior Himalayas titles",
+              [j.title for j in result["jobs"]] == ["Customer Service Representative"])
+    finally:
+        api_client.requests.get = real_get
+
+
+def test_level_filter_every_source():
+    """The level filter is one function applied to every source (2026-10-13)."""
+    print("\nLevel filter — every source")
     feed = [{"title": t} for t in
             ["Senior Golang Developer", "Junior Developer", "Software Developer",
              "Graduate Engineer", "Tech Lead Rails Engineer"]]
-    kept = lambda exp: [j["title"] for j in
-                        api_client._filter_remotive("software developer engineer", feed, exp)]
+    kept = lambda exp: [j["title"] for j in api_client._filter_level(feed, "title", exp)]
 
     entry = kept("entry level")
     check("an entry-level query drops senior titles",
           "Senior Golang Developer" not in entry and "Tech Lead Rails Engineer" not in entry)
     check("it keeps the junior and unmarked ones",
           entry == ["Junior Developer", "Software Developer", "Graduate Engineer"])
-
-    # Both directions, or this is a junior bias rather than a level filter.
     senior = kept("senior")
     check("a senior query drops junior titles",
           "Junior Developer" not in senior and "Graduate Engineer" not in senior)
-    check("a senior query keeps the senior ones", "Senior Golang Developer" in senior)
-
     check("with no level stated nothing is dropped for level", len(kept(None)) == len(feed))
-
-    # Adzuna is never level-filtered: it ran the real search, so its answers are earned.
-    check("the level filter is Remotive-only, by construction",
-          "_filter_remotive" in api_client.fetch_variant.__code__.co_names
-          and "_wrong_level" not in api_client._fetch_adzuna_raw.__code__.co_names)
+    check("fetch_variant uses the shared filter",
+          "_filter_level" in api_client.fetch_variant.__code__.co_names)
 
 
 def test_empty_source_is_not_failure():
@@ -1338,34 +1520,25 @@ def test_degraded_pool_is_not_cached():
     # Restated 2026-09-25. These used to say "Adzuna empty means do not cache", from when
     # Adzuna was the only source that really searched. The rule is now about whether ANY
     # searching source contributed, so the fixtures say which jobs came back rather than
-    # only which source was empty — and one of them was incoherent before, claiming Remotive
-    # was empty while handing the pool a Remotive job.
+    # only which source was empty.
     db = StubDB()
-    empty = FetchRecorder(by_variant={"q": [card("Writer", source="Remotive")]},
+    empty = FetchRecorder(by_variant={"q": [card("Writer", source="Fixture")]},
                           empty_sources=["Adzuna"])
     install(empty, fixed_intent("q"))
     JobSearchAgent(db, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
     check("an Adzuna-empty pool with nothing else searching is NOT cached",
           db.cache_writes == {})
 
-    # But an empty Adzuna is survivable now: Jobicy also runs a real keyword search, so a
+    # But an empty Adzuna is survivable: Himalayas also runs a real keyword search, so a
     # pool it contributed to is worth keeping even when Adzuna found nothing.
     db_j = StubDB()
-    jobicy_only = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]},
+    himalayas_only = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]},
                                 empty_sources=["Adzuna"])
-    install(jobicy_only, fixed_intent("q"))
+    install(himalayas_only, fixed_intent("q"))
     JobSearchAgent(db_j, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
-    check("an Adzuna-empty pool IS cached when Jobicy contributed",
+    check("an Adzuna-empty pool IS cached when Himalayas contributed",
           len(db_j.cache_writes) == 1)
 
-    # Remotive filtering to nothing is the filter working, not a degraded fetch. Refusing to
-    # cache these too would spend Adzuna quota on every repeat of a Remotive-less search.
-    db2 = StubDB()
-    rem = FetchRecorder(by_variant={"q": [card("Writer", source="Jobicy")]},
-                        empty_sources=["Remotive"])
-    install(rem, fixed_intent("q"))
-    JobSearchAgent(db2, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
-    check("a Remotive-empty pool IS still cached", len(db2.cache_writes) == 1)
 
 
 def test_experience_override():
@@ -1590,8 +1763,9 @@ def main():
         test_enrich_query_does_not_swamp_the_query()
         test_adzuna_keywords()
         test_adzuna_work_type_params()
-        test_remotive_filtering()
-        test_remotive_level_filtering()
+        test_narrowed_retry_rule()
+        test_himalayas_fetch()
+        test_level_filter_every_source()
         test_empty_source_is_not_failure()
         test_degraded_pool_is_not_cached()
         test_experience_override()

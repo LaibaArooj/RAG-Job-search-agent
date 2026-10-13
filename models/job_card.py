@@ -1,4 +1,4 @@
-"""JobCard — normalises Adzuna and Remotive responses into one field shape.
+"""JobCard — normalises Adzuna and Himalayas responses into one field shape.
 
 Covers TC-022.
 
@@ -23,32 +23,28 @@ from dataclasses import asdict, dataclass
 # single search produces, a collision is not a realistic failure mode.
 JOB_ID_LENGTH = 16
 
-# Remotive descriptions are full HTML job adverts and can run to tens of kilobytes. They are
+# Remote-board descriptions are full HTML job adverts and can run to tens of kilobytes. They are
 # truncated before embedding because all-MiniLM-L6-v2 only reads the first 256 word-pieces
 # anyway, so the rest is stored and sent to Groq for nothing.
 DESCRIPTION_LIMIT = 500
 
-# The wordings a remote board uses to mean "we will hire you wherever you live". Both
-# Remotive and Jobicy state it in free text rather than a flag, so this is the one place
-# that text is interpreted.
-UNRESTRICTED_TERMS = ("worldwide", "anywhere", "global", "remote - worldwide")
-
-
-def remote_eligibility(candidate_location):
-    """Bucket a remote board's candidate-location text as open, regional or unknown."""
-    # Deliberately only three outcomes, and deliberately NOT a country matcher. Deciding
-    # whether "APAC" or "EMEA" includes a particular user is a judgement this function is in
-    # no position to make, and making it wrong means telling someone they can apply for a job
-    # that will reject them -- the exact failure this field exists to prevent. Anything not
-    # positively unrestricted is "regional", and the raw text is shown so the user can judge.
-    text = (candidate_location or "").strip().lower()
-    if not text:
-        # Remotive uses an empty string for "no restriction" (see from_remotive). Jobicy
-        # never returns empty under geo=anywhere. An empty value is therefore either
-        # unrestricted or unstated, and the two cannot be told apart here.
-        return "unknown"
-    if any(term in text for term in UNRESTRICTED_TERMS):
+def restriction_eligibility(restrictions, country_name):
+    """Bucket a STRUCTURED list of allowed countries as open, country or regional."""
+    # Added 2026-10-13 with Himalayas, which states eligibility as a list of country names
+    # (`locationRestrictions`) rather than free text. That difference is the whole reason an
+    # exact country match is allowed here when it never was for Remotive's or Jobicy's prose:
+    #
+    #   - free text ("APAC", "EMEA or APAC time zones") would need a JUDGEMENT about whether
+    #     a region includes the user, and a wrong judgement wastes an application;
+    #   - a list either contains "Pakistan" or it does not. No judgement, nothing guessed.
+    #
+    # An empty list is Himalayas' own encoding of "no restriction" (measured 2026-10-13:
+    # country=Pakistan with worldwide=true returns only empty lists).
+    names = [str(n).strip().lower() for n in (restrictions or []) if str(n).strip()]
+    if not names:
         return "open"
+    if country_name and country_name.strip().lower() in names:
+        return "country"
     return "regional"
 
 
@@ -69,15 +65,18 @@ class JobCard:
 
     # Added 2026-09-23. `location` and `candidate_location` answer two DIFFERENT questions
     # and conflating them is what made this invisible: Adzuna's "London" is where the job
-    # IS, Remotive's "Worldwide" is where the candidate MAY LIVE. Both were being written
+    # IS, a remote board's "Worldwide" is where the candidate MAY LIVE. Both were being written
     # into `location` and rendered in the same slot, so a user in Pakistan could not tell a
     # job that would hire them from one that would reject them on sight.
     #
     # candidate_location is the raw text the source gave us, kept verbatim for display.
     # eligibility is the coarse bucket the template badges, one of:
     #   "open"     - no geographic restriction stated (Worldwide / Anywhere)
+    #   "country"  - restricted to a list of countries that names the USER'S country
+    #                (added 2026-10-13; only ever set from a structured list, never prose)
     #   "regional" - restricted to named regions or countries; read candidate_location
-    #   "local"    - an on-site or single-market role (every Adzuna listing)
+    #   "local"    - an on-site role in the market that was queried (Adzuna, Careerjet).
+    #                Sources are chosen per country, so that market is the user's own
     #   "unknown"  - the source said nothing usable; DO NOT guess, say so
     # "unknown" exists on purpose. Guessing whether "APAC" includes Pakistan would produce
     # a confident wrong answer, which is worse than an honest one -- the same lesson as the
@@ -111,51 +110,31 @@ class JobCard:
         )
 
     @classmethod
-    def from_remotive(cls, raw):
-        """Normalise one Remotive result, whose company and location are already flat strings."""
+    def from_himalayas(cls, raw, country_name=None):
+        """Normalise one Himalayas result, reading eligibility from its structured country list."""
+        # Added 2026-10-13, replacing Remotive and Jobicy. Himalayas is queried with the
+        # user's country (adapters/api_client.py), so every result is EITHER unrestricted OR
+        # names that country; "regional" is kept for the day their filter disagrees with
+        # their data, and is then shown honestly rather than hidden.
         raw = raw or {}
         title = raw.get("title") or "Unknown Title"
-        company = raw.get("company_name") or "Unknown"
-        return cls(
-            job_id=cls.make_job_id(title, company),
-            title=title,
-            company=company,
-            # Remotive's own wording for "no location restriction" is an empty string, which
-            # would render as a bare em dash next to the company name.
-            location=raw.get("candidate_required_location") or "Remote — Worldwide",
-            description=(raw.get("description") or "")[:DESCRIPTION_LIMIT],
-            url=raw.get("url") or "#",
-            salary=raw.get("salary"),
-            source="Remotive",
-            candidate_location=raw.get("candidate_required_location") or "",
-            eligibility=remote_eligibility(raw.get("candidate_required_location")),
-        )
-
-    @classmethod
-    def from_jobicy(cls, raw):
-        """Normalise one Jobicy result; its field names are camelCase and all its own."""
-        # Added 2026-09-23. Jobicy is the only free source that BOTH searches properly and
-        # filters by candidate eligibility server-side (geo=anywhere), which is why it was
-        # added -- see adapters/api_client.py for the measurements that justified it.
-        raw = raw or {}
-        title = raw.get("jobTitle") or "Unknown Title"
         company = raw.get("companyName") or "Unknown"
+        restrictions = raw.get("locationRestrictions") or []
         return cls(
             job_id=cls.make_job_id(title, company),
             title=title,
             company=company,
             location="Remote",
-            # jobExcerpt is the short summary; jobDescription is full HTML and can be large.
-            # Preferring the excerpt keeps the embedded text closer to MiniLM's 256-token
-            # window than a truncated HTML advert would be.
-            description=(raw.get("jobExcerpt") or raw.get("jobDescription") or "")[
+            # The excerpt is a short plain-text summary; `description` is full HTML. Same
+            # reasoning as before: closer to MiniLM's 256-token window than truncated HTML.
+            description=(raw.get("excerpt") or raw.get("description") or "")[
                 :DESCRIPTION_LIMIT
             ],
-            url=raw.get("url") or "#",
-            salary=raw.get("salaryMin"),
-            source="Jobicy",
-            candidate_location=raw.get("jobGeo") or "",
-            eligibility=remote_eligibility(raw.get("jobGeo")),
+            url=raw.get("applicationLink") or "#",
+            salary=raw.get("minSalary"),
+            source="Himalayas",
+            candidate_location=", ".join(restrictions) if restrictions else "Worldwide",
+            eligibility=restriction_eligibility(restrictions, country_name),
         )
 
     @staticmethod

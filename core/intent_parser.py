@@ -119,14 +119,37 @@ def _build_prompt(query):
     # The allowed values are listed in the prompt AND checked again on the way out. The prompt
     # steers the model; the check is what actually guarantees the closed set, because a prompt
     # is a request and a membership test is not.
+    #
+    # Variants are JOB TITLES, changed 2026-10-13. They used to be "short alternative keyword
+    # phrasings", and the model obliged literally: "I want to get into tech but I have no
+    # degree" became "tech jobs no degree". Every source is an AND keyword match, no advert
+    # contains "degree", and the search found 3 jobs. Asking for the titles an employer would
+    # actually advertise moves the interpretation -- "tech" means IT support, junior developer
+    # -- into the one component able to make it, and the conditions ("no degree", "remote")
+    # into the closed-set keys, where they become filters instead of search words.
+    #
+    # Honest about how this was chosen: the wording was changed AFTER seeing Q01-Q05 of the
+    # pre-registered evaluation fail live as a Pakistan user. The frozen evaluation is
+    # untouched (its fixtures already hold their variants), and the fresh N01-N15 run is
+    # the fair test of this prompt. The examples below deliberately come from none of the
+    # evaluation queries, so the prompt cannot be teaching to the test.
     return (
         f'A job seeker typed this search: "{query}"\n\n'
         f"Extract their intent as JSON with exactly these four keys:\n"
         f'  "work_type": the single closest match from {list(WORK_TYPES)}, or null\n'
         f'  "experience": the single closest match from {list(EXPERIENCE_LEVELS)}, or null\n'
         f'  "category": the single closest match from {list(CATEGORIES)}\n'
-        f'  "variants": 2 or 3 short alternative keyword phrasings of this search,\n'
-        f"      the kind of terms a job board would index, as a list of strings\n\n"
+        f'  "variants": 2 or 3 concrete JOB TITLES this person should search for, as a list\n'
+        f"      of strings. Each one 1-3 words, the way an employer titles an advert\n"
+        f'      (for example "warehouse operative" or "dental nurse"). Translate a vague wish\n'
+        f"      into real titles. Put conditions such as level, remote, \"no degree\" or \"no\n"
+        f"      experience\" in the other keys, never in a variant.\n\n"
+        f'Someone with no degree or no experience is "entry level".\n'
+        # Caught by verify_live.py the same day: told to "translate a vague wish", the model
+        # turned "qwertyuiop zxcvbnm asdfgh" into "Customer support" and "Data entry clerk",
+        # so gibberish returned jobs and TC-018's "No jobs matched" became unreachable.
+        f"If the search does not describe any kind of work (random letters, a greeting), "
+        f'reply with "variants": [] -- do not guess a job.\n'
         f"Pick the single closest member of each list even when the search does not use "
         f"that exact word. Never invent a value outside a list; use null instead. "
         f'For "category" there is no null -- if nothing fits, use "other".\n'
@@ -238,7 +261,9 @@ def _parse_intent_keywords(query):
 
     experience_hints = {
         "entry level": (
-            "no experience", "entry", "junior", "graduate", "starting out",
+            # "no degree" added 2026-10-13: the same reading the LLM prompt now states, so
+            # the two paths agree about what it means.
+            "no experience", "no degree", "entry", "junior", "graduate", "starting out",
             "beginner", "trainee", "intern",
         ),
         "senior": ("senior", "lead", "principal", "head of", "experienced", "expert"),

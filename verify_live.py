@@ -1,4 +1,4 @@
-"""Prove the search pipeline against the REAL Adzuna, Remotive, Groq and Atlas.
+"""Prove the search pipeline against the REAL Adzuna, Himalayas, Groq and Atlas.
 
 Run with the dev server stopped:  python verify_live.py
 
@@ -13,6 +13,9 @@ defects found on 2026-09-20 were invisible to it:
     search — and Adzuna reports that as HTTP 200 with no results, not as a failure.
 
 verify_agent.py passed 57/57 throughout both. That is the gap this script exists to close.
+
+(Remotive and Jobicy were removed on 2026-10-13 -- both had shrunk to a handful of jobs, and
+Remotive's terms forbid our call rate. Himalayas replaced them; its live contract is section 1b.)
 
 Uses Flask's test client rather than a browser, exactly as verify_auth.py does, so it needs
 no running server and no new dependency — but it renders the real templates and makes the
@@ -130,27 +133,6 @@ def main():
               api_client._adzuna_keywords("junior software engineer")
               == "junior software engineer")
 
-        rem_a, ok_a = api_client._fetch_remotive_raw("nurse", 15)
-        rem_b, ok_b = api_client._fetch_remotive_raw("software engineer", 15)
-        check("Remotive reachable", ok_a and ok_b)
-        same_feed = [j.get("title") for j in rem_a] == [j.get("title") for j in rem_b]
-        check("Remotive still ignores `search` (why we filter it locally)", same_feed)
-        if not same_feed:
-            note("Remotive appears to honour `search` again — re-check whether the local "
-                 "filter in api_client is still the right call, and update the docs.")
-
-        kept_nurse = api_client._filter_remotive("nurse", rem_a)
-        kept_dev = api_client._filter_remotive("software developer engineer", rem_b)
-        check("the local filter drops an unrelated feed entirely", len(kept_nurse) == 0)
-        note(f"Remotive feed {len(rem_b)} jobs, {senior_count([j.get('title','') for j in rem_b])} "
-             f"senior-titled; a developer query keeps {len(kept_dev)}")
-
-        entry_kept = api_client._filter_remotive(
-            "software developer engineer", rem_b, "entry level"
-        )
-        check("an entry-level query keeps no senior-titled Remotive job",
-              senior_count([j.get("title", "") for j in entry_kept]) == 0)
-
         # Added 2026-09-26. Adzuna's `what=` is an AND match, so before the keyword narrowing
         # a natural-language query matched no advert at all -- 16 of the 20 evaluation queries
         # returned zero, reported as HTTP 200 with no results. This is the live proof that the
@@ -162,35 +144,43 @@ def main():
         check("a natural-language query now returns Adzuna results",
               natural_ok and len(natural) > 0)
 
-        print("\n1b. Jobicy — the contract the eligibility work depends on")
-        # Added 2026-09-25. Jobicy shipped on 2026-09-23 and nothing in the live suite
-        # exercised it, so the source that supplies most of a non-UK user's results could
-        # have gone down without any script noticing. Adzuna and Remotive each got a section
-        # here only after they broke; this one is written before that happens.
-        jobicy_raw, jobicy_ok = api_client._fetch_jobicy_raw("developer", 25)
-        check("Jobicy reachable and returning results for a plain query",
-              jobicy_ok and len(jobicy_raw) > 0)
+        print("\n1b. Himalayas — the contract a non-UK seeker's results depend on")
+        # Added 2026-10-13, written BEFORE it breaks, which is the lesson of Remotive and
+        # Jobicy: both changed underneath this project (one stopped searching, one shrank from
+        # 100 eligible jobs to 11) and each was only noticed by using the app.
+        pk_raw, pk_ok = api_client._fetch_himalayas_raw("customer service", "pk")
+        check("Himalayas reachable and returning results for a plain query",
+              pk_ok and len(pk_raw) > 0)
+        note(f"Himalayas returned {len(pk_raw)} jobs for 'customer service' as pk")
 
-        if jobicy_raw:
-            geos = {(j.get("jobGeo") or "").strip().lower() for j in jobicy_raw}
-            # The whole point of the source: geo=anywhere filters eligibility SERVER-side, so
-            # we never pay to rank jobs the user cannot apply for. If Jobicy ever starts
-            # ignoring it -- as Remotive did with `search` -- this is what catches it.
-            check("geo=anywhere returns only unrestricted jobs",
-                  all("anywhere" in g or "worldwide" in g for g in geos))
-            cards = [JobCard.from_jobicy(j) for j in jobicy_raw]
-            check("every Jobicy job normalises to an eligibility bucket",
-                  all(c.eligibility in ("open", "regional", "local", "unknown") for c in cards))
-            check("Jobicy jobs come back marked open",
-                  all(c.eligibility == "open" for c in cards))
-            check("a Jobicy job carries a usable apply link",
+        if pk_raw:
+            lists = [j.get("locationRestrictions") or [] for j in pk_raw]
+            # The guarantee the eligibility badges rest on: with country=PK, every job is
+            # either unrestricted or names Pakistan. If Himalayas ever starts ignoring the
+            # filter -- as Remotive did with `search` -- this is what catches it.
+            check("country=PK returns only unrestricted jobs or ones naming Pakistan",
+                  all(not lst or "Pakistan" in lst for lst in lists))
+            cards = [JobCard.from_himalayas(j, "Pakistan") for j in pk_raw]
+            check("every Himalayas job badges as open or open-to-your-country",
+                  all(c.eligibility in ("open", "country") for c in cards))
+            check("a Himalayas job carries a usable apply link",
                   all(c.url.startswith("http") for c in cards))
 
-        # Jobicy's tag is an AND match that collapses on long queries, which is why
-        # _fetch_jobicy_raw retries on the longest token. Proven against the real API here
-        # rather than assumed, because the retry is invisible when it works.
-        long_raw, _ = api_client._fetch_jobicy_raw("entry level marketing no degree", 25)
-        check("a long query still returns results via the token retry", len(long_raw) > 0)
+        # Himalayas' `q` is an AND match like Adzuna's: a sentence returns nothing. Measured
+        # through _himalayas_request, which sends the string unmodified -- this script may not
+        # import requests (SDD layering), so the raw call has to come from the adapter.
+        raw_sentence = api_client._himalayas_request(
+            "entry level remote data analyst job in pakistan", "pk", 20)
+        sentence_jobs = (raw_sentence.json().get("jobs") or []) if raw_sentence is not None \
+            and raw_sentence.status_code == 200 else None
+        check("a whole sentence still returns nothing from Himalayas (why we narrow)",
+              sentence_jobs == [])
+        if sentence_jobs:
+            note("Himalayas now answers sentences — re-check whether narrowing is still needed.")
+        narrowed, _ = api_client._fetch_himalayas_raw(
+            "somewhere I can use my writing and actually get paid", "pk")
+        check("the same kind of sentence returns jobs through the field-word retry",
+              len(narrowed) > 0)
 
         print("\n1b2. The Groq model chain is still on the account")
         # Added 2026-09-26. Groq has retired this project's LLM twice in two weeks, and both
@@ -268,7 +258,7 @@ def main():
             t = titles_in(real)
             check("results rendered", len(t) > 0)
             check("match badges rendered", "% match" in real)
-            check("a source badge is shown", "Adzuna" in real or "Remotive" in real)
+            check("a source badge is shown", "Adzuna" in real or "Himalayas" in real)
             # The descendant of a real bug: Adzuna nests company and location, and passing
             # them through raw once rendered Python dicts into the page.
             check("no raw Python dict or nested API field leaked into the page",
@@ -302,7 +292,8 @@ def main():
 
             print("\n7. TC-018 — 'no results' is reachable again")
             # It was dead code in production for as long as Remotive returned its fixed list
-            # for every query, because the candidate pool was never empty.
+            # for every query, because the candidate pool was never empty. (Remotive was
+            # removed on 2026-10-13; this stays to prove gibberish still finds nothing.)
             junk = search(c, "qwertyuiop zxcvbnm asdfgh")
             check("TC-018  'No jobs matched that search.' is shown",
                   "No jobs matched that search." in junk)
@@ -316,12 +307,12 @@ def main():
         # The degraded state that made the 2026-09-20 bug persist for an hour at a time.
         #
         # Restated 2026-09-25. This used to read "no entry built from Remotive alone", which
-        # assumed Adzuna was the only source that genuinely searches. Jobicy now does too,
-        # and Adzuna is skipped entirely for a user whose country it cannot serve -- so the
-        # real invariant is that a cached pool contains at least one SEARCHING source,
-        # whichever it happens to be. Stating it that way is also what caught the bug: the
-        # old check passed for the wrong reason until a pk-profile run put a Remotive-only
-        # entry in the cache.
+        # assumed Adzuna was the only source that genuinely searches. Himalayas now does too
+        # (Jobicy did before it), and Adzuna is skipped entirely for a user whose country it
+        # cannot serve -- so the real invariant is that a cached pool contains at least one
+        # SEARCHING source, whichever it happens to be. Stating it that way is also what caught
+        # the bug: the old check passed for the wrong reason until a pk-profile run put a
+        # Remotive-only entry in the cache.
         unsearched = [
             d for d in cached
             if d.get("results")

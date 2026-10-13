@@ -1,25 +1,28 @@
-"""Adzuna and Remotive HTTP access. The only module in the project that imports requests.
+"""Adzuna and Himalayas HTTP access. The only module in the project that imports requests.
 
 One fetch path, used by JobSearchAgent: fetch_variant() fetches a single query variant from
-both sources and returns {"jobs": [JobCard], "failed_sources": [str], "empty_sources": [str]}.
+every source that can serve the user's country and returns
+{"jobs": [JobCard], "failed_sources": [str], "empty_sources": [str]}.
 
-Each source needs its own compensation, and both are this module's business under the SDD
-layering rule -- nothing above here should have to know how either API misbehaves.
+Each source needs its own compensation, and all of it is this module's business under the SDD
+layering rule -- nothing above here should have to know how any API misbehaves.
 
-**Adzuna** does a real keyword search, but `what=` is an AND match over the job text, so one
-work-type word empties it. Measured 2026-09-20: "junior software engineer" returns 77 results,
-"remote junior software engineer" returns 0. Worse, Adzuna reports that as HTTP 200 with no
-results -- a legitimate empty search, not a failure -- so nothing upstream could tell that the
-query itself was the problem. _adzuna_keywords strips those words out and the work type is
-passed as Adzuna's own parameter instead.
+**Adzuna** and **Himalayas** both do a real keyword search, and both treat it as an AND match,
+so one extra word empties it. Measured 2026-09-20 on Adzuna: "junior software engineer"
+returns 77 results, "remote junior software engineer" returns 0. Measured 2026-10-13 on
+Himalayas: "data analyst" 174, "entry level remote data analyst job in Pakistan" 0. Both report
+that as HTTP 200 with no results -- a legitimate empty search, not a failure -- so nothing
+upstream could tell that the query itself was the problem. Work-type words are stripped, and ONE
+narrowed retry is allowed, under the same rule for every source (_narrowed_attempts).
 
-**Remotive** ignores its `search` parameter completely and returns the same fixed list for
-every request, verified with no parameters at all. It is therefore fetched once and filtered
-HERE, against the job title. Say this plainly in the report and in the viva: Remotive is
-fetched then filtered locally. It is not an API keyword search any more.
+**Remotive and Jobicy were removed on 2026-10-13.** Remotive ignored its `search` parameter
+(16 identical jobs for every query) and its own API notice asks for at most 4 calls a day, which
+one call per variant per search already broke. Jobicy's worldwide-eligible pool had shrunk from
+100 jobs (2026-09-23) to 11. Neither could serve a seeker in Pakistan; Himalayas returned 3,947
+jobs open to that seeker on the same day. See docs/CHANGELOG.md 2026-10-13.
 
 Three signals go back, not two. A source that FAILED and a source that succeeded but returned
-NOTHING are different events, and collapsing them is what hid this bug: the user saw a full
+NOTHING are different events, and collapsing them is what once hid a bug: the user saw a full
 page of irrelevant jobs with no warning, because Adzuna had politely returned zero.
 """
 
@@ -34,25 +37,18 @@ import config
 from models.job_card import JobCard
 
 ADZUNA_PER_VARIANT = 10
-REMOTIVE_PER_VARIANT = 15
 
-# Jobicy, added 2026-09-23. Asked for more than Remotive's hard cap of 18 because Jobicy
-# actually honours `count`, and because geo=anywhere narrows the result set before we see it.
-JOBICY_PER_VARIANT = 50
-
-# Jobicy's own value for "no geographic restriction". Sent as a request parameter, so the
-# filtering happens on their side and we never pay to rank jobs the user cannot apply for.
-# Measured 2026-09-23: geo=anywhere returned 100 jobs, every one of them jobGeo="Anywhere".
-# Their geo vocabulary is their own -- geo=asia returns 0 -- so do not pass a country here
-# without checking it first.
-JOBICY_GEO_ANYWHERE = "anywhere"
+# Himalayas, added 2026-10-13. The search endpoint returns at most 20 per page whatever is
+# asked for (measured: limit=50 still returned 20), so 20 is the honest number to request.
+HIMALAYAS_URL = "https://himalayas.app/jobs/api/search"
+HIMALAYAS_PER_VARIANT = 20
 
 # Adzuna's own work-type parameters, verified live on 2026-09-20 against a control: a made-up
 # parameter returns HTTP 400, so these three are genuinely honoured rather than ignored.
 #
 # "remote" is deliberately absent. Adzuna has no remote filter -- `where=remote` returns 0 --
 # so remote intent is served by removing the word from the keywords (which is what was
-# breaking the search) and by Remotive, which is an all-remote board.
+# breaking the search) and by Himalayas, which is an all-remote board.
 ADZUNA_WORK_TYPE_PARAMS = {
     "full-time": {"full_time": 1},
     "part-time": {"part_time": 1},
@@ -75,18 +71,12 @@ _CATEGORY_WORDS = tuple(
 # Two characters is too short to be evidence of anything; "ai" would match "said".
 MIN_TOKEN_LENGTH = 3
 
-# A query word may match a job title word plus one of these endings, and nothing else. A bare
-# prefix match was tried first and was too loose -- it matched "car" against "Cardiac Nurse".
-# Anchoring the end to a known inflection keeps "engineer" -> "Engineering" and "develop" ->
-# "Developer" while refusing the accidental ones.
-_INFLECTIONS = r"(?:s|es|ed|er|ers|ing|ings|ment|ments)?"
-
 # Title words that give a job's seniority away, used by _wrong_level below.
 #
-# Why this is needed on top of the title-token filter: a Remotive job titled "Senior Golang
-# Developer" matches the token "developer" from an expanded variant, so it passes the topic
-# test while being exactly the wrong level. That is the shape of the 2026-09-20 report --
-# a beginner query returning senior roles.
+# Why this is needed: a job titled "Senior Golang Developer" matches the word "developer" from
+# an expanded or narrowed variant, so it passes the keyword search while being exactly the
+# wrong level. That is the shape of the 2026-09-20 report -- a beginner query returning
+# senior roles (then from Remotive, which has since been removed).
 _SENIOR_MARKERS = (
     "senior", "snr", "sr", "lead", "principal", "head of", "director", "chief",
     "architect", "manager", "vp", "experienced",
@@ -149,7 +139,7 @@ def _adzuna_keywords(query):
 
 
 def _signal_terms(query):
-    """Return the query's job-domain words, for a narrower retry when Adzuna finds nothing."""
+    """Return the query's job-domain words, for a narrower retry when a search finds nothing."""
     # Adzuna's `what=` is an AND match: every word must appear in the advert. Measured
     # 2026-09-26 over the twenty pre-registered evaluation queries, only 3 returned the five
     # results precision@5 needs and 16 returned NOTHING AT ALL -- including
@@ -175,7 +165,7 @@ def _signal_terms(query):
 
 
 def _query_tokens(query):
-    """Return the meaningful words of a query, used to match Remotive jobs by title."""
+    """Return the meaningful words of a query, with work-type words and stopwords removed."""
     stripped = _adzuna_keywords(query)
     return [
         t
@@ -190,10 +180,8 @@ def _wrong_level(title, experience):
     # "junior developer" against "senior developer" at 0.806, so the two are near-synonyms in
     # that space. An explicit word test is the only thing that separates them reliably.
     #
-    # Applied to Remotive AND Jobicy, and only when a level is known. Adzuna results are never
-    # filtered this way -- Adzuna ran the real search, so its answers are earned and overruling
-    # them would be second-guessing a genuine keyword match. The other two do not really search
-    # on level, so their contribution is ours to justify.
+    # Applied to every source, and only when a level is known -- see _filter_level for why
+    # even the sources that genuinely search are not exempt.
     #
     # The level now reaches here from the user's PROFILE when the query does not state one
     # (see core/agent.py). Before 2026-09-26 it came only from the parsed query, so a recent
@@ -224,35 +212,6 @@ def _wrong_level(title, experience):
     return False
 
 
-def _filter_remotive(query, raw, experience=None):
-    """Keep Remotive jobs whose TITLE matches the query and does not contradict the level."""
-    # Remotive returns the same fixed list whatever is asked of it, so without this every
-    # search inherits the same ~20 jobs and the ranker orders noise. Measured against that
-    # list: "nurse" keeps 0, "freelance copywriter" keeps exactly "Freelance Copywriter".
-    #
-    # Title only, not title + description. It scored almost identically (7 kept vs 8 on a
-    # test query) and it is far tighter -- a description is a long HTML advert whose
-    # boilerplate matches almost anything -- and it states in one sentence.
-    #
-    # A word match that tolerates an inflected ending, so "engineer" matches "Engineering"
-    # but "car" does not match "Cardiac" and "art" does not match "Smart".
-    #
-    # A query with no meaningful words left after stripping ("remote work") has nothing to
-    # filter the topic on, so the feed passes the token test rather than collapsing to zero.
-    # The level test below still applies to it.
-    tokens = _query_tokens(query)
-    kept = []
-    for job in raw:
-        title = (job.get("title") or "").lower()
-        if _wrong_level(title, experience):
-            continue
-        if not tokens or any(
-            re.search(rf"\b{re.escape(t)}{_INFLECTIONS}\b", title) for t in tokens
-        ):
-            kept.append(job)
-    return kept
-
-
 def adzuna_market(country):
     """Return the Adzuna market to query for this user's country, or None if it has none."""
     # The single place the "can this source serve this user?" question is answered for Adzuna.
@@ -267,6 +226,28 @@ def adzuna_market(country):
     return code if code in config.ADZUNA_COUNTRIES else None
 
 
+def _narrowed_attempts(query):
+    """Return the keyword strings to try for one variant: the stripped query, then at most one narrowing."""
+    # ONE rule for every searching source, so there is one thing to defend in the viva.
+    #
+    # The first attempt is the variant with work-type words and stopwords removed. The retry,
+    # if any, keeps only the words that NAME A FIELD OF WORK (_signal_terms). If the query has
+    # no such word, _signal_terms returns the same tokens, the two strings are equal, and NO
+    # retry is made -- the source honestly returns nothing for that variant.
+    #
+    # This replaced Jobicy's retry on 2026-10-13, which sent the single LONGEST word. That
+    # word is usually not the meaningful one: "a job where I help people all day" retried on
+    # "people", "I want to get into tech but I have no degree" on "degree", and a Pakistan
+    # user got the same four interpreter jobs for both. A wrong retry is worse than no retry,
+    # because the user cannot tell the results were never about their query.
+    first = " ".join(_query_tokens(query)) or _adzuna_keywords(query)
+    attempts = [first]
+    narrowed = " ".join(_signal_terms(query))
+    if narrowed and narrowed != first:
+        attempts.append(narrowed)
+    return attempts
+
+
 def _fetch_adzuna_raw(query, app_id, app_key, count, work_type=None, market=None):
     """Call Adzuna, narrowing the keywords once if the full query matches nothing."""
     # Two attempts, capped. Adzuna's AND match means a natural-language query usually matches
@@ -277,13 +258,8 @@ def _fetch_adzuna_raw(query, app_id, app_key, count, work_type=None, market=None
     # The cap is a quota decision, not a design one: three variants times two attempts is six
     # of 250 daily calls per cold search, and the second attempt only happens when the first
     # returned nothing -- which today costs the user everything.
-    attempts = [_adzuna_keywords(query)]
-    narrowed = " ".join(_signal_terms(query))
-    if narrowed and narrowed != attempts[0]:
-        attempts.append(narrowed)
-
     ok = False
-    for keywords in attempts:
+    for keywords in _narrowed_attempts(query):
         raw, attempt_ok = _adzuna_request(keywords, app_id, app_key, count, work_type, market)
         ok = ok or attempt_ok
         if raw:
@@ -326,91 +302,74 @@ def _adzuna_request(keywords, app_id, app_key, count, work_type=None, market=Non
         return [], False
 
 
-def _fetch_remotive_raw(query, count):
-    """Call Remotive and return (raw results, ok) — ok is False only on a transport or HTTP error."""
-    # The search and limit parameters are still sent, and Remotive still ignores both. They
-    # are kept so the call matches Remotive's documented contract rather than silently
-    # encoding our workaround; the filtering that compensates happens in fetch_variant.
+def _himalayas_request(keywords, country, count):
+    """Make one Himalayas call and return (response or None); None means a transport error."""
+    params = {"q": keywords, "limit": count}
+    if country:
+        params["country"] = country.upper()
+    else:
+        params["worldwide"] = "true"
     try:
-        url = "https://remotive.com/api/remote-jobs"
-        response = requests.get(
-            url, params={"search": query, "limit": count}, timeout=10
-        )
-        if response.status_code != 200:
-            print(f"Remotive returned HTTP {response.status_code}")
-            return [], False
-        return response.json().get("jobs", []), True
+        return requests.get(HIMALAYAS_URL, params=params, timeout=10)
     except Exception as e:
-        print(f"Remotive API error: {e}")
-        return [], False
+        print(f"Himalayas API error: {e}")
+        return None
 
 
-def _fetch_jobicy_raw(query, count):
-    """Call Jobicy for worldwide-eligible jobs and return (raw results, ok)."""
-    # `tag` is an AND match like Adzuna's `what`, and it collapses just as hard. Measured
-    # 2026-09-23 with geo=anywhere:
+def _fetch_himalayas_raw(query, country=None, count=HIMALAYAS_PER_VARIANT):
+    """Call Himalayas for remote jobs open to this user's country and return (raw results, ok)."""
+    # `country` takes an ISO code (measured 2026-10-13: PK, GB, TR, CZ all accepted) and
+    # returns jobs with NO restriction plus jobs whose restriction list names that country,
+    # so eligibility is filtered server-side -- the guarantee geo=anywhere gave on Jobicy,
+    # but over a pool of thousands rather than eleven. The code reaching here is always a key
+    # of config.COUNTRIES (validated at registration) or empty -- never raw user input.
     #
-    #   "junior software engineer"        ->  5      "software"     -> 50
-    #   "entry level marketing no degree" ->  0      "marketing"    -> 17
-    #   "something creative ... home"     ->  0      "creative"     -> 18
+    # A country Himalayas does not recognise is HTTP 400 "Invalid country". That switches to
+    # worldwide-only jobs rather than being reported as a failure: the user still gets every
+    # job open to anyone, which they can apply for.
     #
-    # So the work-type and stopword stripping that already exists for Adzuna is applied
-    # first, and if the result is still empty ONE retry is made on the single longest
-    # token. Two HTTP calls per variant is the cap; Jobicy publishes no rate limit and an
-    # unbounded retry loop against an API whose limits are unknown is not worth the jobs.
-    tokens = _query_tokens(query)
-    attempts = [" ".join(tokens) or query]
-    if len(tokens) > 1:
-        attempts.append(max(tokens, key=len))
-
+    # Rate-limited with 429 and no published number. A 429 is reported as a failure, so the
+    # TC-018 banner shows; the 60-minute cache in core/agent.py keeps repeat searches off it.
     ok = False
-    for tag in attempts:
+    for keywords in _narrowed_attempts(query):
+        response = _himalayas_request(keywords, country, count)
+        if response is not None and response.status_code == 400 and country:
+            print(f"Himalayas rejected country {country!r}; using worldwide jobs only")
+            country = None
+            response = _himalayas_request(keywords, country, count)
+        if response is None:
+            continue
+        if response.status_code != 200:
+            print(f"Himalayas returned HTTP {response.status_code}")
+            continue
+        ok = True
         try:
-            response = requests.get(
-                "https://jobicy.com/api/v2/remote-jobs",
-                params={
-                    "count": count,
-                    "geo": JOBICY_GEO_ANYWHERE,
-                    "tag": tag,
-                },
-                timeout=10,
-            )
-            if response.status_code != 200:
-                print(f"Jobicy returned HTTP {response.status_code}")
-                continue
-            ok = True
-            jobs = response.json().get("jobs", []) or []
-            if jobs:
-                return jobs, True
-        except Exception as e:
-            print(f"Jobicy API error: {e}")
+            jobs = response.json().get("jobs") or []
+        except ValueError as e:
+            print(f"Himalayas returned invalid JSON: {e}")
+            jobs = []
+        if jobs:
+            return jobs, True
     # ok stays False only if EVERY attempt failed at the transport or HTTP level. A 200 that
-    # matched nothing is an empty result, not a failed source -- the same distinction Adzuna
-    # and Remotive already report, and TC-018 depends on it.
+    # matched nothing is an empty result, not a failed source -- TC-018 depends on that.
     return [], ok
 
 
-def _filter_adzuna_level(raw, experience):
-    """Drop Adzuna results whose title contradicts the level, now that its query is narrowed."""
+def _filter_level(raw, title_key, experience):
+    """Drop results whose title contradicts the experience level, for any source's raw shape."""
+    # One function for every source; only the name of the title field differs.
+    #
     # Adzuna used to be EXEMPT from this, and the reason was sound at the time: it ran a real
     # keyword search on the user's own words, so overruling it would be second-guessing a
     # genuine match. That premise died on 2026-09-26 when the keyword narrowing shipped --
-    # "beginner level software engineer" now narrows to "software" on the retry, so Adzuna
+    # "beginner level software engineer" narrows to "software" on the retry, so the source
     # never sees the word "beginner" and its results are no longer earned with respect to
     # level. Caught by verify_live.py: the query returned six "Lead Software Engineer".
+    # Himalayas narrows the same way, so the same reasoning applies to it.
     #
     # Nothing is lost when the query WAS specific: _wrong_level only drops titles that
     # actively contradict the level, so a genuine match is untouched.
-    return [j for j in raw if not _wrong_level((j.get("title") or "").lower(), experience)]
-
-
-def _filter_jobicy_level(raw, experience):
-    """Drop Jobicy results whose title contradicts the experience level the user asked for."""
-    # Same rule and the same helper Remotive is filtered with. Jobicy's geo filter is
-    # server-side but it has no level filter, so a "senior" title can still come back for an
-    # entry-level search. Applied here rather than left to the ranker for the reason
-    # _wrong_level documents: cosine similarity rates "junior" and "senior" as near-synonyms.
-    return [j for j in raw if not _wrong_level((j.get("jobTitle") or "").lower(), experience)]
+    return [j for j in raw if not _wrong_level((j.get(title_key) or "").lower(), experience)]
 
 
 def fetch_variant(query, app_id, app_key, work_type=None, experience=None, country=None):
@@ -418,20 +377,6 @@ def fetch_variant(query, app_id, app_key, work_type=None, experience=None, count
     jobs = []
     failed_sources = []
     empty_sources = []
-
-    # Remotive first. Those listings are genuinely global, and the agent keeps the FIRST
-    # occurrence of a duplicate, so the order here decides which copy of a syndicated
-    # listing the user ends up seeing.
-    remotive_raw, remotive_ok = _fetch_remotive_raw(query, REMOTIVE_PER_VARIANT)
-    if not remotive_ok:
-        failed_sources.append("Remotive")
-    else:
-        # The compensation for Remotive ignoring its own search parameter. Without it every
-        # search inherits the same fixed list and the ranker is handed noise to order.
-        remotive_raw = _filter_remotive(query, remotive_raw, experience)
-        if not remotive_raw:
-            empty_sources.append("Remotive")
-    jobs.extend(JobCard.from_remotive(raw) for raw in remotive_raw)
 
     # Adzuna is a country-market board. For a user whose country it does not cover there is no
     # endpoint to call, so it is SKIPPED rather than called and filtered -- the call would
@@ -444,35 +389,38 @@ def fetch_variant(query, app_id, app_key, work_type=None, experience=None, count
     #     failed; it was never asked.
     #   - empty_sources marks a fetch as degraded in core/agent.py so it is not cached. Every
     #     such user's search would bypass the 60-minute cache forever.
+    #
+    # The local source comes FIRST and the remote board last, and that order is load-bearing:
+    # the agent keeps the first occurrence of a duplicate, so a listing on both keeps the
+    # local copy and its honest "local" badge rather than being relabelled by fetch order.
     market = adzuna_market(country)
-    adzuna_raw, adzuna_ok = ([], True) if market is None else _fetch_adzuna_raw(
-        query, app_id, app_key, ADZUNA_PER_VARIANT, work_type, market
-    )
-    if market is None:
-        pass
-    elif not adzuna_ok:
-        failed_sources.append("Adzuna")
-    else:
-        adzuna_raw = _filter_adzuna_level(adzuna_raw, experience)
-    if market is not None and adzuna_ok and not adzuna_raw:
-        # The signal that was missing. Adzuna answering "200, nothing here" is not a failure,
-        # but it does mean the only source that genuinely searches contributed nothing, and
-        # the caller has to be able to tell.
-        empty_sources.append("Adzuna")
-    jobs.extend(JobCard.from_adzuna(raw) for raw in adzuna_raw)
+    if market is not None:
+        adzuna_raw, adzuna_ok = _fetch_adzuna_raw(
+            query, app_id, app_key, ADZUNA_PER_VARIANT, work_type, market
+        )
+        if not adzuna_ok:
+            failed_sources.append("Adzuna")
+        else:
+            adzuna_raw = _filter_level(adzuna_raw, "title", experience)
+            if not adzuna_raw:
+                # Adzuna answering "200, nothing here" is not a failure, but the caller has
+                # to be able to tell it contributed nothing.
+                empty_sources.append("Adzuna")
+        jobs.extend(JobCard.from_adzuna(raw) for raw in adzuna_raw)
 
-    # Jobicy last, and that ordering is load-bearing: the agent keeps the FIRST occurrence
-    # of a duplicate, so putting Jobicy after Adzuna means a listing syndicated to both
-    # keeps Adzuna's copy and its eligibility stays honestly "local". Putting it first would
-    # relabel the same job "open worldwide" purely because of fetch order.
-    jobicy_raw, jobicy_ok = _fetch_jobicy_raw(query, JOBICY_PER_VARIANT)
-    if not jobicy_ok:
-        failed_sources.append("Jobicy")
+    # Himalayas serves every country: remote jobs that are unrestricted or name the user's
+    # country. The display name goes to JobCard so a restriction list can be matched exactly
+    # against it (models/job_card.py restriction_eligibility).
+    code = (country or "").strip().lower()
+    himalayas_raw, himalayas_ok = _fetch_himalayas_raw(query, code or None)
+    if not himalayas_ok:
+        failed_sources.append("Himalayas")
     else:
-        jobicy_raw = _filter_jobicy_level(jobicy_raw, experience)
-        if not jobicy_raw:
-            empty_sources.append("Jobicy")
-    jobs.extend(JobCard.from_jobicy(raw) for raw in jobicy_raw)
+        himalayas_raw = _filter_level(himalayas_raw, "title", experience)
+        if not himalayas_raw:
+            empty_sources.append("Himalayas")
+    country_name = config.COUNTRIES.get(code)
+    jobs.extend(JobCard.from_himalayas(raw, country_name) for raw in himalayas_raw)
 
     # Not deduplicated here. Deduplication is across ALL variants, which only the agent can
     # see; doing a partial pass here would just be work repeated three times.

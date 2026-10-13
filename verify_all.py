@@ -32,7 +32,7 @@ SCRIPTS = [
     ("verify_auth.py", "auth routes, session and CSRF", False),
     ("verify_routes.py", "save/reject routes and categorisation", False),
     ("verify_intent.py", "intent parsing (one live Groq call)", False),
-    ("verify_live.py", "real Adzuna/Remotive/Groq + rendered pages", True),
+    ("verify_live.py", "real Adzuna/Himalayas/Groq + rendered pages", True),
 ]
 
 SUMMARY = "passed,"

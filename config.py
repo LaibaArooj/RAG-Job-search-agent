@@ -32,7 +32,7 @@ ADZUNA_COUNTRY = os.getenv("ADZUNA_COUNTRY", "gb")
 # place to change it and no way for two sources of truth to disagree mid-demo.
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# --- Remotive: no key required ---
+# --- Himalayas: no key required (added 2026-10-13, replacing Remotive and Jobicy) ---
 
 # --- Job cache ---
 # Spec value. Kept here rather than hardcoded in the TTL index so it can be changed
@@ -74,9 +74,10 @@ WORK_TYPE_HINTS = {
     "full-time": ("full time", "full-time", "permanent"),
 }
 
-# Words carrying no signal when deciding whether a Remotive job matches the query. Remotive
-# ignores its own search parameter (see adapters/api_client.py), so the filtering is done
-# locally against the job title, and without this list every query would match on "job".
+# Words carrying no signal in a keyword search. Adzuna's and Himalayas' searches are AND
+# matches (see adapters/api_client.py), so leaving "job" or "looking" in the keywords would
+# empty a search that the meaningful words alone would answer. First written 2026-09-20 to
+# filter Remotive locally; Remotive has since been removed.
 QUERY_STOPWORDS = frozenset(
     {
         "level", "job", "jobs", "work", "working", "position", "positions", "role", "roles",
@@ -84,6 +85,11 @@ QUERY_STOPWORDS = frozenset(
         "needed", "want", "wanted", "looking", "seeking", "hiring", "please", "some",
         "something", "anything", "with", "without", "that", "this", "from", "into", "about",
         "and", "the", "for", "any", "can", "you", "your", "our",
+        # Added 2026-10-13. "no degree" names a CONDITION, which the intent parser turns into
+        # experience = entry level. As a search word it is worse than useless: almost no
+        # advert contains it, so the AND match emptied ("tech degree" -> 0 on Himalayas), and
+        # "no" never survives anyway, so the search meant the opposite of what was typed.
+        "degree", "degrees",
     }
 )
 
@@ -208,7 +214,7 @@ SEARCH_SUGGESTIONS = (
 # checked before any category reaches a field path. A closed set, not escaping.
 #
 # Settled 2026-09-21 (this was the TODO(M3) open question): neither API taxonomy is
-# consulted. Adzuna tags jobs with its own categories, Remotive with a different set, and
+# consulted. Adzuna tags jobs with its own categories, Himalayas with a different set, and
 # reconciling them would mean two mapping tables at different granularities with no answer
 # for a job whose source omits the field. Instead every job -- whichever source it came from
 # -- is classified locally from its own title and description against CATEGORY_HINTS below,

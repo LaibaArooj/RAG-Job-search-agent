@@ -7,7 +7,7 @@ The steps, per docs/ARCHITECTURE.md § Search request flow:
     1. get_user_context          - profile read before any API call
     2. parse_intent              - Groq call #1, keyword fallback
     3. enrich_query              - profile folded into the query text
-    4. fetch, once per variant   - Adzuna + Remotive via adapters.api_client
+    4. fetch, once per variant   - Adzuna + Himalayas via adapters.api_client
     5. union and deduplicate     - on job_id (SHA of title + company)
     6. classify                  - one category per job, core.intent_parser
     7. batch_encode + similarity - core.semantic_engine
@@ -54,13 +54,13 @@ CATEGORY_BOOST = 0.02
 TOP_K = 5
 
 # The sources that actually run a keyword search against the query, as opposed to returning a
-# fixed list we filter ourselves. Remotive is deliberately absent: it ignores its `search`
-# parameter entirely (measured 2026-09-20, and again for `category` on 2026-09-23), so a pool
-# containing only Remotive jobs is the same pool every query would produce.
+# fixed list we filter ourselves. Since Remotive was removed on 2026-10-13 that is every source,
+# but the set is kept: it is what stops a future fixed-list source from being cached as if it
+# had answered the query (see _fetch_cached_variant).
 #
 # Used to decide whether a fetch is worth caching. Keep it in step with adapters/api_client.py
 # -- a new source that genuinely searches belongs here, or its results will never be cached.
-SEARCHING_SOURCES = frozenset({"Adzuna", "Jobicy"})
+SEARCHING_SOURCES = frozenset({"Adzuna", "Himalayas"})
 
 # --- For You feed -----------------------------------------------------------------
 #
@@ -195,10 +195,7 @@ class JobSearchAgent:
         # fix was about, returning through a door the country work left open.
         #
         # Naming the sources that search, rather than the one that used to, means adding a
-        # fourth source cannot silently reopen this again.
-        #
-        # Remotive filtering down to nothing is still NOT degraded; that is the filter
-        # working, and it must stay cacheable or every such search costs quota it need not.
+        # new source cannot silently reopen this again.
         contributed = {job.get("source") for job in jobs}
         degraded = bool(result["failed_sources"]) or not (SEARCHING_SOURCES & contributed)
         if jobs and not degraded:
@@ -252,7 +249,7 @@ class JobSearchAgent:
     @staticmethod
     def classify(jobs, intent_category=None):
         """Assign every job exactly one config.CATEGORIES value from its own title and text."""
-        # This runs in the agent rather than in JobCard.from_adzuna / from_remotive, and that
+        # This runs in the agent rather than in JobCard.from_adzuna / from_himalayas, and that
         # is the decision to be able to defend. JobCard's job is to normalise the SHAPE two
         # APIs disagree about -- it is a dumb dataclass with no policy in it. Which category a
         # job belongs to is policy: it decides what the save/reject loop increments and what
@@ -454,7 +451,7 @@ class JobSearchAgent:
         ]
 
     @staticmethod
-    def rag_candidates(jobs, top_k=TOP_K):
+    def rag_candidates(jobs, top_k=TOP_K, local_applicable=False):
         """Pick the jobs the AI panel explains: applicable ones first, then the rest."""
         # Added 2026-09-23, and it is a deliberate departure worth stating: the AI panel no
         # longer explains "the top 5 by score", it explains "the best 5 the seeker can
@@ -474,8 +471,25 @@ class JobSearchAgent:
         # "unknown" is grouped with applicable rather than excluded. A job whose terms are
         # unstated might well hire the seeker, and the prompt is instructed to say the terms
         # are unstated, so the user is told rather than misled.
-        applicable = [j for j in jobs if j.get("eligibility") in ("open", "unknown")]
-        rest = [j for j in jobs if j.get("eligibility") not in ("open", "unknown")]
+        #
+        # "country" (added 2026-10-13) is applicable by construction: it is only ever set when
+        # a structured restriction list names the seeker's own country.
+        #
+        # "local" is applicable only when local_applicable is True, and run() passes that
+        # only for a user whose profile HAS a country. Since 2026-09-23 sources are chosen
+        # per country, so for that user every local job is in their own country -- a UK
+        # seeker's Adzuna jobs were being demoted for nothing. A legacy account with no
+        # country still falls back to the gb Adzuna market, and nothing says that user lives
+        # in the UK, so for them local stays where it was.
+        #
+        # False is the default ON PURPOSE: evaluation/generate_rag_picks.py and
+        # evaluation/fresh/picks_fresh.py call this to reproduce the system that was
+        # evaluated, and a changed default would silently change what they reproduce.
+        allowed = {"open", "unknown", "country"}
+        if local_applicable:
+            allowed.add("local")
+        applicable = [j for j in jobs if j.get("eligibility") in allowed]
+        rest = [j for j in jobs if j.get("eligibility") not in allowed]
         # Topped up rather than truncated: a seeker with only two applicable jobs still gets
         # a full panel, and the restricted ones arrive carrying their restriction in the
         # prompt. An empty panel would teach them nothing.
@@ -609,7 +623,7 @@ class JobSearchAgent:
         #   list  -- up to three picks, rendered as real job cards.
         # The candidate list is held so the picks can be joined back onto it. RAGPipeline
         # returns indices INTO THIS LIST, so recomputing it here would risk the two drifting.
-        rag_jobs = self.rag_candidates(jobs)
+        rag_jobs = self.rag_candidates(jobs, local_applicable=bool(context.get("country")))
         ai_recommendations = self.join_picks(self.rag_pipeline.run(query, rag_jobs), rag_jobs)
 
         try:

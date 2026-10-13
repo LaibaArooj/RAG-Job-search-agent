@@ -132,6 +132,10 @@ def _hiring_line(job):
 
     if eligibility == "open":
         return "anywhere in the world, no geographic restriction"
+    if eligibility == "country":
+        # Set only from a structured list that names the seeker's own country, so this is a
+        # fact about the listing and can be stated as one.
+        return f"candidates in these countries, which include the seeker's: {candidate_location}"
     if eligibility == "regional":
         return f"ONLY candidates in: {candidate_location or 'unspecified regions'}"
     if eligibility == "local":

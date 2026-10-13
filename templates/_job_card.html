@@ -16,8 +16,8 @@
 {% macro job_card(job, reason=None, badge="score", compact=False) %}
 {# data-remote is derived from eligibility, not from a per-job remote flag, and the report
    must say so: Adzuna has no remote field at all (`where=remote` returns 0 results), so the
-   honest rule available is "this came from a remote board". Remotive and Jobicy are
-   all-remote boards, and every Adzuna listing is classed `local`. TC-015's filter therefore
+   honest rule available is "this came from a remote board". Himalayas is an all-remote
+   board, and every Adzuna listing is classed `local`. TC-015's filter therefore
    means "hide on-site roles", which is what the user actually wants and is not quite what
    the SRS's wording implies. #}
 <div class="card mb-3 js-job-card"
@@ -39,16 +39,31 @@
                 </span>
                 {% endif %}
 
-                {% if job.source is defined %}
+                {# Himalayas' API terms require a visible link back to himalayas.app and a
+                   statement that the data comes from them. A linked source badge on every
+                   card that shows their data does both, wherever the card is rendered. #}
+                {% if job.source == "Himalayas" %}
+                <a href="https://himalayas.app" target="_blank" rel="noopener"
+                   class="badge bg-secondary text-decoration-none"
+                   title="Job data from Himalayas">Himalayas</a>
+                {% elif job.source is defined %}
                 <span class="badge bg-secondary">{{ job.source }}</span>
                 {% endif %}
 
                 {# Where the CANDIDATE may live, which is not where the job is. A listing that
                    will reject you on location is not a result, so this is shown on every card
                    rather than buried in the description. "unclear" is a real state and is
-                   never guessed at -- see models/job_card.py remote_eligibility. #}
+                   never guessed at -- see models/job_card.py restriction_eligibility. #}
                 {% if job.eligibility == "open" %}
                 <span class="badge bg-success">🌍 Open worldwide</span>
+                {% elif job.eligibility == "country" %}
+                {# Only ever set from a structured country list that names the user's own
+                   country, so "your country" is a fact, not a guess. The full list is in the
+                   tooltip because it can run to dozens of names. #}
+                <span class="badge bg-success"
+                      title="Hires from: {{ job.candidate_location }}">
+                    ✅ Open to your country
+                </span>
                 {% elif job.eligibility == "regional" %}
                 <span class="badge bg-warning text-dark"
                       title="This employer only hires from these places">

@@ -104,6 +104,11 @@ def main():
         check("TC-020  intent still usable: category", intent["category"] == "writing")
         check("TC-020  original query survives as a variant",
               intent["variants"] == ["remote writing job no experience"])
+        # Added 2026-10-13: "no degree" means no experience on BOTH paths, so the fallback
+        # agrees with what the LLM prompt now states.
+        check("the fallback reads 'no degree' as entry level",
+              intent_parser._parse_intent_keywords(
+                  "I want to get into tech but I have no degree")["experience"] == "entry level")
 
         print("\n3. Fallback when the reply is not JSON")
         stub = use_stub(StubGroq(reply="Sure! Here are some thoughts about your search."))
@@ -236,6 +241,29 @@ def main():
             check("TC-019  original query leads the variants",
                   intent["variants"][0] == srs_query)
             print(f"\n     intent: {intent}")
+
+            # Added 2026-10-13. Variants are now job titles and conditions go in the closed-set
+            # keys. Before the change this query's variants were "tech jobs no degree" and
+            # "entry level tech positions", and every source's AND match came back near-empty.
+            no_degree = "I want to get into tech but I have no degree"
+            nd = intent_parser.parse_intent(no_degree)
+            if nd["source"] == "llm":
+                check("'no degree' is read as entry level", nd["experience"] == "entry level")
+                check("'tech' is read as the technology category",
+                      nd["category"] == "technology")
+                check("no generated variant carries the condition 'degree'",
+                      all("degree" not in v.lower() for v in nd["variants"][1:]))
+                check("the generated variants are short, like advert titles",
+                      all(len(v.split()) <= 4 for v in nd["variants"][1:]))
+                print(f"     no-degree variants: {nd['variants'][1:]}")
+
+            # The guard on that change. Told to translate vague wishes into titles, the model
+            # also "translated" gibberish into "Data entry clerk", which made TC-018's
+            # no-results message unreachable. Nonsense must get no invented titles.
+            gib = intent_parser.parse_intent("qwertyuiop zxcvbnm asdfgh")
+            if gib["source"] == "llm":
+                check("gibberish gets no invented job titles",
+                      gib["variants"] == ["qwertyuiop zxcvbnm asdfgh"])
 
     finally:
         intent_parser._client = None
