@@ -244,12 +244,12 @@ documented deviations and penalise undocumented ones.
 | Change | SRS said | Now | Why |
 |---|---|---|---|
 | Intent parsing | `parse_intent` matches keywords with if-statements (SDD §5.1) | Groq call returning structured JSON, keyword matching as fallback | The SRS defines an Agent as something that "autonomously decides what steps to take". Keyword matching doesn't meet that definition. This makes the claim true. |
-| Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped | Directly addresses the recall ceiling described below |
+| Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped. **Since 2026-10-13 the variants are job titles**, and conditions such as "no degree" go in the level/work-type keys | Directly addresses the recall ceiling described below. The job-title change was made after Q01–Q05 failed live as a Pakistan user ("tech jobs no degree" found 3 jobs, "junior developer" / "IT support" find 27), so it was tuned on evaluation queries and the fresh N01–N15 run is its fair test |
 | Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claimed semantic ranking is better; that claim needed evidence. **Measured 2026-09-30: it is not, on ranking alone** (0.32 vs 0.31, `evaluation/results.md`) |
 | **LLM model** | **Llama 3 8B-instant via Groq** | **`openai/gpt-oss-120b` via Groq** | **Forced TWICE, not chosen — see below** |
-| **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + Remotive + **Jobicy** | Neither original source can answer "will this employer hire a candidate in my country?" — Adzuna has no such concept and Remotive is capped at 18 jobs. Jobicy filters eligibility server-side. Free, no key, no card, so the SRS cost constraint holds. See § Geographic eligibility below. |
+| **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + **Himalayas** (since 2026-10-13; Adzuna + Remotive + Jobicy from 09-23) | Neither original source can answer "will this employer hire a candidate in my country?". Jobicy was added for that on 09-23, then shrank from 100 eligible jobs to 11. Remotive returned 16 fixed jobs for every query, and its API notice allows at most 4 calls a day, which one call per variant broke. Himalayas filters by the user's country server-side, states eligibility as a structured list, and had 3,947 jobs open to Pakistan (measured 10-13). Free, no key, no card, so the SRS cost constraint holds; its terms require a credit and link back. See § Geographic eligibility below. |
 | **Source selection** | All sources queried for every user | **Only sources that can serve the user's country** | Adzuna is a country-market API with no `jobs/pk/search` endpoint (404, measured 2026-09-23). Querying it for a user it cannot serve spends quota to fetch jobs that reject them. Requires a `country` field on the user document. |
-| **AI panel selection** | Top 5 ranked jobs → LLM (FR-016) | Top 5 **the seeker can apply for** → LLM | Measured: all five top-ranked jobs were UK-local for a non-UK user, so every AI pick was unreachable. Ranking itself is unchanged — only which five reach the prompt. |
+| **AI panel selection** | Top 5 ranked jobs → LLM (FR-016) | Top 5 **the seeker can apply for** → LLM | Measured: all five top-ranked jobs were UK-local for a non-UK user, so every AI pick was unreachable. Ranking itself is unchanged — only which five reach the prompt. Widened 2026-10-13: jobs open to the user's country count, and so do local jobs for a user whose profile has a country (sources are chosen per country, so those are in the user's own country). The evaluation scripts keep the old rule by default. |
 | **AI panel size** | Three top picks (FR-016) | **Up to three, or an explicit "no strong match"** | Added 2026-10-11. All 9 failed runs in the RAG-stage evaluation were the model declining (`{"picks": []}`), which the panel treated as an outage. Forcing three also made it fill the slots with jobs it said did not fit ("This is a recruitment-focused role, which does not meet the requirement"). A decline now shows a message; a Groq failure still hides the band (TC-009 unchanged). |
 | `rejected_jobs` contents | `Array<String>` of job **titles** (§ Data model) | `Array<String>` of **`job_id`** | Titles are not unique across employers. TC-012 requires rejected jobs to be *absent* from the feed; keyed on title, rejecting one "Software Engineer" hides every job with that title from every company. `saved_jobs` already keys on `job_id` for the same reason (TC-013). Field type is unchanged — still an array of strings. |
 
@@ -272,7 +272,17 @@ Measured on "junior software engineer": jobs applicable from anywhere went from 
 **Still open, and both belong in the report:** Adzuna is not yet skipped for users outside
 its markets (the profile's location field defaults to "remote" and cannot drive the rule),
 and Remotive is labelled rather than filtered, so a user still sees region-restricted
-listings — clearly badged, but present.
+listings — clearly badged, but present. *(Both since resolved: Adzuna is skipped per country
+from 09-23, and Remotive was removed on 10-13.)*
+
+**Updated 2026-10-13 — Himalayas and the `country` bucket.** Jobicy and Remotive are gone.
+Himalayas is queried with `country=<ISO code>`, so eligibility is filtered server-side, and
+it states eligibility as a **structured list of country names** (an empty list = worldwide).
+That is what allows a fifth bucket, `country` ("✅ Open to your country"): set only when the
+list names the user's country exactly. The rule against guessing is unchanged — free text
+such as "APAC" is never matched to a country — but a list either contains "Pakistan" or it
+does not, so no judgement is involved. Measured as a Pakistan user on Q01–Q05: 27–43 jobs
+each, against near-empty or unrelated results before.
 
 ### The LLM substitution is forced, not a preference — and it has now happened TWICE
 
@@ -370,9 +380,12 @@ are the ones an examiner is most likely to find.
    model itself, remains the upgrade; both were weighed and rejected as harder to justify in a
    viva than a table you can read.
 
-10. **Geographic eligibility is read from free text.** Added 2026-09-23. Whether an employer
-    will hire a candidate in a given country comes from a prose field — Remotive's
-    `candidate_required_location`, Jobicy's `jobGeo` — that has no controlled vocabulary.
+10. **Geographic eligibility is read from free text** — *now only partly true.* Added
+    2026-09-23, when it came from prose fields (Remotive's `candidate_required_location`,
+    Jobicy's `jobGeo`). Since 2026-10-13 the remote source is Himalayas, whose eligibility is
+    a structured country list, so the limitation becomes: **the system is only as right as
+    the source's tags** — a "…Work From Home – Canada" job came back tagged unrestricted.
+    The original rule still governs any free text:
     Anything not positively unrestricted is classed `regional` and shown verbatim for the user
     to judge. The system deliberately does **not** decide whether "APAC" or "EMEA" includes a
     particular user; that is stated as unknown rather than guessed, because a confident wrong
@@ -384,10 +397,18 @@ are the ones an examiner is most likely to find.
     such a user **every job the system can offer is remote**, so the product is a search engine
     for remote roles rather than the general job search the SRS describes.
 
-12. **Region-restricted listings are shown, not filtered.** Remotive and Jobicy listings
-    restricted to named regions are badged and kept. Filtering them would need the "does APAC
+12. **Region-restricted listings are shown, not filtered.** Listings restricted to named
+    regions are badged and kept (with Himalayas' country filter these should be rare). Filtering them would need the "does APAC
     include Pakistan?" judgement this system deliberately refuses to make, and would drop
     Europe/UK listings for a UK user.
+
+13. **The job sources drift, and the evaluation predates the current ones.** Added
+    2026-10-13. Remotive stopped searching and Jobicy shrank from 100 eligible jobs to 11,
+    each noticed only by using the app. Every evaluation number was produced with the old
+    sources and a UK profile; it stays a valid record of that system, and the report must say
+    the live sources changed afterwards. Groq's job-title variants also vary between runs.
+    If Careerjet ships (Phase B), each request forwards the user's IP address and user agent
+    to Careerjet, as its API requires — the first time user data goes to a job source.
 
 ## Data model — MongoDB `users` collection
 

@@ -5,7 +5,7 @@ Final Year Project — Laiba Arooj, Dept. of Computer Science. Supervisor: Dr Al
 ## Goal
 
 A Flask web app that lets job seekers search in plain English instead of keywords. It fetches
-live listings from Adzuna, Remotive and Jobicy, ranks them by semantic similarity using a
+live listings from Adzuna and Himalayas, ranks them by semantic similarity using a
 local sentence-transformer, and passes five to an LLM via Groq to produce three explained
 picks. Every card states whether the employer will hire a candidate in the user's location.
 Saving and rejecting jobs updates per-category preference scores that personalise future
@@ -41,7 +41,7 @@ or cleverness. When you make a design decision, tell me why, so I can defend it.
 | Embeddings | sentence-transformers 2.7+, model `all-MiniLM-L6-v2`, runs locally, 384-dim |
 | LLM | **Groq** API (not Grok), a FALLBACK CHAIN in `GROQ_MODELS` (`openai/gpt-oss-120b` → `qwen/qwen3.8-27b` → `openai/gpt-oss-20b`), because Groq has retired this project's model twice — Groq decommissioned Llama 3 *and then* `groq/compound-mini`, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py`. **It is a reasoning model: hidden reasoning tokens count against `max_tokens`, so changing it means rechecking the budget at both call sites** |
 | Auth | Werkzeug password hashing (ships with Flask) |
-| Job data | Adzuna API (250 req/day free, UK market) + Remotive API (no auth; capped at 18 jobs, ignores `search`) + Jobicy API (no auth; `geo=anywhere` filters candidate eligibility server-side) |
+| Job data | Adzuna API (250 req/day free, 19 country markets) + Himalayas API (no auth; `country=` filters candidate eligibility server-side; credit and link back required). Remotive and Jobicy were removed 2026-10-13. Careerjet (local Pakistani jobs) is planned and waits on a free key |
 | Env | pip + venv, dependencies pinned in `requirements.txt` |
 
 Hard constraint from the SRS: **every tool, API and service must be free with no credit card.**
@@ -59,7 +59,7 @@ python verify_auth.py                            # prove the auth routes, TC-001
 python verify_routes.py                          # prove save/reject, categorisation and /feed, TC-010/011/012/013
 python verify_intent.py                          # prove intent parsing, TC-019/TC-020 (live Groq call)
 python verify_agent.py                           # prove the pipeline and the feed, TC-006/012/014/016/017/018/021/022 (offline)
-python verify_live.py                            # prove it against the REAL Adzuna/Remotive/Groq + rendered pages
+python verify_live.py                            # prove it against the REAL Adzuna/Himalayas/Groq + rendered pages
 python verify_all.py                             # run all six, one summary. --offline skips the quota-spending one
 python evaluation/score.py                       # re-score the judged sheets into evaluation/results.md (--check: validate only)
 python evaluation/build_rag_supplement.py        # RAG stage: blind sheet of candidates no earlier sheet showed (refuses to overwrite)
@@ -71,8 +71,8 @@ python evaluation/score_agreement.py             # second judge: Cohen's kappa i
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 543 assertions, about 290 seconds --
-500 of them offline, measured 2026-10-11; verify_live.py contributes the other 43. Use
+**`python verify_all.py` is the pre-demo check.** 577 assertions, about 290 seconds --
+538 of them offline, measured 2026-10-13; verify_live.py contributes the other 39. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.
@@ -96,17 +96,21 @@ two forced by Groq retiring models mid-implementation. All are recorded in
 `docs/PROJECT_SPEC.md` § Deviations with justifications. Don't revert to the SRS behaviour
 without asking:
 
-1. `parse_intent` calls Groq for structured intent plus 2–3 query variants; keyword matching
-   is the fallback path, not the primary one.
+1. `parse_intent` calls Groq for structured intent plus 2–3 query variants, which since
+   2026-10-13 are **job titles** ("no degree" = entry level, never a search word); keyword
+   matching is the fallback path, not the primary one.
 2. The APIs are called once per query variant, results unioned and deduplicated on `job_id`.
 3. Evaluation (precision@5) is a deliverable, not optional.
 4. **Forced:** the LLM is `openai/gpt-oss-120b`, not Llama 3 — Groq decommissioned Llama 3
    and then decommissioned its replacement too.
 5. `rejected_jobs` stores `job_id`, not job titles.
-6. **Jobicy is a third job source**, because neither Adzuna nor Remotive can say whether an
-   employer will hire a candidate in a given country.
+6. **Remotive and Jobicy are replaced by Himalayas** (2026-10-13). Remotive is named in the
+   SRS, so this is a deviation: it returned 16 fixed jobs and its terms allow 4 calls a day;
+   Jobicy (the earlier third source) shrank to 11 eligible jobs. Himalayas filters by country
+   and states eligibility as a structured list.
 7. The AI panel explains the top five jobs the seeker **can apply for**, not the top five by
-   score. Ranking itself is unchanged.
+   score — open, open-to-your-country, unknown, and (for a user with a country) local jobs.
+   Ranking itself is unchanged.
 8. Only sources that can serve the user's country are queried (Adzuna has no market for most
    countries). Requires the `country` field on the user document.
 9. The AI panel gives **up to three** picks, or an explicit "no strong match", not always

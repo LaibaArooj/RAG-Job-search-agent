@@ -1,20 +1,30 @@
-Last updated: 2026-10-13 (**M4 in progress. Two corrections take priority over new work.**
-Every relevance verdict was AI-proposed, not judged by hand; it is disclosed and recorded. And
-search is close to broken for non-UK users, which is not fixed yet.)
+Last updated: 2026-10-13, later (**M4 in progress.** Every relevance verdict was AI-proposed,
+not judged by hand; that is disclosed and recorded. Search for a seeker in Pakistan now works:
+Remotive and Jobicy were replaced by Himalayas, and query expansion produces job titles.)
 
-## Where we left off — 2026-10-13 (judging disclosed; non-UK search defect found)
+## Where we left off — 2026-10-13, later (Pakistan search fixed on `feat/pakistan-sources`)
 
-**Read the 2026-10-13 changelog entry, then `evaluation/provenance/README.md`.**
+**Read the two 2026-10-13 changelog entries, newest first.**
 
-- **Judging.** All verdicts were proposed by Claude (Claude Sonnet 5.5) and adopted by the
-  developer.
-  - Disclosed in `evaluation/queries.md` § 10, with records in `evaluation/provenance/`.
-  - Every "judged by the developer" is corrected, and no number changed.
-  - `rag_results.md` has the circularity caveat, plus post-hoc sensitivity rows. No row
-    reverses L ≥ K.
-- **Search for non-UK users.** As a Pakistan account, vague queries return nothing, or the
-  same unrelated jobs. The cause is the Jobicy one-word retry, plus Adzuna never being queried
-  for pk. Reproduced 10-13; not fixed.
+- **Search for non-UK users is fixed** in commit `4ba518f`, branch `feat/pakistan-sources`
+  (from `fix/judging-disclosure`).
+  - Remotive (16 fixed jobs, and terms of 4 calls a day) and Jobicy (pool down to 11) are
+    removed.
+  - **Himalayas** was added: free, no key, filters by country, with a structured eligibility
+    list.
+  - Q01–Q05 as a Pakistan user went from near-empty or unrelated results to 27–43 jobs each.
+  - `verify_all.py` is 577/577.
+- **Query expansion now asks Groq for job titles.** "No degree" means entry level, and
+  gibberish gets no invented titles.
+  - **Disclose:** this prompt was changed after seeing Q01–Q05 fail, so N01–N15 is its fair
+    test.
+- **Phase B, Careerjet (local jobs in Lahore, Karachi and Islamabad), is waiting on a key.**
+  The developer signs up at careerjet.com.pk/partners after checking that sign-up asks for no
+  card and allows a student project, then sets `CAREERJET_API_KEY` in `.env`. The plan is in
+  the 2026-10-13 changelog entry.
+- **Judging** is unchanged since the correction. All verdicts were proposed by Claude (Claude
+  Sonnet 5.5) and adopted by the developer. See `evaluation/queries.md` § 10 and
+  `evaluation/provenance/`.
 - **Branches, all local and unmerged**, in this order:
   1. `feat/feed-saved-filter`
   2. `feat/rag-eval`
@@ -22,22 +32,34 @@ search is close to broken for non-UK users, which is not fixed yet.)
   4. `feat/second-judge`
   5. `feat/fresh-eval`
   6. `fix/judging-disclosure`
+  7. `feat/pakistan-sources`
 
 ### Next actions, in order
 
 1. **A walkthrough with the developer**, in plain language: the pipeline, the evaluation, and
-   the rules R1–R5. On 10-13 the developer said she had marked sheets without understanding
-   the task. Nothing below should be handed over until she can explain it.
-2. **Fix search for non-UK users.** Plan it first. Start with the one-word Jobicy retry.
+   the rules R1–R5. A separate session was offered for it on 10-13 and has not happened yet.
+   It must now also cover the new sources, the "country" badge and the job-title expansion.
+2. **The Careerjet key** (Phase B, above). If sign-up needs a card or forbids student use,
+   stop, and record local jobs as a limitation.
 3. **Send `evaluation/second_judge/` to a classmate**, with no AI. This is the only human
    validation the verdicts will get.
 4. **The fresh experiment**, judged by the developer **by hand**: write N01–N15, then F0.
+   **Decide first whether it runs as a Pakistan profile, a UK profile, or both.** Every
+   earlier number used a UK profile and the old sources.
 5. **The report:**
    - methods, with the AI-assisted judging disclosed (chat B's record suggests wording)
    - both results with their caveats
-   - the non-UK limitation
-6. Demo account checks: saved jobs stay off `/feed`, and the no-match message shows.
+   - the source change and when it happened
+   - the prompt tuned on Q01–Q05
+   - the Careerjet IP-forwarding privacy note, if Phase B ships
+6. Demo account checks: saved jobs stay off `/feed`, and the no-match message shows. Also
+   search as a Pakistan account.
 7. Merge via PR.
+
+## Where we left off — 2026-10-13 (judging disclosed; non-UK search defect found)
+
+Superseded by the entry above. In short: the verdicts were disclosed as AI-proposed, and the
+Pakistan search defect was reproduced.
 
 ## Where we left off — 2026-10-11, latest (second judge ready to send)
 

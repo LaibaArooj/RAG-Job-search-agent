@@ -11,6 +11,120 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-10-13 (later) — Search works for a seeker in Pakistan: new job source, job-title expansion
+
+Branch `feat/pakistan-sources`, commit `4ba518f`. This fixes the defect recorded in the entry
+below.
+
+### Why: the sources had changed underneath the project
+
+Measured live on 2026-10-13, as a Pakistan account:
+
+| Source | What it gave a Pakistan user |
+|---|---|
+| Adzuna | Nothing: it has no Pakistan market, so it is skipped (deviation 8) |
+| Remotive | The same 16 jobs for every query. Its own API notice also asks for **at most 4 calls a day**, and we made one per variant per search, so we were breaking its terms |
+| Jobicy | The worldwide-eligible pool was **11 jobs** (100 on 09-23). 0 results for 5 of 7 test queries |
+
+So the retry fix alone would have stopped the irrelevant results but left almost nothing.
+
+### Removed
+
+- **Remotive and Jobicy**, with their fetchers, filters and `JobCard.from_remotive` /
+  `from_jobicy`. Frozen fixtures store normalised dicts, so re-scoring still works.
+
+### Added
+
+- **Himalayas as the remote-jobs source** (free, no key, no card).
+  - It filters by the user's country server-side: `country=PK` returns jobs that are
+    unrestricted or name Pakistan.
+  - Its eligibility is a **structured list** (`locationRestrictions`; an empty list means
+    worldwide), not free text.
+  - Measured for Pakistan: **3,947 eligible jobs**. Customer service 190, writing 150, data
+    analyst 174, software developer 440, accountant 43.
+  - Its terms ask for a visible link back and a "data from Himalayas" credit. Every Himalayas
+    card's source badge links to himalayas.app.
+  - A 429 rate limit counts as a failed source (the TC-018 banner). A country it does not
+    recognise falls back to worldwide jobs.
+- **A new eligibility badge, "✅ Open to your country".** It is set only when a structured list
+  names the user's country. Free text is still never matched against a country, so "APAC" stays
+  "regional".
+
+### Changed
+
+- **One retry rule for every source** (`_narrowed_attempts`):
+  - retry only on a word that names a field of work (`CATEGORY_HINTS`)
+  - if there is no such word, don't retry, and return an honest empty result
+
+  This replaced Jobicy's retry on the longest word, which searched "people" and "degree".
+- **One level filter for every source** (`_filter_level`).
+- **The AI panel's "can apply" rule widened (deviation 7).**
+  - "Open to your country" jobs count as applicable.
+  - Local jobs also count, but only for a user whose profile has a country, because sources
+    are now chosen per country.
+  - The default is unchanged, so `generate_rag_picks.py` and `picks_fresh.py` still reproduce
+    the system that was evaluated.
+- **Query expansion now produces job titles (deviation 1).**
+  - The intent prompt asks for 2–3 titles an employer would actually advertise, 1–3 words each.
+  - Conditions such as "no degree", "no experience" or "remote" go into the level and
+    work-type keys, never into a search phrase.
+  - "No degree" means entry level, on both the LLM path and the keyword fallback.
+  - "degree" is never sent as a search word.
+
+### Fixed
+
+- **Q01–Q05 as a Pakistan user.** Unique jobs across all variants:
+
+  | Query | Before | After |
+  |---|---|---|
+  | Q01 creative from my bedroom | 1 (a senior role) | 43 |
+  | Q02 help people all day | 4 interpreter jobs | 31 |
+  | Q03 numbers but not boring | 1 | 38 |
+  | Q04 tech, no degree | 2 (unrelated) | 27 |
+  | Q05 writing, get paid | 0–2 | 38 |
+
+  For Q04, Groq now searches "junior developer" and "IT support". The results include Junior
+  Software Engineer and Junior Full Stack Developer.
+- **Caught by `verify_live.py` before commit.** Asked to "translate a vague wish", the model
+  turned `qwertyuiop zxcvbnm asdfgh` into "Data entry clerk", so TC-018's "No jobs matched"
+  became unreachable. The prompt now says to return no variants for a search that describes no
+  work, and `verify_intent.py` checks it.
+
+### Honesty notes for the report
+
+- **The prompt was changed after seeing five evaluation queries fail live.** That is tuning on
+  test data. The examples inside the prompt deliberately come from none of the evaluation
+  queries, and the fresh N01–N15 run is the fair test of it.
+- **Every existing evaluation number came from the old sources with a UK profile.** They
+  remain a valid record of that system. `score.py` and `score_rag.py` re-ran byte-identical.
+  The report must say the live sources have since changed.
+- **Groq's titles vary between runs.** Q02 once came back as "home health aide".
+- **Himalayas' tags can be wrong.** A "…Work From Home – Canada" job came back tagged
+  unrestricted.
+- **Cached pools from the old sources** expire within 60 minutes.
+
+### Researched and rejected
+
+These sources were researched and rejected:
+
+- **No API, only scrapers:** Rozee.pk, Mustakbil and Bayt.
+- **APIs closed:** Indeed, Glassdoor and LinkedIn.
+- **Resold, scraped Google data** (fails the no-ToS-violation rule): SerpApi and JSearch.
+- **Tiny pools or no search:** Remote OK, The Muse, Arbeitnow and others.
+
+**Still to do (Phase B): Careerjet**, for local jobs in Lahore, Karachi and Islamabad.
+
+- It has an official v4 API with an `en_PK` locale.
+- Measured with the sample ID from its docs: customer service 400+, writing 237, software
+  developer 71.
+- It needs a free publisher key that the developer must sign up for. First check that sign-up
+  asks for no card and allows a student project.
+- It also requires forwarding the user's IP and user agent, which the report must state.
+
+`verify_all.py`: **577 passed, 0 failed** (was 543).
+
+---
+
 ## 2026-10-13 — Correction: the relevance verdicts were AI-proposed, not judged by the developer
 
 ### Corrected

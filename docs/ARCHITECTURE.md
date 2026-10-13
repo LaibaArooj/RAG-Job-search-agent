@@ -2,8 +2,8 @@
 
 Derived from SDD v1.0 §3–§5. Claude keeps this current as the code evolves.
 
-Last updated: 2026-09-20 (search route moved into the ui blueprint; per-source fetch
-compensation added to api_client after Remotive stopped honouring its search parameter)
+Last updated: 2026-10-13 (Remotive and Jobicy replaced by Himalayas; one retry rule and one
+level filter for every source; query expansion produces job titles; new `country` eligibility)
 
 ## System overview
 
@@ -21,7 +21,7 @@ Flask application layer
         |
         +--> Data layer: MongoDB Atlas (users) · Flask session · job_cache (optional)
         |
-        +--> External: Adzuna API · Remotive API · Groq (Llama 3)
+        +--> External: Adzuna API · Himalayas API · Groq (openai/gpt-oss-120b)
 ```
 
 ## Layers
@@ -32,7 +32,7 @@ Flask application layer
 | Application | UIController, AuthController, JobSearchAgent | Business logic and orchestration |
 | AI / ML | SemanticEngine, RAGPipeline, intent_parser | Pure Python, called synchronously |
 | Data | MongoDB Atlas, Flask session, job_cache | Persistence |
-| External | Adzuna, Remotive, Groq, HuggingFace (once) | Third-party services |
+| External | Adzuna, Himalayas, Groq, HuggingFace (once) | Third-party services |
 
 ## The nine classes
 
@@ -44,9 +44,9 @@ Flask application layer
 | `SemanticEngine` | Wraps all-MiniLM-L6-v2; encode / batch_encode / similarity | sentence-transformers |
 | `RAGPipeline` | retrieve → augment → generate, plus `fallback()` | prompt construction |
 | `intent_parser` | Groq-based structured intent + query variants, keyword fallback | intent schema |
-| `APIClient` | Adzuna, Remotive, Groq calls; Adzuna rate limiter | `requests` |
+| `APIClient` | Adzuna and Himalayas calls; per-source compensation and retry | `requests` |
 | `DatabaseManager` | Thin PyMongo facade — `get_user_context`, `increment_score` | PyMongo |
-| `JobCard` | Normalises Adzuna and Remotive field shapes into one | — |
+| `JobCard` | Normalises Adzuna and Himalayas field shapes into one, with eligibility | — |
 | `UIController` | Flask route functions | Flask routing |
 
 **The layering rule is a graded design property.** Only `DatabaseManager` imports PyMongo,
@@ -58,21 +58,21 @@ Swapping any dependency should mean editing one file.
 1. Auth check — unauthenticated requests redirect to `/login` before anything else
 2. `DatabaseManager.get_user_context(user_id)` — profile fetched before any API call
 3. `parse_intent(query)` — Groq call returning structured JSON: work type, experience,
-   category, and 2–3 alternative query phrasings. Falls back to keyword matching on failure
+   category, and 2–3 **job titles** to search (since 2026-10-13; conditions such as "no
+   degree" go in the closed-set keys, never in a title, and gibberish gets none). Falls back
+   to keyword matching on failure
 4. `enrich_query(query, context)` — profile injected into the query text
-5. Query encoding, then Adzuna + Remotive + **Jobicy** fetched once per query variant. Each
-   source is compensated for inside `api_client`: work-type words are stripped from Adzuna's
-   keyword query (its `what=` is an AND match, so one such word returns nothing) and passed as
-   Adzuna's own parameters, while Remotive — which ignores its search parameter and returns a
-   fixed list — is filtered locally on the job title, and on the requested level when one was
-   parsed.
-   **Jobicy, added 2026-09-23**, is queried with `geo=anywhere` so that candidate eligibility
-   is filtered server-side. Its `tag=` is an AND match that collapses the same way Adzuna's
-   does, so the same stopword and work-type stripping is applied first, with one retry on the
-   longest token — two HTTP calls per variant, capped, because Jobicy publishes no rate limit.
-   Source ORDER is load-bearing: Jobicy is fetched last, so that a listing syndicated to both
-   it and Adzuna keeps Adzuna's copy and its eligibility stays honestly `local` rather than
-   being relabelled `open` by fetch order.
+5. Query encoding, then the sources that can serve the user's country are fetched once per
+   query variant: **Adzuna** (only for its 19 markets) and **Himalayas** (every country,
+   filtered server-side with `country=<ISO code>`). Remotive and Jobicy were removed on
+   2026-10-13 — see `docs/CHANGELOG.md`. Both searches are AND keyword matches, so one rule is
+   shared (`_narrowed_attempts`): work-type words and stopwords are stripped, and if that finds
+   nothing ONE retry is made on the words that name a field of work (`CATEGORY_HINTS`). If the
+   query names no field, no retry is made and the source honestly returns nothing. Work type
+   is passed to Adzuna as its own parameter; one level filter (`_filter_level`) drops titles
+   that contradict the requested level, for every source.
+   Source ORDER is load-bearing: Adzuna is fetched first, so a listing on both keeps the local
+   copy and its honest `local` badge rather than being relabelled by fetch order.
    **Deferred, deliberately:** the SDD specifies a parallel fork here (query encoding ‖ Adzuna
    ‖ Remotive, ~800 ms saved). `core/agent.py` fetches *sequentially* as of 2026-09-19. With
    three variants that is six sequential HTTP calls and the demo is correspondingly slow. The
@@ -91,7 +91,7 @@ Swapping any dependency should mean editing one file.
    `CATEGORY_HINTS` using the job's **own** title and description. Neither API's taxonomy is
    consulted (settled 2026-09-21). The parsed intent's category is the fallback for a job whose
    text matches nothing, and `"other"` is the last resort. It runs here rather than in
-   `JobCard.from_adzuna` / `from_remotive` because `JobCard` normalises *shape* and carries no
+   `JobCard.from_adzuna` / `from_himalayas` because `JobCard` normalises *shape* and carries no
    policy, and because running it in the agent covers jobs read back out of the cache too.
    Honest description: keyword matching over job text, not classification by meaning.
    **Rewritten 2026-09-22** after four of five jobs real users had saved were misfiled as
@@ -236,21 +236,22 @@ core/
     intent_parser.py            BUILT — parse_intent (Groq + keyword fallback),
                                 enrich_query; TC-019, TC-020
 adapters/
-    api_client.py               BUILT — Adzuna + Remotive fetch, one path only.
+    api_client.py               BUILT — Adzuna + Himalayas fetch, one path only.
                                 fetch_variant() returns jobs, failed_sources and
                                 empty_sources separately; normalising is delegated to
                                 JobCard. Also carries the per-source compensation, because
-                                nothing above should know how either API misbehaves:
-                                work-type words are stripped from Adzuna's keyword query
-                                and passed as its own parameters instead, and Remotive --
-                                which ignores its search parameter entirely -- is fetched
-                                then FILTERED LOCALLY on the job title
+                                nothing above should know how any API misbehaves:
+                                _narrowed_attempts (one retry rule), _filter_level (one
+                                level filter), country skip for Adzuna, worldwide
+                                fallback when Himalayas rejects a country
     db_manager.py               BUILT — MongoDB facade
 models/
     user.py                     BUILT — User dataclass
     job_card.py                 BUILT — JobCard dataclass; the single place an Adzuna/
-                                Remotive field-shape difference is resolved. make_job_id
-                                (SHA-256 of title|company) is the dedupe key (TC-022)
+                                Himalayas field-shape difference is resolved, plus
+                                restriction_eligibility (exact match of the user's country
+                                against a STRUCTURED list -> open/country/regional).
+                                make_job_id (SHA-256 of title|company) is the dedupe key
 templates/                      index, register, login, profile, feed
 static/css/, static/js/
 tests/                          empty — pytest is not yet a dependency
@@ -374,8 +375,7 @@ not by a read-then-write check in Python, which a concurrent signup could slip b
 | Service | Used for | Env var | Limit |
 |---|---|---|---|
 | Adzuna | Live job listings for **19 country markets**, verified empirically 2026-09-23 (`at au be br ca ch de es fr gb in it mx nl nz pl sg us za`). **Skipped entirely** for a user whose country is not one of them — `jobs/pk/search` returns 404, so there is no endpoint to call | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | 250 requests/day |
-| Remotive | Remote job listings. Ignores `search`, `category` and `limit` alike — fetched once and filtered locally, capped at 18 jobs | none — no auth | none |
-| Jobicy | Remote job listings **filtered by candidate eligibility** (`geo=anywhere`). Added 2026-09-23; the only free source that both searches and filters eligibility server-side | none — no auth | none published — treat as unknown |
+| Himalayas | Remote job listings, **filtered by the user's country server-side** (`country=PK` returns unrestricted jobs plus those naming Pakistan). Eligibility is a structured `locationRestrictions` list. Added 2026-10-13, replacing Remotive (fixed list, 4 calls/day terms) and Jobicy (pool down to 11). Terms: visible link back and "data from Himalayas", done by the linked source badge on each card | none — no auth | rate-limited (429), no published number; max 20 per page |
 | Groq | LLM inference — `openai/gpt-oss-120b`. **A reasoning model**: hidden reasoning tokens count against `max_tokens`, so both call-site budgets were raised. Llama 3 and then `groq/compound-mini` were each decommissioned by Groq; see `docs/PROJECT_SPEC.md` § Deviations | `GROQ_API_KEY` | free-tier rate limits |
 | MongoDB Atlas | User profiles | `MONGODB_URI` | 512 MB |
 | HuggingFace | One-time model download | none | — |
@@ -393,7 +393,8 @@ not by a read-then-write check in Python, which a concurrent signup could slip b
 | Bootstrap, no JS framework | Keeps complexity manageable for one developer | React / Vue |
 | LLM intent parsing | Keyword if-statements don't meet the SRS's own definition of an Agent | `if 'remote' in query` (kept as fallback) |
 | Query expansion (2–3 variants) | Widens the candidate pool the semantic layer can rank | Single keyword query |
-| Dedupe on title+company hash | Adzuna and Remotive syndicate overlapping listings | No dedupe (duplicates in results) |
+| Dedupe on title+company hash | Sources syndicate overlapping listings | No dedupe (duplicates in results) |
+| Structured eligibility only (2026-10-13) | An exact country list can be matched without guessing; free text ("APAC") cannot | Matching region names to countries |
 
 ## Known limitation of this architecture
 
