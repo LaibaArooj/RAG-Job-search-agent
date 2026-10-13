@@ -80,10 +80,14 @@ A short section in the final report:
 
 ## Honest framing
 
-Twenty queries judged by the developer is not a rigorous IR evaluation. Say so. The right
-framing is: *a small-scale relevance assessment indicating the direction of the effect, limited
-by a single non-blind-to-the-project judge and a 20-query sample.* Naming the weakness is what
-makes it credible.
+This is not a rigorous IR evaluation. Say so. **Corrected 2026-10-13:** the verdicts were
+not judged by the developer. They were proposed by Claude (Claude Sonnet 5.5, claude.ai) and
+adopted by the developer. See `evaluation/queries.md` § 10 and `evaluation/provenance/`.
+
+The right framing is: *a small-scale relevance assessment indicating the direction of the
+effect, using AI-proposed relevance verdicts from a single model, blind to the system, with no
+human validation yet, over a 20-query sample.* For the RAG stage, add that an LLM judging an
+LLM's picks may be circular. Naming the weakness is what makes it credible.
 
 ## The RAG stage — pre-registered 2026-10-01
 
@@ -120,8 +124,9 @@ have measured that re-partition and the LLM together.
 
 ## Second judge — pre-registered 2026-10-11, awaiting a judge
 
-Both results rest on one judge, the developer. This measures how much the verdicts depend on
-who judged.
+Both results rest on AI-proposed verdicts from a single model (§ 10). This is now **the human
+validation of those verdicts**: an independent person, using no AI, judges a random sample
+blind, and kappa measures how far a human agrees with the AI-proposed verdicts.
 
 - **Protocol:** `evaluation/queries.md` § 9. The seed was committed before the draw.
 - **Sample:** 6 random queries (Q16, Q12, Q20, Q11, Q09, Q01), 58 cards, each identical to

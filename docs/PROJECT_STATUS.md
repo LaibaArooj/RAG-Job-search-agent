@@ -1,8 +1,43 @@
-Last updated: 2026-10-11 (**M4 in progress. Both evaluations are measured.** Semantic re-ranking
-did not beat keyword order (precision@5, 09-30). The LLM's three picks beat the first three
-of the same five without ever losing a query, but the Adzuna-only headline is not
-significant (precision@3 0.43 vs 0.37, p = 0.25). What remains is the write-up, the demo and
-the merges.)
+Last updated: 2026-10-13 (**M4 in progress. Two corrections take priority over new work.**
+Every relevance verdict was AI-proposed, not judged by hand; it is disclosed and recorded. And
+search is close to broken for non-UK users, which is not fixed yet.)
+
+## Where we left off — 2026-10-13 (judging disclosed; non-UK search defect found)
+
+**Read the 2026-10-13 changelog entry, then `evaluation/provenance/README.md`.**
+
+- **Judging.** All verdicts were proposed by Claude (Claude Sonnet 5.5) and adopted by the
+  developer.
+  - Disclosed in `evaluation/queries.md` § 10, with records in `evaluation/provenance/`.
+  - Every "judged by the developer" is corrected, and no number changed.
+  - `rag_results.md` has the circularity caveat, plus post-hoc sensitivity rows. No row
+    reverses L ≥ K.
+- **Search for non-UK users.** As a Pakistan account, vague queries return nothing, or the
+  same unrelated jobs. The cause is the Jobicy one-word retry, plus Adzuna never being queried
+  for pk. Reproduced 10-13; not fixed.
+- **Branches, all local and unmerged**, in this order:
+  1. `feat/feed-saved-filter`
+  2. `feat/rag-eval`
+  3. `feat/ai-panel-no-match`
+  4. `feat/second-judge`
+  5. `feat/fresh-eval`
+  6. `fix/judging-disclosure`
+
+### Next actions, in order
+
+1. **A walkthrough with the developer**, in plain language: the pipeline, the evaluation, and
+   the rules R1–R5. On 10-13 the developer said she had marked sheets without understanding
+   the task. Nothing below should be handed over until she can explain it.
+2. **Fix search for non-UK users.** Plan it first. Start with the one-word Jobicy retry.
+3. **Send `evaluation/second_judge/` to a classmate**, with no AI. This is the only human
+   validation the verdicts will get.
+4. **The fresh experiment**, judged by the developer **by hand**: write N01–N15, then F0.
+5. **The report:**
+   - methods, with the AI-assisted judging disclosed (chat B's record suggests wording)
+   - both results with their caveats
+   - the non-UK limitation
+6. Demo account checks: saved jobs stay off `/feed`, and the no-match message shows.
+7. Merge via PR.
 
 ## Where we left off — 2026-10-11, latest (second judge ready to send)
 
@@ -98,7 +133,8 @@ summary.
 
 ### The result, in one paragraph for the report
 
-On 20 pre-registered queries judged blind by the developer, semantic re-ranking was
+On 20 pre-registered queries judged blind to the system (verdicts AI-proposed and adopted by the
+developer; corrected 2026-10-13, see `evaluation/queries.md` § 10), semantic re-ranking was
 indistinguishable from Adzuna's keyword order: precision@5 0.32 vs 0.31, 3 wins and
 3 losses (sign test p = 1.0). It helped some vague and negation queries and hurt some
 specific ones. Across all sources it was slightly worse (0.30 vs 0.32). The 0.02

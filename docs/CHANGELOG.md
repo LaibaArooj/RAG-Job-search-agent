@@ -11,6 +11,62 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ---
 
+## 2026-10-13 — Correction: the relevance verdicts were AI-proposed, not judged by the developer
+
+### Corrected
+
+- **Every relevance verdict in both evaluations was proposed by Claude** (Claude Sonnet 5.5,
+  claude.ai) and adopted by the developer, who disclosed this on 2026-10-13.
+  - Chat A did the 20 main sheets and the Adzuna supplement's first pass, 09-26 to 09-30.
+  - Chat B did the supplements on 10-11, including the Q10.1 and Q11.2 re-readings.
+- **Which earlier statements were wrong:**
+  - "Judge: the developer" in `results.md` and `rag_results.md`
+  - "judged by the developer" in `EVALUATION.md`, `PROJECT_SPEC.md` and `PROJECT_STATUS.md`
+  - "You, once" in `VIVA_PREP.md`
+  - the 2026-09-30 and 2026-10-11 entries below, which are left as written because they are
+    history
+- All of these are now corrected. No verdict and no headline number changed.
+- **Recorded:** `evaluation/queries.md` § 10, and `evaluation/provenance/`. That holds both
+  chats' own accounts, unedited, plus a who-did-what table. A third, notes-only account was
+  left out, because it verifies nothing and states a wrong fact.
+
+### What still holds, and what it costs
+
+- **Still holds:** the sheets were blind to the system, because neither chat saw a key, a
+  rank or a source. Chat A's own errors (the Q20 portfolio reasoning, the false duplicate
+  flags, the "retrieval problem" claim) were corrected before scoring.
+- **Costs:**
+  - These are a single model's verdicts with no human validation.
+  - The RAG stage may be circular, because an LLM judged an LLM's picks.
+  - Chat B judged under a "be strict" instruction, and used unverified aggregator copies of
+    two adverts.
+
+### Added
+
+- **Post-hoc sensitivity rows** in `rag_results.md` for every judgment call chat B listed,
+  labelled as added after unblinding. **No reading reverses L ≥ K.** Three single flips each
+  take the precision@5 B − A of 0.01 to 0.00, which only underlines that it was a null result.
+- **The second judge is now the human validation.** RULES.md says to use no AI, and the
+  scorer reports human-versus-AI-assisted agreement.
+- **The fresh experiment will be judged by hand**, with no AI (F3, added before any fresh
+  query exists).
+
+### Found the same day: search is close to broken for non-UK users
+
+The developer's test accounts are set to Pakistan, where Adzuna is never queried
+(deviation 8). Running Q01–Q05 through the real pipeline as that account gave this:
+
+- two searches returned nothing
+- "a job where I help people all day" and "I want to get into tech but I have no degree"
+  returned **the same four interpreter jobs**
+
+**The cause:** when Jobicy matches nothing, the one-word retry sends the longest word.
+"people", "degree" and "somewhere" are meaningless tags. **Every evaluation ran as a UK
+user**, so none of the numbers describe what a Pakistan user sees. This is not fixed yet; it
+is the next code task.
+
+---
+
 ## 2026-10-11 (later still) — A second judge is pre-registered, and the sheet is ready to send
 
 ### Added

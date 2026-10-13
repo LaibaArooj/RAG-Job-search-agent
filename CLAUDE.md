@@ -124,7 +124,11 @@ missed. And **measured on 2026-09-30, the re-ranking did not beat keyword order*
 The LLM stage measured differently (2026-10-11, `evaluation/rag_results.md`). Its three
 picks beat the first three of the same five by a small margin and never lost a query, but
 the headline is **not significant** (p = 0.25). Never write "the LLM improves results"
-without that qualifier. Don't write comments, docstrings or report text implying otherwise. If I ask you to
+without that qualifier. **The relevance verdicts were proposed by Claude (Claude Sonnet 5.5,
+claude.ai) and adopted by the developer**, not judged by hand (disclosed 2026-10-13,
+`evaluation/queries.md` § 10, `evaluation/provenance/`). Never write "judged by the developer"
+or describe the judging as human. For the RAG stage, always state the LLM-judging-LLM
+circularity. From 2026-10-13, any remaining judging is human, with no AI. Don't write comments, docstrings or report text implying otherwise. If I ask you to
 describe what the system does, describe it accurately — overclaiming in the code or the write-up
 is what gets picked apart in a viva.
 

@@ -326,7 +326,7 @@ are the ones an examiner is most likely to find.
 
 0. **Semantic re-ranking did not measurably beat keyword order.** Added 2026-09-30. On the
    Adzuna-only headline, precision@5 was 0.32 vs 0.31 (3 wins, 3 losses, 13 ties). Across all
-   sources it was 0.30 vs 0.32. The evaluation itself is limited: one judge (the developer),
+   sources it was 0.30 vs 0.32. The evaluation itself is limited: AI-proposed verdicts from one model, adopted by the developer, with no human validation yet (disclosed 2026-10-13, `evaluation/queries.md` § 10),
    20 queries, only 13 of which can discriminate on the headline, and relevance judged only
    on the pooled top 5s. Full detail in `evaluation/results.md` and `evaluation/queries.md` § 7.
 

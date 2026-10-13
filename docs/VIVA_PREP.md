@@ -123,8 +123,21 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
 - **"What does p = 1.0 mean?"** An even win/loss split. A high p is not evidence that there's
   no effect; with this few non-tied queries, only a large, consistent effect could be
   detected.
-- **"Who judged?"** You, once, not blind to the project but blind to the system. Name it as
-  the main threat to validity before they do.
+- **"Who judged?"** (Rewritten 2026-10-13. The old answer, "you", was wrong.) The verdicts
+  were proposed by Claude in claude.ai, from the card text, blind to the system, and you
+  adopted them. Say that first, before they ask. Then give three things:
+  - the table in `evaluation/provenance/README.md`
+  - that the judging chat's own errors were caught and corrected before scoring (§ 7, and
+    the git history)
+  - that a human check is what the second judge is for
+- **"Why did you use an AI to judge?"** Be honest about why. Then the defence: LLM-as-judge
+  is an established method, *if* it is validated against humans, and that validation is the
+  missing piece you're adding. Don't claim it was a design choice if it wasn't.
+- **"Isn't judging an LLM's picks with an LLM circular?"** Yes, possibly, and it's stated
+  beside the RAG numbers. The judge may share the picker's preferences, so "L never lost a
+  query" could be partly that. The precision@5 null result is less exposed, because an AI
+  judge has no obvious reason to prefer the ranker over keyword order. The human second
+  judge measures how much it matters.
 - **"So how do you know the verdicts aren't just your opinion?"** A second, independent judge
   marked a random sample blind (`queries.md` § 9). Quote the kappa, and then the raw and
   positive agreement, because relevant cards are rare and kappa alone can mislead. If it's
@@ -161,7 +174,8 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
   precision gain didn't come from obeying the eligibility instruction. Be ready for the
   follow-up: this means the LLM partly undoes deviation 7.
 - **"Your secondary p is 0.016. Isn't that a significant result?"** It is the secondary
-  pool, and one of two comparisons, with a single judge. Report it as significant at that
+  pool, and one of two comparisons, with AI-proposed verdicts from a single model that may
+  share the picker's preferences (§ 10). Report it as significant at that
   level, but lead with the non-significant headline because that is what was
   pre-registered.
 - **"Did your LLM ever recommend a job it knew didn't fit?"** Yes, until 10-11, and you
