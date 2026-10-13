@@ -384,3 +384,40 @@ sample below could not be chosen after seeing it.
   same queries. Only the **direction** of B − A and L − K is compared. Six queries can show
   no significance.
 - Every disagreement is listed by query and card. **The result is reported whatever it is.**
+
+---
+
+## 10. Disclosure — the verdicts were AI-proposed (disclosed 2026-10-13)
+
+**Everything above is unchanged, and so is every verdict.** This section corrects one fact
+that § 3 to § 9 and every results file stated wrongly: who judged.
+
+- **All verdicts were proposed by Claude** (Claude Sonnet 5.5 per the developer, in claude.ai)
+  and adopted by the developer. The developer states she adopted them unchanged.
+  - **Chat A** proposed the verdicts for the 20 main sheets and the Adzuna supplement's first
+    pass, 2026-09-26 to 09-30. It saw pasted sheet text only.
+  - **Chat B** proposed the verdicts for the Adzuna supplement re-read and the RAG sheet on
+    2026-10-11, including both § 8.6 readings. It used aggregator copies of two postings
+    (Q11.2 and the Welocalize cards), and it was told to judge strictly.
+  - Both chats' own accounts are in `evaluation/provenance/`, unedited.
+- **What held.** Neither chat saw a key, a rank or a source, so the sheets were blind to the
+  system as designed. The § 7 clarifications answer gaps chat A raised, and were decided
+  before `key.json` was opened. Chat A's errors that § 7 corrected were all corrected before
+  scoring.
+- **What this costs.**
+  - The verdicts are a single model's, with **no human validation**. "Judged by the
+    developer" must not be said anywhere.
+  - **The RAG stage (§ 8) is exposed to circularity.** An LLM judged whether an LLM's picks
+    were relevant, and it may share that LLM's preferences. L never losing a query could be
+    partly that.
+  - **The strictness instruction** pushes chat B's verdicts toward not relevant.
+  - **Chat B's two external readings** rest on aggregator copies, matched to the cards by
+    wording, and were not checked against the captured adverts.
+- **Added in response, after unblinding, as sensitivity only.** `score_rag.py` now also
+  re-scores with each judgment-call card chat B lists, flipped one at a time (or as a group,
+  for Welocalize). These rows sit beside the headline and never replace it.
+- **§ 9 now measures human-versus-AI agreement.** The second judge is a person, instructed to
+  use no AI. Their kappa against these verdicts is the only human validation the evaluation
+  will have, and it should be read that way.
+- **From 2026-10-13, every remaining judgement is human.** That covers the second judge and
+  the fresh-query experiment (`evaluation/fresh/queries.md` F3), with no AI assistance.

@@ -14,7 +14,8 @@ to them, which is tuning to the test set. These 15 have never been fetched.
 
 _Replace this paragraph. Say plainly what you have seen: the results of the original 20
 queries, including which kinds of query the LLM did well and badly on, and that the same person
-is writing these queries and will judge the results. Confirm that none of the 15 below is one of
+is writing these queries and will judge the results. State that the earlier verdicts were
+AI-proposed (`evaluation/queries.md` § 10) and that these will be judged by hand. Confirm that none of the 15 below is one of
 the original 20 or one of the strings in `evaluation/queries.md` § 1, and that none was chosen
 because you expect the LLM to do well or badly on it._
 
@@ -95,6 +96,10 @@ all-sources is the pool production hands it.
 - Relevance is R1–R5 from `evaluation/queries.md` § 3, read with C1–C4 of § 7, judged on the
   **card only** (§ 8.6). Genuinely ambiguous means not relevant. Eligibility is not part of
   relevance.
+- **Judged by the developer, by hand, with no AI assistance.** Added 2026-10-13, before any
+  fresh query or pool existed, after it was disclosed that every earlier verdict was
+  AI-proposed (`evaluation/queries.md` § 10). This is the one evaluation in the project that
+  can be fully human and fully blind.
 
 ## F4. Runs and budget
 

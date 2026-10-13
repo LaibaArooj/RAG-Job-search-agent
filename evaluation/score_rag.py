@@ -42,14 +42,38 @@ RAG_DUPLICATES = {}
 
 POOL_NAMES = {"adzuna": "Adzuna-only", "all": "all-sources"}
 
-# § 8.6: alternative readings scored BESIDE the headline, never instead of it. Each is
-# (label, query, job_id, verdict under that reading).
+# Alternative readings, scored BESIDE the headline and never instead of it. Each row is
+# (label, [(sheet, query, card number, expected title, verdict under that reading), ...]).
+# The first two are the § 8.6 rulings. The rest were added on 2026-10-13, AFTER unblinding, as
+# post-hoc sensitivity: they are the judgment calls chat B itself lists in its § 7
+# (evaluation/provenance/chat-B-supplements.md), each flipped against its committed verdict.
+_WELO = "Sports Localization Specialist (Football)"
 SENSITIVITY = [
-    ("Q10.1 (Adzuna supplement) re-read after unblinding as not relevant", "Q10",
-     "fee8787ba1b4d9d9", False),
-    ("Q11.2 (RAG sheet) on the external posting instead of the card: not relevant", "Q11",
-     "4c394bd43ea5f22e", False),
+    ("§ 8.6: Adzuna Q10.1 re-read after unblinding, not relevant",
+     [("adzuna", "Q10", 1, "Oxbridge Graduates - Aspiring Primary Teacher", False)]),
+    ("§ 8.6: RAG Q11.2 on an aggregator copy of the posting (unverified against the captured "
+     "advert), not relevant", [("rag", "Q11", 2, "Conceptual Copywriter", False)]),
+    ("post-hoc: RAG Q08.1 not relevant", [("rag", "Q08", 1, "Creative (Motion Design)", False)]),
+    ("post-hoc: RAG Q17.3 not relevant",
+     [("rag", "Q17", 3, "Solution Architecture Manager", False)]),
+    ("post-hoc: RAG Q02.1 relevant", [("rag", "Q02", 1, "Solution Engineer", True)]),
+    ("post-hoc: the 8 Welocalize cards relevant (one decision, flipped together)",
+     [("rag", "Q15", n, f"{lang} {_WELO}", True)
+      for n, lang in enumerate(("Dutch", "Hebrew", "Slovak", "Ukrainian"), 1)]
+     + [("rag", "Q16", n, f"{lang} {_WELO}", True)
+        for n, lang in enumerate(("Ukrainian", "Hebrew", "Slovak", "Dutch"), 1)]),
+    ("post-hoc: Adzuna Q02.1 not relevant", [("adzuna", "Q02", 1, "Family Help Practitioner", False)]),
+    ("post-hoc: Adzuna Q19.1 not relevant", [("adzuna", "Q19", 1, "AS400 Lead", False)]),
 ]
+
+
+def resolve_card(sheet, qid, n, title, key_rag, key_adzuna):
+    """Return the job_id of supplement card qid.n, asserting it is the card the row names."""
+    key, number = (key_rag, "rag_n") if sheet == "rag" else (key_adzuna, "supplement_n")
+    found = [(jid, c["title"]) for jid, c in key["queries"][qid]["candidates"].items()
+             if c.get(number) == n]
+    assert len(found) == 1 and found[0][1] == title, f"{sheet} {qid}.{n} is {found}, not {title!r}"
+    return found[0][0]
 
 
 def sheet_is_marked(text):
@@ -165,22 +189,28 @@ def main():
 
     rows, eligible_rows = score_all(picks, verdicts, positions, key_rag)
 
-    # § 8.6: the same scoring under each alternative reading, one at a time.
+    # The same scoring under each alternative reading, one row at a time.
     sensitivity = []
     pairs = {qid: [(positions[qid][a], positions[qid][b]) for a, b in pp]
              for qid, pp in DUPLICATES.items()}
-    for label, qid, job_id, verdict in SENSITIVITY:
-        assert job_id in verdicts[qid], f"{label}: {job_id} is not a RAG candidate"
+    for label, flips in SENSITIVITY:
         alt = {q: dict(v) for q, v in verdicts.items()}
-        alt[qid][job_id] = verdict
+        alt_adz = {q: dict(v) for q, v in adzuna_verdicts.items()}
+        touches_p5 = False
+        for sheet, qid, n, title, verdict in flips:
+            job_id = resolve_card(sheet, qid, n, title, key_rag, key_adzuna)
+            # A card may sit in the RAG candidates, the Adzuna-only top 5s, or both; the
+            # reading is applied wherever the job is scored.
+            assert job_id in alt.get(qid, {}) or job_id in alt_adz.get(qid, {}), label
+            if job_id in alt.get(qid, {}):
+                alt[qid][job_id] = verdict
+            if job_id in alt_adz.get(qid, {}):
+                alt_adz[qid][job_id] = verdict
+                touches_p5 = True
         alt_rows, _ = score_all(picks, alt, positions, key_rag)
-        # precision@5 too, where the job is in the Adzuna-only lists results.md scored.
-        p5 = None
-        if job_id in adzuna_verdicts.get(qid, {}):
-            alt_adz = {q: dict(v) for q, v in adzuna_verdicts.items()}
-            alt_adz[qid][job_id] = verdict
-            p5 = (score_p5(key_adzuna, adzuna_verdicts, pairs),
-                  score_p5(key_adzuna, alt_adz, pairs))
+        # precision@5 too, where the card is in the Adzuna-only lists results.md scored.
+        p5 = ((score_p5(key_adzuna, adzuna_verdicts, pairs), score_p5(key_adzuna, alt_adz, pairs))
+              if touches_p5 else None)
         sensitivity.append((label, alt_rows, p5))
 
     write_results(key_rag, rows, eligible_rows, sensitivity)
@@ -265,8 +295,13 @@ def write_results(key_rag, rows, eligible_rows, sensitivity):
         "",
         "- **Question:** given the five candidates the AI panel is handed, are the LLM's three picks",
         "  (L) more relevant than the first three in rank order (K)? The ranking is held fixed.",
-        "- **Judge:** the developer, as for precision@5. Verdicts are reused from the earlier sheets;",
-        "  candidates no sheet had shown were judged blind on `SUPPLEMENT-rag.md`.",
+        "- **Judge:** verdicts proposed by Claude (Claude Sonnet 5.5, claude.ai) from the card text",
+        "  and adopted unchanged by the developer; see `evaluation/provenance/` and `queries.md`",
+        "  § 10. No human validation yet. Verdicts are reused from the earlier sheets;",
+        "  candidates no sheet had shown were judged, blind to the system, on `SUPPLEMENT-rag.md`.",
+        "- **Caveats on the judging (§ 10):** an LLM judged whether an LLM's picks were relevant,",
+        "  so the comparison may be circular -- the judge may share the picker's preferences. The",
+        "  RAG sheet's judge was also told to be strict, which pushes verdicts toward not relevant.",
         "- **precision@3** = relevant ÷ 3, always 3 (§ 8.2). A duplicate vacancy counts once (C3).",
         "- **L** is the mean over 3 runs of `openai/gpt-oss-120b` (temperature 0.3, no seed).",
         f"  {failed} of {len(all_runs)} runs failed and were scored as K (§ 8.3).",
@@ -307,10 +342,12 @@ def write_results(key_rag, rows, eligible_rows, sensitivity):
 
     out += [
         "",
-        "## Sensitivity — alternative readings (§ 8.6)",
+        "## Sensitivity — alternative readings (§ 8.6, § 10)",
         "",
-        "Each row changes ONE verdict and re-scores. The headline above uses the verdicts as",
-        "committed; these are reported beside it, never instead of it.",
+        "Each row changes ONE judgment call (the Welocalize row, one decision covering eight cards)",
+        "and re-scores. The headline above uses the verdicts as committed; these are reported beside",
+        "it, never instead of it. Rows marked post-hoc were added on 2026-10-13, after unblinding:",
+        "they are the judgment calls the judging chat itself listed (`evaluation/provenance/`).",
         "",
         "| Reading | Adzuna-only K | L | L − K | All-sources K | L | L − K |",
         "|---|---|---|---|---|---|---|",

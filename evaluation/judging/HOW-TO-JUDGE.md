@@ -1,5 +1,9 @@
 # How to mark these sheets
 
+> **Disclosed 2026-10-13:** the verdicts on these sheets were proposed by Claude (Claude Sonnet
+> 5.5, claude.ai) and adopted by the developer. They were not judged by hand. See
+> `evaluation/queries.md` § 10 and `evaluation/provenance/`.
+
 20 sheets, **139 candidates** in total. Budget an hour or two, and do it in one sitting if you
 can — a relevance rule applied on Tuesday and again on Friday is two rules.
 

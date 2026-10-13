@@ -5,8 +5,13 @@ Protocol: `evaluation/queries.md` § 8, pre-registered before any pick was gener
 
 - **Question:** given the five candidates the AI panel is handed, are the LLM's three picks
   (L) more relevant than the first three in rank order (K)? The ranking is held fixed.
-- **Judge:** the developer, as for precision@5. Verdicts are reused from the earlier sheets;
-  candidates no sheet had shown were judged blind on `SUPPLEMENT-rag.md`.
+- **Judge:** verdicts proposed by Claude (Claude Sonnet 5.5, claude.ai) from the card text
+  and adopted unchanged by the developer; see `evaluation/provenance/` and `queries.md`
+  § 10. No human validation yet. Verdicts are reused from the earlier sheets;
+  candidates no sheet had shown were judged, blind to the system, on `SUPPLEMENT-rag.md`.
+- **Caveats on the judging (§ 10):** an LLM judged whether an LLM's picks were relevant,
+  so the comparison may be circular -- the judge may share the picker's preferences. The
+  RAG sheet's judge was also told to be strict, which pushes verdicts toward not relevant.
 - **precision@3** = relevant ÷ 3, always 3 (§ 8.2). A duplicate vacancy counts once (C3).
 - **L** is the mean over 3 runs of `openai/gpt-oss-120b` (temperature 0.3, no seed).
   9 of 117 runs failed and were scored as K (§ 8.3).
@@ -139,20 +144,42 @@ Computed from the data: eligibility in ('open', 'unknown').
 
 Mean eligible@3: K 2.20, L 1.75 (out of 3).
 
-## Sensitivity — alternative readings (§ 8.6)
+## Sensitivity — alternative readings (§ 8.6, § 10)
 
-Each row changes ONE verdict and re-scores. The headline above uses the verdicts as
-committed; these are reported beside it, never instead of it.
+Each row changes ONE judgment call (the Welocalize row, one decision covering eight cards)
+and re-scores. The headline above uses the verdicts as committed; these are reported beside
+it, never instead of it. Rows marked post-hoc were added on 2026-10-13, after unblinding:
+they are the judgment calls the judging chat itself listed (`evaluation/provenance/`).
 
 | Reading | Adzuna-only K | L | L − K | All-sources K | L | L − K |
 |---|---|---|---|---|---|---|
 | Headline (as committed) | 0.37 | 0.43 | 0.06 | 0.23 | 0.36 | 0.12 |
-| Q10.1 (Adzuna supplement) re-read after unblinding as not relevant | 0.37 | 0.42 | 0.05 | 0.23 | 0.36 | 0.12 |
-| Q11.2 (RAG sheet) on the external posting instead of the card: not relevant | 0.37 | 0.43 | 0.06 | 0.23 | 0.34 | 0.11 |
+| § 8.6: Adzuna Q10.1 re-read after unblinding, not relevant | 0.37 | 0.42 | 0.05 | 0.23 | 0.36 | 0.12 |
+| § 8.6: RAG Q11.2 on an aggregator copy of the posting (unverified against the captured advert), not relevant | 0.37 | 0.43 | 0.06 | 0.23 | 0.34 | 0.11 |
+| post-hoc: RAG Q08.1 not relevant | 0.37 | 0.43 | 0.06 | 0.22 | 0.34 | 0.12 |
+| post-hoc: RAG Q17.3 not relevant | 0.37 | 0.43 | 0.06 | 0.23 | 0.34 | 0.11 |
+| post-hoc: RAG Q02.1 relevant | 0.37 | 0.43 | 0.06 | 0.23 | 0.36 | 0.12 |
+| post-hoc: the 8 Welocalize cards relevant (one decision, flipped together) | 0.37 | 0.43 | 0.06 | 0.33 | 0.43 | 0.10 |
+| post-hoc: Adzuna Q02.1 not relevant | 0.37 | 0.42 | 0.05 | 0.23 | 0.36 | 0.12 |
+| post-hoc: Adzuna Q19.1 not relevant | 0.37 | 0.42 | 0.05 | 0.23 | 0.36 | 0.12 |
 
-Adzuna-only precision@5 (`results.md`) under the same reading — Q10.1 (Adzuna supplement) re-read after unblinding as not relevant:
+Adzuna-only precision@5 (`results.md`) under the same reading — § 8.6: Adzuna Q10.1 re-read after unblinding, not relevant:
 
 | | A | B | C | B − A |
 |---|---|---|---|---|
 | As published | 0.31 | 0.32 | 0.31 | 0.01 |
 | Re-read | 0.31 | 0.31 | 0.29 | 0.00 |
+
+Adzuna-only precision@5 (`results.md`) under the same reading — post-hoc: Adzuna Q02.1 not relevant:
+
+| | A | B | C | B − A |
+|---|---|---|---|---|
+| As published | 0.31 | 0.32 | 0.31 | 0.01 |
+| Re-read | 0.31 | 0.31 | 0.29 | 0.00 |
+
+Adzuna-only precision@5 (`results.md`) under the same reading — post-hoc: Adzuna Q19.1 not relevant:
+
+| | A | B | C | B − A |
+|---|---|---|---|---|
+| As published | 0.31 | 0.32 | 0.31 | 0.01 |
+| Re-read | 0.31 | 0.31 | 0.31 | 0.00 |

@@ -123,7 +123,7 @@ def write_results(key, rows, out_path):
         "",
         "- **K** = first three of the five candidates. **L5** / **L10** = the LLM's picks from 5 / 10",
         "  candidates, mean of 3 runs. precision@3, always ÷ 3. A decline scores 0; a failure scores",
-        "  as K (F3). All-sources pool only (F2). Single judge, the developer.",
+        "  as K (F3). All-sources pool only (F2). Single judge: the developer, by hand, without AI assistance.",
         "",
         "| Query | | K | L5 | L10 | L5 runs | L10 runs |",
         "|---|---|---|---|---|---|---|",

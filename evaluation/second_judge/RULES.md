@@ -44,4 +44,7 @@ A card is **relevant** only if **all five** of these hold:
 - When every card is done, change the `**Status:** unmarked` line at the top of `SHEET.md` to
   `**Status:** marked`, and send the file back.
 
+**Judge entirely by yourself.** Please don't use ChatGPT, Claude or any other AI tool, and
+don't ask anyone else. The point is to record one person's own judgement.
+
 Please don't discuss the cards with the project's author until you have sent the sheet back.
