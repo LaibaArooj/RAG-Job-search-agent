@@ -1,6 +1,22 @@
-Last updated: 2026-10-13, later (**M4 in progress.** Every relevance verdict was AI-proposed,
-not judged by hand; that is disclosed and recorded. Search for a seeker in Pakistan now works:
-Remotive and Jobicy were replaced by Himalayas, and query expansion produces job titles.)
+Last updated: 2026-10-25 (**M4 in progress, aiming to finish in about two weeks.** Careerjet
+dropped; sources stay Adzuna + Himalayas. Emojis removed from all templates.)
+
+## Where we left off — 2026-10-25 (Careerjet dropped, two-week finish plan)
+
+- **Careerjet (Phase B) is dropped.** It will not be added; the time goes to evaluation and the
+  report instead.
+- **Emojis are removed** from every template. The project uses none anywhere.
+- **The plan, in order:**
+  1. Days 1–2: send `evaluation/second_judge/` to a classmate, with no AI.
+  2. Days 3–5: the fresh experiment, **Pakistan profile only**, judged by the developer by
+     hand. If short of time, cut to 10 queries rather than skipping it.
+  3. Days 6–7: `verify_all.py`, the demo account checks, then merge the seven branches via PR.
+  4. Days 8–11: the report.
+  5. Days 12–14: viva rehearsal (`docs/VIVA_PREP.md`) and the plain-language walkthrough.
+- If time runs short, cut the second judge's result first (report it as pending), then shrink
+  the fresh experiment.
+
+The 10-13 entry below is superseded where it disagrees.
 
 ## Where we left off — 2026-10-13, later (Pakistan search fixed on `feat/pakistan-sources`)
 
@@ -18,7 +34,8 @@ Remotive and Jobicy were replaced by Himalayas, and query expansion produces job
   gibberish gets no invented titles.
   - **Disclose:** this prompt was changed after seeing Q01–Q05 fail, so N01–N15 is its fair
     test.
-- **Phase B, Careerjet (local jobs in Lahore, Karachi and Islamabad), is waiting on a key.**
+- ~~**Phase B, Careerjet (local jobs in Lahore, Karachi and Islamabad), is waiting on a key.**~~
+  *Dropped 2026-10-25.*
   The developer signs up at careerjet.com.pk/partners after checking that sign-up asks for no
   card and allows a student project, then sets `CAREERJET_API_KEY` in `.env`. The plan is in
   the 2026-10-13 changelog entry.
@@ -39,8 +56,7 @@ Remotive and Jobicy were replaced by Himalayas, and query expansion produces job
 1. **A walkthrough with the developer**, in plain language: the pipeline, the evaluation, and
    the rules R1–R5. A separate session was offered for it on 10-13 and has not happened yet.
    It must now also cover the new sources, the "country" badge and the job-title expansion.
-2. **The Careerjet key** (Phase B, above). If sign-up needs a card or forbids student use,
-   stop, and record local jobs as a limitation.
+2. ~~**The Careerjet key** (Phase B, above).~~ Dropped 2026-10-25.
 3. **Send `evaluation/second_judge/` to a classmate**, with no AI. This is the only human
    validation the verdicts will get.
 4. **The fresh experiment**, judged by the developer **by hand**: write N01–N15, then F0.
@@ -51,7 +67,6 @@ Remotive and Jobicy were replaced by Himalayas, and query expansion produces job
    - both results with their caveats
    - the source change and when it happened
    - the prompt tuned on Q01–Q05
-   - the Careerjet IP-forwarding privacy note, if Phase B ships
 6. Demo account checks: saved jobs stay off `/feed`, and the no-match message shows. Also
    search as a Pakistan account.
 7. Merge via PR.

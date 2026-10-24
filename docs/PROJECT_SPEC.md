@@ -407,8 +407,6 @@ are the ones an examiner is most likely to find.
     each noticed only by using the app. Every evaluation number was produced with the old
     sources and a UK profile; it stays a valid record of that system, and the report must say
     the live sources changed afterwards. Groq's job-title variants also vary between runs.
-    If Careerjet ships (Phase B), each request forwards the user's IP address and user agent
-    to Careerjet, as its API requires — the first time user data goes to a job source.
 
 ## Data model — MongoDB `users` collection
 

@@ -41,7 +41,7 @@ or cleverness. When you make a design decision, tell me why, so I can defend it.
 | Embeddings | sentence-transformers 2.7+, model `all-MiniLM-L6-v2`, runs locally, 384-dim |
 | LLM | **Groq** API (not Grok), a FALLBACK CHAIN in `GROQ_MODELS` (`openai/gpt-oss-120b` → `qwen/qwen3.8-27b` → `openai/gpt-oss-20b`), because Groq has retired this project's model twice — Groq decommissioned Llama 3 *and then* `groq/compound-mini`, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py`. **It is a reasoning model: hidden reasoning tokens count against `max_tokens`, so changing it means rechecking the budget at both call sites** |
 | Auth | Werkzeug password hashing (ships with Flask) |
-| Job data | Adzuna API (250 req/day free, 19 country markets) + Himalayas API (no auth; `country=` filters candidate eligibility server-side; credit and link back required). Remotive and Jobicy were removed 2026-10-13. Careerjet (local Pakistani jobs) is planned and waits on a free key |
+| Job data | Adzuna API (250 req/day free, 19 country markets) + Himalayas API (no auth; `country=` filters candidate eligibility server-side; credit and link back required). Remotive and Jobicy were removed 2026-10-13. Careerjet was considered and dropped 2026-10-25 |
 | Env | pip + venv, dependencies pinned in `requirements.txt` |
 
 Hard constraint from the SRS: **every tool, API and service must be free with no credit card.**

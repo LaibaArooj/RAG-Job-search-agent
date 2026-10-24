@@ -6,6 +6,10 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 
 ### Added
 ### Changed
+- 2026-10-25: Careerjet (Phase B) dropped; it will not be added. Sources stay Adzuna +
+  Himalayas.
+- 2026-10-25: all emojis removed from the templates (navbar brand, page headings, and the
+  "Open worldwide" / "Open to your country" badges). No verify script checks for them.
 ### Fixed
 ### Removed
 
@@ -112,7 +116,9 @@ These sources were researched and rejected:
 - **Resold, scraped Google data** (fails the no-ToS-violation rule): SerpApi and JSearch.
 - **Tiny pools or no search:** Remote OK, The Muse, Arbeitnow and others.
 
-**Still to do (Phase B): Careerjet**, for local jobs in Lahore, Karachi and Islamabad.
+**Considered (Phase B), then dropped on 2026-10-25: Careerjet**, for local jobs in Lahore,
+Karachi and Islamabad. Not pursued, to keep the remaining time on evaluation and the report.
+What was found at the time:
 
 - It has an official v4 API with an `en_PK` locale.
 - Measured with the sample ID from its docs: customer service 400+, writing 237, software

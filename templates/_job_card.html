@@ -55,14 +55,14 @@
                    rather than buried in the description. "unclear" is a real state and is
                    never guessed at -- see models/job_card.py restriction_eligibility. #}
                 {% if job.eligibility == "open" %}
-                <span class="badge bg-success">🌍 Open worldwide</span>
+                <span class="badge bg-success">Open worldwide</span>
                 {% elif job.eligibility == "country" %}
                 {# Only ever set from a structured country list that names the user's own
                    country, so "your country" is a fact, not a guess. The full list is in the
                    tooltip because it can run to dozens of names. #}
                 <span class="badge bg-success"
                       title="Hires from: {{ job.candidate_location }}">
-                    ✅ Open to your country
+                    Open to your country
                 </span>
                 {% elif job.eligibility == "regional" %}
                 <span class="badge bg-warning text-dark"

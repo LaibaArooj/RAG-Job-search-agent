@@ -75,7 +75,7 @@ class JobCard:
     #   "country"  - restricted to a list of countries that names the USER'S country
     #                (added 2026-10-13; only ever set from a structured list, never prose)
     #   "regional" - restricted to named regions or countries; read candidate_location
-    #   "local"    - an on-site role in the market that was queried (Adzuna, Careerjet).
+    #   "local"    - an on-site role in the market that was queried (Adzuna).
     #                Sources are chosen per country, so that market is the user's own
     #   "unknown"  - the source said nothing usable; DO NOT guess, say so
     # "unknown" exists on purpose. Guessing whether "APAC" includes Pakistan would produce
