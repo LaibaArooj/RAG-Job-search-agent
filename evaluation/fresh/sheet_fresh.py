@@ -24,7 +24,7 @@ sys.path.insert(0, str(HERE.parent))
 from build_export import readable  # noqa: E402
 from core.agent import JobSearchAgent  # noqa: E402
 
-FIXTURES = HERE / "fixtures"
+FIXTURES = HERE / "fixtures_expanded"  # F7
 PICKS = HERE / "picks"
 JUDGING = HERE / "judging"
 SHUFFLE_SEED = 20261013

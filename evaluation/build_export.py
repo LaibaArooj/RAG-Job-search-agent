@@ -52,7 +52,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from core.agent import CATEGORY_BOOST, JobSearchAgent  # noqa: E402
-from core.intent_parser import enrich_query  # noqa: E402
+from core.intent_parser import enrich_query, positive_query  # noqa: E402
 from core.semantic_engine import SemanticEngine  # noqa: E402
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -83,8 +83,10 @@ def readable(description):
     return " ".join(text.split())
 
 
-def rank_systems(query, jobs, engine):
+def rank_systems(query, jobs, engine, exclude=None):
     """Return {system: [job, ...]} for the three pre-registered systems over one pool."""
+    # `exclude` was added 2026-10-27 for the fresh experiment, which ranks as production now
+    # does. Left as None, as every original-20 caller leaves it, nothing changes.
     # DEDUPLICATE FIRST, with the production function. fetch_variant deliberately does not --
     # it cannot, because deduplication is across all variants and only the agent sees those --
     # so a frozen pool is the raw union and repeats listings syndicated to several sources.
@@ -105,11 +107,11 @@ def rank_systems(query, jobs, engine):
 
     # The same neutral profile enriches the query for every system, so B and C differ ONLY by
     # the boost. A does not use the vector at all -- it is the order the APIs returned.
-    vector = engine.encode(enrich_query(query, {}))
+    vector = engine.encode(enrich_query(positive_query(query, exclude), {}))
 
     agent = JobSearchAgent(db=None, semantic_engine=engine, rag_pipeline=None)
-    ranked_b = agent.rank(vector, [dict(j) for j in classified], SYNTHETIC_SCORES)
-    ranked_c = agent.rank(vector, [dict(j) for j in classified], {})
+    ranked_b = agent.rank(vector, [dict(j) for j in classified], SYNTHETIC_SCORES, exclude)
+    ranked_c = agent.rank(vector, [dict(j) for j in classified], {}, exclude)
 
     return {"A": list(classified), "B": ranked_b, "C": ranked_c}
 

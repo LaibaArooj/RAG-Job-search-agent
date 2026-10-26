@@ -24,7 +24,8 @@ from core.rag_pipeline import RAGPipeline  # noqa: E402
 from core.semantic_engine import SemanticEngine  # noqa: E402
 from generate_rag_picks import MODEL, PAUSE_SECONDS, RUNS, model_still_offered  # noqa: E402
 
-FIXTURES = HERE / "fixtures"
+# The expanded pools (F7), not the raw ones: 7 raw pools held 0 or 1 jobs.
+FIXTURES = HERE / "fixtures_expanded"
 PICKS = HERE / "picks"
 ARMS = {"L5": 5, "L10": 10}
 
@@ -33,9 +34,9 @@ BUDGET = 1200
 PROBE_FIXTURE = HERE.parent / "fixtures" / "Q07.json"  # an ORIGINAL query, already seen
 
 
-def candidates(query, jobs, engine):
+def candidates(query, jobs, engine, exclude=None):
     """Return {arm: candidate list} for one pool, asserting that L10 sees a superset of L5."""
-    ranked = rank_systems(query, jobs, engine)["B"]
+    ranked = rank_systems(query, jobs, engine, exclude)["B"]
     out = {arm: JobSearchAgent.rag_candidates(ranked, top_k=k) for arm, k in ARMS.items()}
     five, ten = ([j["job_id"] for j in out[a]] for a in ("L5", "L10"))
     assert ten[:len(five)] == five, "the first 5 of the 10 candidates must be the 5 candidates"
@@ -62,6 +63,9 @@ def one_run(pipeline, query, cands):
     """Ask once and keep the three states apart: failed (None), declined ([]), or picked."""
     # Not generate_rag_picks.one_run. That one predates 2026-10-11 and counts a decline as a
     # failure, while F3 scores them differently: a failure as K, a decline as 0.
+    if not cands:
+        # An empty pool. Production shows no AI panel at all, so no call is made.
+        return {"state": "empty", "picks": []}
     picks = pipeline.run(query, cands)
     if picks is None:
         return {"state": "failed", "picks": []}
@@ -78,7 +82,7 @@ def main():
     """Probe, then generate and freeze RUNS runs per arm per fresh query."""
     fixtures = sorted(FIXTURES.glob("N*.json"))
     if len(fixtures) != 15:
-        print(f"Expected 15 fresh pools, found {len(fixtures)}. Run fetch_fresh.py first.")
+        print(f"Expected 15 fresh pools, found {len(fixtures)}. Run fetch_fresh_expanded.py first.")
         return 1
     PICKS.mkdir(exist_ok=True)
     if any(PICKS.glob("N*.json")):
@@ -95,18 +99,19 @@ def main():
         print(f"{MODEL} is no longer offered. Stopping.")
         return 1
 
-    tally = {arm: {"failed": 0, "declined": 0, "picked": 0} for arm in ARMS}
+    tally = {arm: {"failed": 0, "declined": 0, "picked": 0, "empty": 0} for arm in ARMS}
     for path in fixtures:
         fixture = json.loads(path.read_text(encoding="utf-8"))
         qid, query = fixture["query_id"], fixture["query"]
-        cands = candidates(query, fixture["jobs"], engine)
+        cands = candidates(query, fixture["jobs"], engine, fixture["intent"]["exclude"])
         record = {"query_id": qid, "query": query, "model": MODEL, "budget": BUDGET, "arms": {}}
         for arm in ARMS:
             runs = []
             for _ in range(RUNS):
                 runs.append(one_run(pipelines[arm], query, cands[arm]))
                 tally[arm][runs[-1]["state"]] += 1
-                time.sleep(PAUSE_SECONDS)
+                if cands[arm]:
+                    time.sleep(PAUSE_SECONDS)
             record["arms"][arm] = {"candidates": [c["job_id"] for c in cands[arm]], "runs": runs}
         (PICKS / f"{qid}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
         print(f"  {qid}  candidates: L5 {len(cands['L5'])}, L10 {len(cands['L10'])}", flush=True)

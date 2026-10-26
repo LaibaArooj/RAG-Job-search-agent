@@ -147,13 +147,13 @@ def write_results(key, rows, out_path):
                      f"{c['losses']} | {c['p']:.3f} | {', '.join(c['lost_on']) or '—'} |")
 
     states = {arm: {s: sum(r["states"][arm].count(s) for r in rows.values())
-                    for s in ("picked", "declined", "failed")} for arm in ("L5", "L10")}
+                    for s in ("picked", "declined", "failed", "empty")} for arm in ("L5", "L10")}
     stable = {arm: sum(r["stable"][arm] for r in rows.values()) for arm in ("L5", "L10")}
-    lines += ["", "| Arm | Runs picked | Declined | Failed | Queries where all 3 runs agreed |",
-              "|---|---|---|---|---|"]
+    lines += ["", "| Arm | Runs picked | Declined | Failed | Empty pool | Queries where all 3 runs agreed |",
+              "|---|---|---|---|---|---|"]
     for arm in ("L5", "L10"):
         lines.append(f"| {arm} | {states[arm]['picked']} | {states[arm]['declined']} | "
-                     f"{states[arm]['failed']} | {stable[arm]} of {len(rows)} |")
+                     f"{states[arm]['failed']} | {states[arm]['empty']} | {stable[arm]} of {len(rows)} |")
     out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

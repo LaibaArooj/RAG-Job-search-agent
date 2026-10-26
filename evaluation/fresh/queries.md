@@ -150,3 +150,34 @@ worldwide or to Pakistan. Consequences, stated before fetching:
   marking.
 - Duplicates (C3's definition) are noted by the judge and declared in `fresh/score.py` before
   it first runs.
+
+## F7. Amendment, 2026-10-27, after the raw fetch and before any pick
+
+Written after `fetch_fresh.py` froze the raw pools, which were seen as **counts only**. No job
+in any pool and no pick had been seen.
+
+- **What happened:** 7 of the 15 raw pools held 0 or 1 jobs (N01, N02, N03, N04, N10: 0;
+  N09, N13: 1). The raw fetch sends the whole query as keywords, and Himalayas matches none
+  of "jobs for introverts who are good at math". Production never searches that way.
+- **Change 1, retrieval:** the experiment now fetches as production does
+  (`fresh/fetch_fresh_expanded.py`). `parse_intent` asks Groq for 2-3 job titles; the query
+  and each title are fetched as a Pakistan user and unioned. The intent (titles and
+  exclusions) is frozen in each pool. Pools go to `fresh/fixtures_expanded/`. The raw pools
+  in `fresh/fixtures/` stay committed, unchanged, as what F2 first produced.
+- **Change 2, ranking:** the ranking now handles exclusions, as production does since the
+  same day. `parse_intent` returns an `exclude` list ("no phone calls" gives `phone`). Negated
+  phrases are removed from the embedded text, and a job naming an excluded term loses 0.25
+  (in the title) or 0.10 (in the description only). This fixes the N12 behaviour in F0.
+  The synthetic category scores and the 0.02 boost are unchanged.
+- **Unchanged:** the 15 queries, the arms K, L5 and L10, the prompt, the model, the metric,
+  three runs, and judging by the developer by hand with no AI.
+- **Empty pools:** a query whose expanded pool is still empty makes no LLM call (state
+  `empty`) and scores 0 for every system, which counts as a tie.
+- **Consequence:** this result measures the LLM stage over pools as production builds them,
+  with Groq choosing the search titles. Retrieval now involves an LLM call, frozen once. The
+  displayed match percentage was also made absolute on this date; it does not affect
+  ranking or picks.
+- **N06 fetched twice.** On the first expanded fetch its intent call was cut off and fell back
+  to keywords (9 jobs). The new `exclude` key had pushed replies to 305-553 of the 600-token
+  budget. The budget was raised to 1000 and only N06 was fetched again (38 jobs). As before,
+  only counts were seen.
