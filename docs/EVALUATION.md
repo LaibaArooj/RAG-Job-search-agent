@@ -122,7 +122,17 @@ the top three by cosine similarity". That comparison was rejected before any pic
 generated. `rag_candidates` lifts applicable jobs from lower ranks, so the comparison would
 have measured that re-partition and the LLM together.
 
-## Second judge — pre-registered 2026-10-11, awaiting a judge
+## Second judge — pre-registered 2026-10-11, scored 2026-10-27
+
+**Result (`evaluation/agreement_results.md`):** kappa 0.26 (fair), raw agreement 0.64,
+positive agreement 0.49. Judge 2 marked 28 of 58 cards relevant, judge 1 13, and 18 of the 21
+disagreements are judge 2 accepting a card judge 1 rejected. Over the 6 queries, B − A on
+Adzuna-only keeps its direction (+0.03 under both judges), but **L − K on all-sources goes
+from +0.13 to 0.00**. So the absolute precision numbers depend on the judge, and so does the
+LLM stage's small lead. Six queries cannot show significance either way. The second judge
+used no AI by their own statement, which cannot be checked.
+
+The original protocol, as pre-registered:
 
 Both results rest on AI-proposed verdicts from a single model (§ 10). This is now **the human
 validation of those verdicts**: an independent person, using no AI, judges a random sample

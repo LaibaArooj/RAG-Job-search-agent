@@ -1,5 +1,29 @@
-Last updated: 2026-10-25 (**M4 in progress, aiming to finish in about two weeks.** Careerjet
-dropped; sources stay Adzuna + Himalayas. Emojis removed from all templates.)
+Last updated: 2026-10-27 (**M4 in progress.** Second judge scored: kappa 0.26. Fresh
+queries written but not yet frozen.)
+
+## Where we left off — 2026-10-27 (second judge scored; fresh experiment not yet fetched)
+
+- **Plan step 1 is done.** The classmate's sheet came back marked, with no AI by their own
+  statement (not something that can be checked). The 8 untouched `[ ]` boxes were confirmed as
+  deliberate "not relevant". Result in `evaluation/agreement_results.md`:
+  - kappa 0.26 (fair), raw agreement 0.64, positive agreement 0.49
+  - judge 2 is far more lenient: 28 of 58 relevant against 13
+  - under judge 2 the all-sources L − K lead (+0.13) drops to 0.00
+  - **For the report:** precision values depend on who judges, and the LLM's small lead
+    depends on the judge. Say both.
+- **Plan step 2, the fresh experiment, is blocked.** N01–N15 are written in
+  `evaluation/fresh/queries.md` (uncommitted), but before `fetch_fresh.py` runs:
+  1. N11 still ends in a stray `_` (`H1B_`), which would be sent to Adzuna.
+  2. F0 still holds bug notes rather than a disclosure. It must state plainly that all 15
+     queries were run on the live app before freezing.
+  3. **Profile undecided:** the protocol and `fetch_fresh.py` use `country=gb`, but the
+     10-25 plan says Pakistan only. N10 (USD) and N11 (H1B) are US-specific under either.
+  4. Optional while still unfrozen: 9 of 15 queries are tech, and N12 and N15 overlap.
+- **Bug found while trying the fresh queries (not fixed):** the match percentage stays at
+  100% when a stated constraint is broken (N12, "no phone calls"), including when the
+  no-match banner shows. The raw list and the AI panel also show different percentages for
+  the same job. Recommended: fix it *after* the fresh pools are frozen and judged, so N01–N15
+  still test the system as it stood when written. Not yet decided.
 
 ## Where we left off — 2026-10-25 (Careerjet dropped, two-week finish plan)
 

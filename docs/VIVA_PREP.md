@@ -140,8 +140,11 @@ Source: `evaluation/results.md`, `evaluation/queries.md` § 7, and the 2026-09-3
   judge measures how much it matters.
 - **"So how do you know the verdicts aren't just your opinion?"** A second, independent judge
   marked a random sample blind (`queries.md` § 9). Quote the kappa, and then the raw and
-  positive agreement, because relevant cards are rare and kappa alone can mislead. If it's
-  not done yet, say what was pre-registered and that the sample was drawn from a committed seed.
+  positive agreement, because relevant cards are rare and kappa alone can mislead. The
+  numbers (2026-10-27): kappa 0.26 (fair), raw 0.64, positive 0.49. Then say what it means:
+  the human judge was much more lenient (28 of 58 against 13), so absolute precision depends
+  on who judges. Also say that under the human judge the LLM's all-sources lead on the sample
+  disappears (+0.13 to 0.00). Don't wait to be asked about that.
 
 ### The RAG stage (added 2026-10-01; result in `evaluation/rag_results.md`)
 

@@ -5,6 +5,16 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 ## [Unreleased]
 
 ### Added
+- 2026-10-27: **the second judge's result.** A classmate, using no AI, marked the 58-card
+  blind sample (Q16, Q12, Q20, Q11, Q09, Q01), and `score_agreement.py` wrote
+  `evaluation/agreement_results.md`. Against the AI-proposed verdicts: raw agreement 0.64,
+  **Cohen's kappa 0.26 (fair)**, positive agreement 0.49. Judge 2 marked 28 of 58 relevant,
+  judge 1 13. 18 of the 21 disagreements are judge 2 accepting what judge 1 rejected, mostly
+  in Q12 (support jobs), Q11 (Marketing Manager titles vs "entry level"), Q16 (localization
+  roles) and Q01. Over the 6 sampled queries, B − A on Adzuna-only keeps its direction (+0.03
+  under both judges); on all-sources it falls from +0.07 to 0.00. **L − K on all-sources falls
+  from +0.13 to 0.00**, so the LLM stage's small lead depends on the judge. Absolute precision
+  roughly doubles under judge 2. Six queries cannot show significance either way.
 ### Changed
 - 2026-10-25: Careerjet (Phase B) dropped; it will not be added. Sources stay Adzuna +
   Himalayas.
