@@ -71,8 +71,8 @@ def use_stub(stub):
 
 
 def shape_is_canonical(intent):
-    """True when the intent dict has exactly the five keys every caller relies on."""
-    return set(intent) == {"work_type", "experience", "category", "variants", "source"}
+    """True when the intent dict has exactly the six keys every caller relies on."""
+    return set(intent) == {"work_type", "experience", "category", "variants", "exclude", "source"}
 
 
 def main():
@@ -84,11 +84,11 @@ def main():
                                        '"variants": ["remote content writer", '
                                        '"junior copywriter"]}'))
         llm = intent_parser.parse_intent("remote writing job no experience")
-        check("LLM path returns the five canonical keys", shape_is_canonical(llm))
+        check("LLM path returns the six canonical keys", shape_is_canonical(llm))
         check("LLM path is labelled source=llm", llm["source"] == "llm")
 
         kw = intent_parser._parse_intent_keywords("remote writing job no experience")
-        check("keyword path returns the same five keys", shape_is_canonical(kw))
+        check("keyword path returns the same six keys", shape_is_canonical(kw))
         check("keyword path is labelled source=keywords", kw["source"] == "keywords")
         check("both paths agree on key set", set(llm) == set(kw))
 

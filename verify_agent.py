@@ -194,6 +194,7 @@ def fixed_intent(*variants):
             "experience": None,
             "category": "other",
             "variants": list(variants) or [query],
+            "exclude": [],
             "source": "stub",
         }
 
@@ -333,7 +334,7 @@ def test_ranking():
     check("results are sorted by score descending",
           all(result["jobs"][i]["final_score"] >= result["jobs"][i + 1]["final_score"]
               for i in range(len(result["jobs"]) - 1)))
-    check("the top result normalises to 100%", round(result["jobs"][0]["normalized_score"], 6) == 100.0)
+    check("a strong top result (0.91) caps at 100%", round(result["jobs"][0]["normalized_score"], 6) == 100.0)
     check("every job carries a similarity score",
           all("similarity_score" in j for j in result["jobs"]))
 
@@ -1726,9 +1727,55 @@ def test_feed_ranking_uses_scores():
     check("both categories were fetched", fetch.calls == ["writing", "design"])
     check("both jobs survive the filter", len(titles) == 2)
     check("the higher-scoring category ranks first", titles[0] == "Technical Writer")
-    # The top card is a Top Match by construction, because normalized_score is relative to
-    # the best match in this feed. Worth asserting so the label's meaning stays honest.
-    check("the top card is a Top Match", result["feed_jobs"][0]["match_band"] == "Top Match")
+    # Since 2026-10-27 the band is read off an ABSOLUTE score, so the top card is no longer a
+    # Top Match by construction. The band must follow the score, whatever it is.
+    top = result["feed_jobs"][0]
+    check("the top card's band follows its absolute score",
+          top["match_band"] == agent_module.match_band(top["normalized_score"]))
+
+
+def test_absolute_scores_and_exclusions():
+    """2026-10-27: percentages are absolute, and an excluded term lowers a job's score."""
+    print("\n[match percentage and exclusions]")
+    strong = agent_module.STRONG_MATCH_SIMILARITY
+
+    # A weak result set must not show 100%. This is the bug the fresh queries surfaced.
+    jobs = [card("Accountant"), card("Warehouse Packer")]
+    weak = JobSearchAgent(StubDB(), StubEngine({"Accountant": 0.12, "Warehouse Packer": 0.05}),
+                          StubRAG()).rank("q", list(jobs_as_dicts(jobs)), {})
+    check("a weak top job is not shown as 100%", weak[0]["normalized_score"] < 25)
+    check("the percentage is similarity / STRONG_MATCH_SIMILARITY",
+          abs(weak[0]["normalized_score"] - 0.12 / strong * 100) < 1e-6)
+
+    # An excluded term in the title drops the job below a clean one of slightly lower similarity.
+    jobs = [card("Phone Support Agent"), card("Chat Support Agent")]
+    scores = {"Phone Support Agent": 0.55, "Chat Support Agent": 0.50}
+    ranked = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).rank(
+        "q", list(jobs_as_dicts(jobs)), {}, exclude=["phone"])
+    check("a title naming an excluded term ranks below a clean job", ranked[0]["title"] == "Chat Support Agent")
+    check("the penalised job records why", ranked[1]["excluded_terms"] == ["phone"])
+    check("the penalised job's percentage drops",
+          ranked[1]["normalized_score"] < ranked[0]["normalized_score"])
+    check("without exclusions nothing is penalised",
+          all(j["excluded_terms"] == [] for j in JobSearchAgent(
+              StubDB(), StubEngine(scores), StubRAG()).rank("q", list(jobs_as_dicts(jobs)), {})))
+
+    # The keyword fallback and the embedded-text cleanup, on the fresh queries' wording.
+    k, p = intent_parser.keyword_exclusions, intent_parser.positive_query
+    check("'no phone calls' excludes phone", k("support immediate start no phone calls") == ["phone"])
+    check("'except crypto and web3' excludes both",
+          k("marketing jobs except crypto and web3") == ["crypto", "web3"])
+    check("'without phone calls or voice chats' excludes phone and voice",
+          k("support without phone calls or voice chats") == ["phone", "voice"])
+    check("'no experience' is a level, not an exclusion", k("no experience junior data analyst") == [])
+    check("'no degree' is a level, not an exclusion", k("marketing role no degree required") == [])
+    check("the negated phrase leaves the embedded text",
+          p("night shift customer support no phone calls", ["phone"]) == "night shift customer support")
+    check("a following non-excluded phrase is kept",
+          p("no phone customer support", ["phone"]) == "customer support")
+    check("a query with no exclusions is unchanged", p("data analyst", []) == "data analyst")
+    check("the LLM's exclude list is validated",
+          intent_parser._validate_exclude(["Phone", "experience", "$ne", 3, "phone"]) == ["phone"])
 
 
 def main():
@@ -1746,6 +1793,7 @@ def main():
         test_query_expansion()
         test_deduplication()
         test_ranking()
+        test_absolute_scores_and_exclusions()
         test_context_injection()
         test_category_boost()
         test_classification()

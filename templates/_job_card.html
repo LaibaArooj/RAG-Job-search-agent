@@ -38,6 +38,10 @@
                     {{ job.normalized_score | round(1) }}% match
                 </span>
                 {% endif %}
+                {# Added 2026-10-27: says WHY a job's score was lowered (core.agent.rank). #}
+                {% if job.excluded_terms %}
+                <span class="badge bg-warning text-dark">Mentions: {{ job.excluded_terms | join(", ") }}</span>
+                {% endif %}
 
                 {# Himalayas' API terms require a visible link back to himalayas.app and a
                    statement that the data comes from them. A linked source badge on every

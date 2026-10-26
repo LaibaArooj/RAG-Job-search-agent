@@ -44,7 +44,24 @@ import hashlib
 
 import config
 from adapters.api_client import adzuna_market, fetch_variant
-from core.intent_parser import classify_category, enrich_query, parse_intent
+import re
+
+from core.intent_parser import classify_category, enrich_query, parse_intent, positive_query
+
+# The similarity shown as "100% match". Changed 2026-10-27: the percentage used to be relative
+# to the best job in the result set, so the top job always read 100% -- even at a raw
+# similarity of 0.07, and even when the AI panel said nothing was a strong match. Now it is
+# absolute: similarity / 0.60, capped at 100. Chosen from the original 20 queries' judged
+# cards (AI-proposed verdicts, evaluation/queries.md § 10): at 0.60 and above, 5 of 6 cards
+# were judged relevant; at 0.55, 11 of 15. A heuristic informed by data, not a tuned value.
+STRONG_MATCH_SIMILARITY = 0.60
+
+# Subtracted from a job's score when it contains a term the seeker excluded ("no phone
+# calls"). A hit in the TITLE is near-certain to break the constraint; a hit in the
+# description may be "no phone calls required", so it costs less. Hand-picked against the
+# 0.2-0.7 band raw similarity occupies: 0.25 drops a title hit below most relevant jobs.
+EXCLUDE_PENALTY_TITLE = 0.25
+EXCLUDE_PENALTY_DESCRIPTION = 0.10
 
 # Hand-picked coefficient weighting learned category preference against raw similarity.
 # TODO(M4): this number has no justification yet. Either tune it during the precision@5
@@ -80,11 +97,10 @@ MSG_FEED_EMPTY = (
 MSG_FEED_NONE_FOUND = "Nothing new in your categories right now. Try a search instead."
 
 # Match-quality bands for the badge on each feed card (FR-019). These thresholds are
-# HAND-PICKED and have no more justification than CATEGORY_BOOST does -- they are read off
-# normalized_score, which is already relative to the best match in this feed rather than an
-# absolute quality measure, so the top card is always a "Top Match" by construction. Say
-# that plainly rather than letting an examiner find it. TODO(M4): either tune these during
-# the precision@5 evaluation or state them in the report as presentation-only labels.
+# HAND-PICKED. They are read off normalized_score, which since 2026-10-27 is absolute
+# (similarity / STRONG_MATCH_SIMILARITY), so the top card is no longer a "Top Match" by
+# construction: 85% means similarity of about 0.51 or more, 65% about 0.39. State them in the
+# report as presentation labels.
 MATCH_BANDS = ((85.0, "Top Match"), (65.0, "Great Match"))
 MATCH_BAND_DEFAULT = "Worth a Look"
 
@@ -276,12 +292,14 @@ class JobSearchAgent:
 
     # --- ranking ------------------------------------------------------------------
 
-    def rank(self, query_vector, jobs, category_scores):
-        """Re-rank an already-fetched job list by cosine similarity plus the category boost."""
+    def rank(self, query_vector, jobs, category_scores, exclude=None):
+        """Re-rank fetched jobs by cosine similarity plus the category boost, minus exclusion penalties."""
         if not jobs:
             return []
 
         category_scores = category_scores or {}
+        # Word-START match, so "phone" also catches "phones"; it never matches inside a word.
+        patterns = [re.compile(r"\b" + re.escape(term), re.I) for term in exclude or []]
 
         # One batch_encode beats len(jobs) separate encode calls: the model runs on batched
         # tensors, so the per-call overhead is paid once rather than eighty times.
@@ -298,18 +316,26 @@ class JobSearchAgent:
             # jobs of near-equal similarity, and cannot lift an irrelevant job over a
             # relevant one. TODO(M4) still applies to the coefficient itself.
             boost = category_scores.get(job.get("category") or "", 0) * CATEGORY_BOOST
-            job["final_score"] = similarity + boost
+            penalty = 0.0
+            hits = []
+            for term, pattern in zip(exclude or [], patterns):
+                if pattern.search(job.get("title") or ""):
+                    penalty += EXCLUDE_PENALTY_TITLE
+                    hits.append(term)
+                elif pattern.search(job.get("description") or ""):
+                    penalty += EXCLUDE_PENALTY_DESCRIPTION
+                    hits.append(term)
+            job["excluded_terms"] = hits
+            job["final_score"] = similarity + boost - penalty
 
         jobs.sort(key=lambda j: j["final_score"], reverse=True)
 
-        # Displayed percentages are relative to the best match in THIS result set, not an
-        # absolute quality score — raw cosine values cluster in a narrow band and read as
-        # meaningless to a user. Cosine similarity can be zero or negative, so the divide
-        # is guarded rather than assumed safe.
-        top_score = jobs[0]["final_score"]
+        # Absolute, not relative to the best job here (see STRONG_MATCH_SIMILARITY). So a
+        # result set with no good match shows low percentages, a broken exclusion lowers the
+        # number, and one job shows the same percentage in the list and in the AI panel.
         for job in jobs:
-            job["normalized_score"] = (
-                (job["final_score"] / top_score) * 100 if top_score > 0 else 0.0
+            job["normalized_score"] = max(
+                0.0, min(100.0, job["final_score"] / STRONG_MATCH_SIMILARITY * 100)
             )
 
         return jobs
@@ -566,8 +592,10 @@ class JobSearchAgent:
         # Without this, a profile saying "mid level" is embedded alongside a query saying
         # "beginner" and the two fight: measured on 2026-09-20, that narrowed the gap
         # between a junior and a senior job by about a third.
+        # The embedded text drops negated phrases ("no phone calls"); rank() penalises them.
+        exclude = intent.get("exclude") or []
         query_vector = self.semantic_engine.encode(
-            enrich_query(query, context, intent.get("experience"))
+            enrich_query(positive_query(query, exclude), context, intent.get("experience"))
         )
 
         # TC-021. This is where expansion actually happens — parse_intent has been returning
@@ -614,7 +642,7 @@ class JobSearchAgent:
             error = MSG_SOURCE_DOWN if failed_sources else MSG_NO_RESULTS
             return self._empty_result(query, error, intent)
 
-        jobs = self.rank(query_vector, jobs, context.get("category_scores"))
+        jobs = self.rank(query_vector, jobs, context.get("category_scores"), exclude)
 
         # Groq call #2. Three outcomes, each rendered differently by index.html:
         #   None  -- Groq failed. The AI band is hidden, so an outage costs the explanation

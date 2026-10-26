@@ -50,6 +50,23 @@ from core.rag_pipeline import GROQ_MODEL, _extract_json, complete
 # Adzuna call, and Adzuna allows 250 a day.
 MAX_VARIANTS = 3
 
+# At most this many excluded terms survive validation. A reply listing twenty would be the
+# model padding, not the user.
+MAX_EXCLUDE = 5
+
+# An excluded term is matched against job text, so it must be a short plain phrase. Anything
+# else -- punctuation, a sentence, regex metacharacters from the model -- is dropped.
+EXCLUDE_PATTERN = re.compile(r"^[a-z0-9][a-z0-9 +#-]{0,29}$")
+
+# "No degree" and "no experience" are QUALIFICATIONS, not things to avoid: they mean entry
+# level (see experience_hints below). Excluding every advert that mentions "experience" would
+# penalise almost all of them.
+NOT_EXCLUSIONS = {"experience", "prior experience", "degree", "qualifications", "cv", "portfolio"}
+
+# The words that open and continue an exclusion in plain English.
+NEGATIONS = ("no", "not", "without", "except", "excluding", "nor", "non")
+CONJUNCTIONS = ("and", "or", "nor")
+
 # A query that matches no category still has to name one, because category_scores is keyed by
 # these values. "other" is in CATEGORIES precisely so there is a safe landing value.
 DEFAULT_CATEGORY = "other"
@@ -110,6 +127,7 @@ def _blank_intent(query, source):
         "experience": None,
         "category": DEFAULT_CATEGORY,
         "variants": [query] if query else [],
+        "exclude": [],
         "source": source,
     }
 
@@ -135,7 +153,7 @@ def _build_prompt(query):
     # evaluation queries, so the prompt cannot be teaching to the test.
     return (
         f'A job seeker typed this search: "{query}"\n\n'
-        f"Extract their intent as JSON with exactly these four keys:\n"
+        f"Extract their intent as JSON with exactly these five keys:\n"
         f'  "work_type": the single closest match from {list(WORK_TYPES)}, or null\n'
         f'  "experience": the single closest match from {list(EXPERIENCE_LEVELS)}, or null\n'
         f'  "category": the single closest match from {list(CATEGORIES)}\n'
@@ -143,7 +161,13 @@ def _build_prompt(query):
         f"      of strings. Each one 1-3 words, the way an employer titles an advert\n"
         f'      (for example "warehouse operative" or "dental nurse"). Translate a vague wish\n'
         f"      into real titles. Put conditions such as level, remote, \"no degree\" or \"no\n"
-        f"      experience\" in the other keys, never in a variant.\n\n"
+        f"      experience\" in the other keys, never in a variant.\n"
+        # Added 2026-10-27. A sentence embedding has no "not": it read "no phone calls" as a
+        # search ABOUT phone calls, and phone jobs ranked first (fresh query N12).
+        f'  "exclude": what the person explicitly does NOT want, as a list of 1-2 word terms\n'
+        f'      a job advert would contain ("no phone calls" gives ["phone"]; "except crypto\n'
+        f'      and web3" gives ["crypto", "web3"]). [] if they exclude nothing. "No degree"\n'
+        f'      and "no experience" are a level, never an exclusion.\n\n'
         f'Someone with no degree or no experience is "entry level".\n'
         # Caught by verify_live.py the same day: told to "translate a vague wish", the model
         # turned "qwertyuiop zxcvbnm asdfgh" into "Customer support" and "Data entry clerk",
@@ -204,7 +228,76 @@ def _validate_intent(raw, query, source):
         intent["category"] = category.strip().lower()
 
     intent["variants"] = _validate_variants(raw.get("variants"), query)
+    intent["exclude"] = _validate_exclude(raw.get("exclude"))
     return intent
+
+
+def _validate_exclude(raw):
+    """Keep the excluded terms that are short plain phrases, lower-cased and deduplicated."""
+    terms = []
+    if isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, str):
+                continue
+            term = " ".join(item.lower().split())
+            if EXCLUDE_PATTERN.match(term) and term not in NOT_EXCLUSIONS and term not in terms:
+                terms.append(term)
+            if len(terms) >= MAX_EXCLUDE:
+                break
+    return terms
+
+
+def keyword_exclusions(query):
+    """Keyword fallback: the word after each negation, and after each and/or that continues it."""
+    # "except crypto and web3" gives crypto, web3. "without phone calls or voice chats" gives
+    # phone, voice: one trailing word ("calls") is skipped before looking for "or". Crude on
+    # purpose, like the rest of this path.
+    tokens = re.findall(r"[a-z0-9+#-]+", (query or "").lower())
+    found = []
+    for i, token in enumerate(tokens):
+        if token not in NEGATIONS or i + 1 >= len(tokens):
+            continue
+        found.append(tokens[i + 1])
+        j = i + 2
+        while j < len(tokens):
+            if tokens[j] not in CONJUNCTIONS:
+                j += 1  # the one trailing word
+            if j + 1 < len(tokens) and tokens[j] in CONJUNCTIONS:
+                found.append(tokens[j + 1])
+                j += 2
+                continue
+            break
+    return _validate_exclude(found)
+
+
+def positive_query(query, exclude):
+    """Drop each negated phrase that names an excluded term, so the embedding is not pulled toward it."""
+    # "support, no phone calls" embeds CLOSER to phone-support adverts than "support" alone,
+    # because the model has no notion of "not". So the embedded text loses the negation, the
+    # term, and one trailing word ("calls") when that word ends the phrase. rank() then
+    # handles the term as a penalty. A negation naming no excluded term ("no degree") stays,
+    # because enrich_query and the level filter read it.
+    if not exclude:
+        return query
+    stems = tuple(term.split()[0] for term in exclude)
+    words = query.split()
+    bare = [w.lower().strip(",.;") for w in words]
+    ends_phrase = lambda k: k >= len(words) or bare[k] in CONJUNCTIONS + NEGATIONS  # noqa: E731
+    keep = []
+    i = 0
+    while i < len(words):
+        if bare[i] in NEGATIONS and i + 1 < len(words) and bare[i + 1].startswith(stems):
+            i += 1
+            while i < len(words) and bare[i].startswith(stems):
+                i += 1
+                if i < len(words) and not bare[i].startswith(stems) and ends_phrase(i + 1):
+                    i += 1  # trailing word: "phone CALLS"
+                if i + 1 < len(words) and bare[i] in CONJUNCTIONS and bare[i + 1].startswith(stems):
+                    i += 1
+            continue
+        keep.append(words[i])
+        i += 1
+    return " ".join(keep) or query
 
 
 def parse_intent(query):
@@ -224,7 +317,9 @@ def parse_intent(query):
             # Must cover the model's hidden reasoning tokens as well as the JSON. At 300 a
             # reasoning model truncated the object, _extract_json raised, and parse_intent
             # fell back to keywords with query expansion silently gone. See GROQ_MODEL.
-            max_tokens=600,
+            # Raised to 1000 on 2026-10-27 when the "exclude" key was added: measured replies
+            # used 305-553 of 600, and one fresh query (N06) was cut off and fell back.
+            max_tokens=1000,
             timeout=TIMEOUT_SECONDS,
         )
         raw = _extract_json(text)
@@ -283,6 +378,7 @@ def _parse_intent_keywords(query):
     # No expansion without the LLM. Inventing variants by string manipulation would widen the
     # pool with phrasings nobody chose, and TC-021 measures expansion against the LLM path.
     intent["variants"] = [query]
+    intent["exclude"] = keyword_exclusions(query)
     return intent
 
 
