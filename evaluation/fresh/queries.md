@@ -12,12 +12,17 @@ to them, which is tuning to the test set. These 15 have never been fetched.
 
 ## F0. Contamination disclosure — **to be written by the developer before committing**
 
-_Replace this paragraph. Say plainly what you have seen: the results of the original 20
-queries, including which kinds of query the LLM did well and badly on, and that the same person
-is writing these queries and will judge the results. State that the earlier verdicts were
-AI-proposed (`evaluation/queries.md` § 10) and that these will be judged by hand. Confirm that none of the 15 below is one of
-the original 20 or one of the strings in `evaluation/queries.md` § 1, and that none was chosen
-because you expect the LLM to do well or badly on it._
+Before freezing these queries, I ran all 15 one by one in the live app, signed in as a pakistan account, and looked at the results. So these queries are not unseen by me. I have seen some of the jobs they return, and I am the person who will judge the picks. I will judge from the card alone, using R1–R5, but I may recognise cards I saw while testing.
+
+I did not change any query after seeing its results. 
+
+While testing I noticed three things:
+
+N12 returned jobs that contain “phone” and “visa” rather than jobs that exclude them.
+The match percentage stayed at 100% for results that break a stated constraint, even when the “no strong match” banner showed.
+The same job showed a different match percentage in the ranked list and in the AI panel.
+
+No code was changed because of these observations before the pools were frozen. They are recorded as findings and will be fixed afterwards.
 
 ---
 
@@ -31,44 +36,45 @@ technology. Write them the way a real job seeker would type them. Replace every
 
 | # | Query |
 |---|---|
-| N01 | _write your query here_ |
-| N02 | _write your query here_ |
-| N03 | _write your query here_ |
-| N04 | _write your query here_ |
+| N01 | i used to be a waiter but want an office job now |
+| N02 | jobs for introverts who are good at math |
+| N03 | remote work that lets you travel the world |
+| N04 | lowkey looking for a side hustle in tech that pays quick |
 
 ### Specific
 
 | # | Query |
 |---|---|
-| N05 | _write your query here_ |
-| N06 | _write your query here_ |
-| N07 | _write your query here_ |
-| N08 | _write your query here_ |
+| N05 | Senior DevOps Engineer AWS Terraform Kubernetes CI/CD |
+| N06 | Staff Software Engineer distributed systems remote |
+| N07 | Figma design systems UI prototyping |
+| N08 | Quantitative Developer Python C++ high frequency trading |
 
 ### Stated constraint (seniority, work type or qualification)
 
 | # | Query |
 |---|---|
-| N09 | _write your query here_ |
-| N10 | _write your query here_ |
-| N11 | _write your query here_ |
-| N12 | _write your query here_ |
+| N09 | No experience entry level junior data analyst |
+| N10 | remote senior product manager minimum 150k USD |
+| N11 | software engineer visa sponsorship provided H1B |
+| N12 | night shift customer support immediate start no phone calls |
 
 ### Negation
 
 | # | Query |
 |---|---|
-| N13 | _write your query here_ |
-| N14 | _write your query here_ |
-| N15 | _write your query here_ |
+| N13 | technical product manager role with no coding |
+| N14 | remote digital marketing specialist jobs except crypto and web3 |
+| N15 | customer support position without phone calls or voice chats |
 
 ---
 
 ## F2. Systems
 
-Each query is fetched once into a frozen pool (`fresh/fixtures/`). The neutral profile is the
-same as `evaluation/generate_fixtures.py`: `country=gb`, no skills, no level, no expansion. The
-pool is ranked by system B exactly as in `evaluation/queries.md` § 4: the synthetic scores,
+Each query is fetched once into a frozen pool (`fresh/fixtures/`). The profile is
+**`country=pk`** (a seeker in Pakistan), with no skills, no level and no expansion. This was
+decided on 2026-10-27, before any pool was fetched. The country differs from
+`evaluation/generate_fixtures.py`, which used `country=gb`. The pool is ranked by system B exactly as in `evaluation/queries.md` § 4: the synthetic scores,
 with the boost at 0.02. Then:
 
 | System | Definition |
@@ -85,6 +91,19 @@ picks, or decline), and the model is pinned to `openai/gpt-oss-120b`.
 **Pool: all-sources only.** The original Adzuna-only headline existed to give the *ranker* a
 genuine keyword baseline. This experiment holds the ranking fixed and measures the LLM, and
 all-sources is the pool production hands it.
+
+**For a Pakistan user, all-sources means Himalayas only.** Adzuna has no Pakistan market, so
+it is not queried (deviation 8). Every pool therefore holds only remote jobs that are open
+worldwide or to Pakistan. Consequences, stated before fetching:
+
+- These results are **not comparable** with the original 20, which used a UK profile and
+  different sources (Adzuna, Remotive, Jobicy).
+- Queries whose natural answers are on-site may get thin or off-target pools, for example
+  N01 (waiter to office) and N12 (night shift). A small pool is reported as found and is
+  never re-fetched.
+- N10 (USD salary) and N11 (H1B sponsorship) are US-specific, and a Pakistan seeker cannot
+  use H1B sponsorship from a remote role. Eligibility is not part of relevance (F3), so they
+  are judged on the role as written. The mismatch is a limitation of the query wording.
 
 ## F3. Metric
 
