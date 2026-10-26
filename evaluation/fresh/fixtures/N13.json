@@ -1,0 +1,29 @@
+{
+  "query_id": "N13",
+  "query": "technical product manager role with no coding",
+  "profile": {
+    "country": "pk",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [],
+  "jobs": [
+    {
+      "job_id": "12c2db9300adce86",
+      "title": "Engineering Manager",
+      "company": "Federato",
+      "location": "Remote",
+      "description": "There's nothing more exciting than transforming an industry that's been stagnant for decades.",
+      "url": "https://himalayas.app/companies/federato/jobs/engineering-manager?utm_source=api",
+      "salary": 200000,
+      "source": "Himalayas",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Worldwide",
+      "eligibility": "open"
+    }
+  ]
+}

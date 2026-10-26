@@ -1,0 +1,29 @@
+{
+  "query_id": "N09",
+  "query": "No experience entry level junior data analyst",
+  "profile": {
+    "country": "pk",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [],
+  "jobs": [
+    {
+      "job_id": "8ba2ea4acbdbffd5",
+      "title": "PMAS Arid University - 2026",
+      "company": "Cowlar Design Studio",
+      "location": "Remote",
+      "description": "Hi Folks,Like always, we have great expectations from students at ARID University University.",
+      "url": "https://himalayas.app/companies/cowlar-design-studio/jobs/pmas-arid-university-2026-535827734?utm_source=api",
+      "salary": null,
+      "source": "Himalayas",
+      "category": "",
+      "similarity_score": 0.0,
+      "candidate_location": "Pakistan",
+      "eligibility": "country"
+    }
+  ]
+}

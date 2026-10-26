@@ -1,0 +1,16 @@
+{
+  "query_id": "N01",
+  "query": "i used to be a waiter but want an office job now",
+  "profile": {
+    "country": "pk",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Himalayas"
+  ],
+  "jobs": []
+}
