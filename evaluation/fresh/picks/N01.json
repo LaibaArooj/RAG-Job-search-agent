@@ -1,0 +1,137 @@
+{
+  "query_id": "N01",
+  "query": "i used to be a waiter but want an office job now",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "3c281926390ba06d",
+        "d5359ec84fab5ef6",
+        "6cd4fe0a48ad5c94",
+        "1839d35517ada631",
+        "2f8705f836820ea2"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2f8705f836820ea2",
+              "reason": "This role is fully remote with no geographic restriction, so you can apply from anywhere. It involves administrative support tasks that translate well from waiter experience such as organization and customer interaction."
+            },
+            {
+              "job_id": "1839d35517ada631",
+              "reason": "The Data Entry Specialist position is remote but limited to candidates in Pakistan, which matches your location. It focuses on CRM and Excel work, providing an office\u2011type environment suitable for a former waiter."
+            },
+            {
+              "job_id": "6cd4fe0a48ad5c94",
+              "reason": "The Administrative Assistant role is also remote and restricted to Pakistan, aligning with your location. It offers office duties like scheduling and correspondence that can build on your service\u2011industry skills."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2f8705f836820ea2",
+              "reason": "This role is open to candidates worldwide, so you can apply without geographic limits. It offers virtual assistant duties that translate well from customer\u2011service experience as a waiter into organized office support."
+            },
+            {
+              "job_id": "d5359ec84fab5ef6",
+              "reason": "This position only accepts applicants from Pakistan, which matches your location. The executive assistant responsibilities involve calendar and operations support, providing a clear office\u2011based career path."
+            },
+            {
+              "job_id": "6cd4fe0a48ad5c94",
+              "reason": "This role is limited to candidates in Pakistan, aligning with your current country. As an administrative assistant you\u2019ll handle office tasks that build on the organizational skills you used while waiting tables."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2f8705f836820ea2",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere, including Pakistan. It is an office\u2011type virtual assistant position that uses administrative and organizational skills, which aligns well with a transition from waiting tables to desk work."
+            },
+            {
+              "job_id": "1839d35517ada631",
+              "reason": "Hiring is limited to candidates in Pakistan, which matches your location. The data entry specialist role involves CRM and Excel work, providing an office environment suitable for someone moving from hospitality."
+            },
+            {
+              "job_id": "6cd4fe0a48ad5c94",
+              "reason": "This position is also limited to candidates in Pakistan, so you are eligible. An administrative assistant job offers routine office tasks and coordination duties, a good fit for a former waiter seeking office work."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "3c281926390ba06d",
+        "d5359ec84fab5ef6",
+        "6cd4fe0a48ad5c94",
+        "1839d35517ada631",
+        "2f8705f836820ea2",
+        "7efd881a0aa9a478",
+        "75a5196ef55e5984",
+        "5cc8211deca65994",
+        "a5ac3361b296932b",
+        "28dea309ba72e801"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2f8705f836820ea2",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It is a full\u2011time virtual assistant position focused on administrative support and organization, which matches a transition from waiting tables to office work."
+            },
+            {
+              "job_id": "7efd881a0aa9a478",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It offers a remote virtual assistant role that emphasizes proactive organization and day\u2011to\u2011day operational support, ideal for moving into an office environment."
+            },
+            {
+              "job_id": "28dea309ba72e801",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It combines executive assistance and operations support, providing office\u2011type responsibilities that suit a shift from a service job to an administrative career."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2f8705f836820ea2",
+              "reason": "This position has no geographic restriction, so you can apply from anywhere. It is a full\u2011time virtual assistant role that focuses on administrative support, vendor management and operational organization, which are suitable office tasks for someone transitioning from a waiter job."
+            },
+            {
+              "job_id": "5cc8211deca65994",
+              "reason": "There is no geographic restriction for this role, allowing you to apply globally. The executive assistant position involves calendar management, communication and coordination duties that provide a solid entry into office work after hospitality experience."
+            },
+            {
+              "job_id": "28dea309ba72e801",
+              "reason": "This role also accepts applicants from anywhere in the world. As an executive/operations virtual assistant you will handle daily administrative and operational responsibilities, offering a clear office\u2011based career path for a former waiter."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2f8705f836820ea2",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere. It offers general administrative support and vendor management, which are suitable entry\u2011level office tasks for someone transitioning from waiting tables."
+            },
+            {
+              "job_id": "7efd881a0aa9a478",
+              "reason": "This position also has no geographic restriction, allowing you to apply globally. The virtual assistant duties focus on organization and daily operations, matching the skill set a former waiter can bring to an office environment."
+            },
+            {
+              "job_id": "28dea309ba72e801",
+              "reason": "There is no geographic restriction for this job, so you can apply from any location. The combined executive assistant and operations support responsibilities provide a broad office experience that aligns well with a career shift from hospitality."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

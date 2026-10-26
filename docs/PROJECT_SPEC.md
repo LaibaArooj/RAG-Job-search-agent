@@ -296,7 +296,9 @@ spend hidden reasoning tokens before emitting content, and `max_tokens` covers b
 original budget of 300, `parse_intent`'s JSON was truncated, no object could be parsed, and
 the module fell back to keyword matching — so query expansion silently stopped happening
 and TC-019 and TC-021 were both broken **while the app still appeared to work**. Both token
-budgets were raised (intent 300 → 600, RAG 700 → 1200).
+budgets were raised (intent 300 → 600, RAG 700 → 1200). The intent budget rose again to
+1000 on 2026-10-27, when the `exclude` key was added: replies used 305-553 of 600 and one was
+cut off.
 
 It also went undetected for two days because `verify_intent.py` reported the dead model as
 "Groq unreachable", which reads like a network fault. A test's own wording can hide a

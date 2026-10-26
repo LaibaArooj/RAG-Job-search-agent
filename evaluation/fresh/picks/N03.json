@@ -1,0 +1,137 @@
+{
+  "query_id": "N03",
+  "query": "remote work that lets you travel the world",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "bb9387bcf338af8d",
+        "4d08985b93b7d1f4",
+        "c8e5817886a48fdb",
+        "41ab0dc4207a201b",
+        "b40bdb9104a654aa"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bb9387bcf338af8d",
+              "reason": "This role is fully remote with no geographic restriction, so you can work from anywhere while traveling. Writing about AI-generated content lets you engage with cutting\u2011edge topics from any location."
+            },
+            {
+              "job_id": "4d08985b93b7d1f4",
+              "reason": "The copywriter position is remote and open to candidates worldwide, allowing you to move freely. It involves creating immersive storytelling for spatial media, which aligns with a travel\u2011friendly lifestyle."
+            },
+            {
+              "job_id": "b40bdb9104a654aa",
+              "reason": "The Polygon high\u2011performance writer job is a remote freelance gig with no location limits, so you can work while on the road. Covering entertainment and gaming offers flexible deadlines that suit a nomadic schedule."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bb9387bcf338af8d",
+              "reason": "This role is fully remote with no geographic restrictions, so you can work from anywhere while traveling. As a journalist/writer evaluating AI-generated content, you can manage your schedule to explore different locations."
+            },
+            {
+              "job_id": "4d08985b93b7d1f4",
+              "reason": "The copywriter position is remote and open to candidates worldwide, allowing you to work while you move around the globe. It involves creating spatial media content, which can be done from any internet\u2011connected location."
+            },
+            {
+              "job_id": "b40bdb9104a654aa",
+              "reason": "The Polygon high\u2011performance writer job is a remote freelance role with no location limits, perfect for a traveling lifestyle. Writing about entertainment and gaming can be done from any country, giving you flexibility to roam."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bb9387bcf338af8d",
+              "reason": "The Journalist/Writer role is fully remote with no geographic restriction, so you can work from any country while you travel. Writing contracts typically allow flexible hours, making it easy to adjust to different time zones."
+            },
+            {
+              "job_id": "4d08985b93b7d1f4",
+              "reason": "The Copywriter position is remote and open to candidates worldwide, letting you earn while moving between locations. The focus on immersive storytelling aligns with a travel lifestyle that values creativity on the go."
+            },
+            {
+              "job_id": "b40bdb9104a654aa",
+              "reason": "The Polygon High-Performance Writer gig is a paid freelance remote role with no location limits, perfect for a globetrotting schedule. Covering entertainment and gaming topics can be done from anywhere with an internet connection."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "bb9387bcf338af8d",
+        "4d08985b93b7d1f4",
+        "c8e5817886a48fdb",
+        "41ab0dc4207a201b",
+        "b40bdb9104a654aa",
+        "b60cd5650d0105e6",
+        "3a7d9497421f93e9",
+        "2eb1bf330da91d15",
+        "14b77cce90ea5936",
+        "2e6a5ce5e5e105ee"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bb9387bcf338af8d",
+              "reason": "This role is fully remote with hiring open to anyone worldwide, so you can work from any location while traveling. As a journalist/writer you can produce content from wherever you are, fitting a nomadic lifestyle."
+            },
+            {
+              "job_id": "4d08985b93b7d1f4",
+              "reason": "The copywriter position is remote and accepts applicants from any country, letting you earn while moving around the globe. Writing copy can be done from any internet connection, supporting a travel\u2011first schedule."
+            },
+            {
+              "job_id": "b40bdb9104a654aa",
+              "reason": "The Polygon high\u2011performance writer job is remote with no geographic hiring restrictions, so you can work from anywhere in the world. Covering entertainment and gaming topics can be done while you explore new places."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bb9387bcf338af8d",
+              "reason": "This role is fully remote with hiring open to anyone worldwide, so you can work from any location while traveling. As a journalist/writer you can create content from wherever you are, fitting the desire to combine work and travel."
+            },
+            {
+              "job_id": "4d08985b93b7d1f4",
+              "reason": "The copywriter position is remote and accepts applicants from any country, allowing you to work while moving around the globe. It involves creating spatial media copy, which can be done from any internet\u2011connected location."
+            },
+            {
+              "job_id": "b40bdb9104a654aa",
+              "reason": "Polygon\u2019s high\u2011performance writer role is a remote freelance job with no geographic limits, so you can earn while traveling. Writing about entertainment and gaming can be done from anywhere, matching the travel\u2011friendly requirement."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bb9387bcf338af8d",
+              "reason": "This journalist/writer role is fully remote with no geographic restrictions, so you can work from anywhere while traveling. Writing projects can be managed on a flexible schedule that fits a nomadic lifestyle."
+            },
+            {
+              "job_id": "b40bdb9104a654aa",
+              "reason": "The Polygon High\u2011Performance Writer position is remote and open to candidates worldwide, allowing you to work from any location. As a freelance writer you can set your own hours, making it compatible with continuous travel."
+            },
+            {
+              "job_id": "41ab0dc4207a201b",
+              "reason": "The Senior Customer Success Manager role is a remote freelance position with no location limits, so you can perform the job while moving between countries. The role focuses on AI\u2011software services, which can be handled online from any internet connection."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

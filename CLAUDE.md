@@ -67,6 +67,10 @@ python evaluation/generate_rag_picks.py          # RAG stage: freeze 3 LLM runs 
 python evaluation/score_rag.py                   # RAG stage: precision@3 into evaluation/rag_results.md (--check: validate only)
 python evaluation/build_second_judge.py          # second judge: draw 6 queries (seed in queries.md § 9), write evaluation/second_judge/ (refuses to overwrite)
 python evaluation/score_agreement.py             # second judge: Cohen's kappa into evaluation/agreement_results.md (--check: validate only)
+python evaluation/fresh/fetch_fresh_expanded.py  # fresh N01-N15: freeze pools with Groq expansion, Pakistan profile (F7; refuses to overwrite)
+python evaluation/fresh/picks_fresh.py           # fresh: freeze L5/L10 picks, 3 runs each (~40 min; refuses to overwrite)
+python evaluation/fresh/sheet_fresh.py           # fresh: blind sheet for hand judging (refuses to overwrite)
+python evaluation/fresh/score_fresh.py           # fresh: precision@3, L10 vs L5, into evaluation/fresh/results.md
 ```
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.

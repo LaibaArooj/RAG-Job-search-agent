@@ -202,8 +202,19 @@ per page load would buy an explanation of a query the user never typed, and FR-0
 Recommendations are specified against a search. Deliberate omission, not an oversight.
 
 **Hand-picked numbers, same standing as `CATEGORY_BOOST`:** `FEED_CATEGORIES = 3`,
-`FEED_LIMIT = 12`, and the `MATCH_BANDS` thresholds (85 / 65). `normalized_score` is relative to
-the best match in the feed, so the top card is a "Top Match" by construction. TODO(M4).
+`FEED_LIMIT = 12`, and the `MATCH_BANDS` thresholds (85 / 65). Since 2026-10-27
+`normalized_score` is **absolute**: final score / `STRONG_MATCH_SIMILARITY` (0.60), capped at
+100. It used to be relative to the best match, so the top card was always 100% and a "Top
+Match" by construction, even at similarity 0.07.
+
+**Exclusions (2026-10-27).** `parse_intent` returns a sixth key, `exclude` ("no phone calls"
+gives `["phone"]`; the keyword fallback uses `keyword_exclusions`). Before embedding,
+`positive_query` removes each negated phrase naming an excluded term, because a sentence
+embedding reads "no phone calls" as a query about phone calls. `rank(..., exclude)` then
+subtracts `EXCLUDE_PENALTY_TITLE` (0.25) for a title hit or `EXCLUDE_PENALTY_DESCRIPTION`
+(0.10) for a description-only hit, records `excluded_terms`, and the card shows a "Mentions:"
+badge. Word-start matching, so it is crude: "no phone calls required" in a description still
+costs 0.10. The feed passes no exclusions.
 
 Save and reject work on feed cards with no JavaScript change — `feed.html` and `index.html`
 share one decision-group markup block and one `static/js/decisions.js`.

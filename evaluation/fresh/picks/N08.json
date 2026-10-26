@@ -1,0 +1,59 @@
+{
+  "query_id": "N08",
+  "query": "Quantitative Developer Python C++ high frequency trading",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "9ad2831b8f7c8bcf",
+        "b3c078461b4b5198",
+        "5c70aa01a4dfcc8b",
+        "f6b787a204e053c2",
+        "4a4f480ff4c17d88"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "9ad2831b8f7c8bcf",
+        "b3c078461b4b5198",
+        "5c70aa01a4dfcc8b",
+        "f6b787a204e053c2",
+        "4a4f480ff4c17d88",
+        "944afd43b0fcf2ee",
+        "b68e04b5440e6874",
+        "d805999aebb48de6",
+        "4716e32547a06f69",
+        "6eda7397e0964384"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    }
+  }
+}

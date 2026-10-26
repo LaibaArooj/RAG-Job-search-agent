@@ -1,0 +1,59 @@
+{
+  "query_id": "N11",
+  "query": "software engineer visa sponsorship provided H1B",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "60146b7ddd9d7f4c",
+        "54ecabcf38414b2f",
+        "aa9161608374501c",
+        "2d7a8005f60af6fb",
+        "c9f3e474c32afb6b"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "60146b7ddd9d7f4c",
+        "54ecabcf38414b2f",
+        "aa9161608374501c",
+        "2d7a8005f60af6fb",
+        "c9f3e474c32afb6b",
+        "754f693229c8f798",
+        "a24dd51b0f44462f",
+        "32bf108fd24d2a50",
+        "c22d352aa36621ec",
+        "c8afb1ea36ffbf71"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "query_id": "N12",
+  "query": "night shift customer support immediate start no phone calls",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "bdfacaaeab9fe74f",
+        "c7edc44dbe577cab",
+        "097d63a204e25911",
+        "f2f0138851f5aa63",
+        "34f6fb3101e35f10"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "bdfacaaeab9fe74f",
+        "c7edc44dbe577cab",
+        "097d63a204e25911",
+        "f2f0138851f5aa63",
+        "34f6fb3101e35f10",
+        "2e6a5ce5e5e105ee",
+        "76e02790222b8283",
+        "9544814b3dc97fb2",
+        "41ab0dc4207a201b",
+        "2c63317e28fa1e0f"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdfacaaeab9fe74f",
+              "reason": "This role has no geographic restriction and is fully remote, allowing you to apply from anywhere. The posting does not specify shift or phone\u2011call requirements, so you can inquire about night\u2011shift, chat\u2011only work and an immediate start."
+            },
+            {
+              "job_id": "34f6fb3101e35f10",
+              "reason": "The position is open worldwide and remote, so location is not a barrier. Since shift and communication channel details are not listed, you can ask whether night\u2011shift, non\u2011phone support and immediate onboarding are possible."
+            },
+            {
+              "job_id": "76e02790222b8283",
+              "reason": "Hiring is unrestricted by country and the job is remote, matching your location flexibility. The description does not mention phone calls or specific hours, so you should confirm that night\u2011shift, written\u2011only support and a quick start are available."
+            }
+          ]
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    }
+  }
+}

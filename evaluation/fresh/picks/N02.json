@@ -1,0 +1,137 @@
+{
+  "query_id": "N02",
+  "query": "jobs for introverts who are good at math",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "26e3668961abce7c",
+        "e375a42d5afb8de5",
+        "10b0d3bd622833b5",
+        "455557f857d8a178",
+        "6b95f4532adf0f4e"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "This remote Data Analyst role has no geographic restrictions, allowing you to work from anywhere. The analytical nature of the position suits introverts who excel at math and enjoy turning data into decisions."
+            },
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "This Data Analyst position is open to candidates worldwide with no geographic limitation. Its focus on detailed, quantitative work makes it a good fit for introverted individuals strong in mathematics."
+            },
+            {
+              "job_id": "e375a42d5afb8de5",
+              "reason": "This Financial & Data Analyst position is limited to candidates in specific countries, including Pakistan. It still offers remote work and focuses on quantitative analysis, which aligns with an introverted, math\u2011oriented skill set."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "This role has no geographic restriction, allowing you to apply from anywhere. It focuses on turning data into decisions, which leverages strong math skills and suits introverted, analytical work styles."
+            },
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "This position also welcomes candidates worldwide with no location limits. It emphasizes detailed, analytical work with data, ideal for someone comfortable with math and independent tasks."
+            },
+            {
+              "job_id": "e375a42d5afb8de5",
+              "reason": "This job is limited to candidates in certain countries, including Pakistan, so you must meet that regional requirement. It combines financial analysis and data work, providing a remote, math\u2011focused environment that fits introverted preferences."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "The Data Analyst position at Emetlab is fully remote with no geographic restrictions, allowing you to apply from anywhere. It focuses on turning data into decisions, a task that relies heavily on mathematical reasoning and can be done in a solitary environment, ideal for introverts."
+            },
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "The Data Analyst role with Talent Sam is also remote with no geographic limits, so you can apply regardless of location. It emphasizes detail\u2011oriented analytical work, requiring solid math abilities while offering a quiet, independent work setting suitable for introverts."
+            },
+            {
+              "job_id": "e375a42d5afb8de5",
+              "reason": "This role is limited to candidates in specific countries, including Pakistan. It involves data and financial analysis, which leverages strong math skills and can be performed independently, suiting introverted workers."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "26e3668961abce7c",
+        "e375a42d5afb8de5",
+        "10b0d3bd622833b5",
+        "455557f857d8a178",
+        "6b95f4532adf0f4e",
+        "e49a534a30321b49",
+        "bda0435ff486fea8",
+        "1749ed3554b6f884",
+        "7302b34929c60ceb",
+        "c3aa15ccd0d9cf07"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "This Data Analyst role has no geographic restriction and involves turning data into decisions, which relies heavily on quantitative and mathematical skills. The remote nature allows for a solitary work environment that suits introverts."
+            },
+            {
+              "job_id": "e49a534a30321b49",
+              "reason": "The BI Analyst position also has no geographic restriction and focuses on business intelligence, requiring strong analytical and math abilities. Working remotely lets you concentrate independently, ideal for introverted candidates."
+            },
+            {
+              "job_id": "7302b34929c60ceb",
+              "reason": "The Junior Data Scientist role is open worldwide and centers on statistical modeling and data science, perfect for someone good at math. A remote contract setup provides the independent, low\u2011interaction setting that introverts often prefer."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "This remote Data Analyst role has no geographic restriction, allowing you to work independently from anywhere, which suits introverted preferences. It focuses on turning data into decisions, a task that heavily relies on strong mathematical and analytical abilities."
+            },
+            {
+              "job_id": "e49a534a30321b49",
+              "reason": "The BI Analyst position is fully remote with worldwide eligibility, providing a quiet work environment ideal for introverts. It involves data modeling and performance analysis, requiring solid math skills and attention to detail."
+            },
+            {
+              "job_id": "7302b34929c60ceb",
+              "reason": "The Junior Data Scientist contract is remote and open to candidates worldwide, so you can apply without location constraints. It emphasizes quantitative analysis and machine learning, perfect for someone strong in mathematics and comfortable with independent work."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "The role focuses on turning data into decisions, which relies heavily on mathematical analysis and independent work, making it ideal for introverts who enjoy working with numbers. It is fully remote with no geographic restrictions, so you can apply from anywhere."
+            },
+            {
+              "job_id": "e49a534a30321b49",
+              "reason": "As a BI Analyst you will translate data into business insights, a task that requires strong quantitative skills and often involves solitary analysis. The position is remote and open to candidates worldwide, fitting an introverted, math\u2011oriented profile."
+            },
+            {
+              "job_id": "7302b34929c60ceb",
+              "reason": "The Junior Data Scientist contract involves applying statistical and machine learning techniques to solve problems, perfect for someone comfortable with math and independent research. It is a remote role with no location limits, allowing you to work from any country."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

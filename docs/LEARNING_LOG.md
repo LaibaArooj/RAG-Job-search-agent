@@ -109,6 +109,8 @@ here becomes a silence in the viva.
 | LLM-as-judge | | | Added 2026-10-13. Your verdicts were proposed by an LLM. What is LLM-as-judge, and why is it accepted only when validated against human judges? Why is it potentially circular when the system under test is itself an LLM choosing jobs? What can the second judge's kappa tell you, and what can't it? |
 | Cohen's kappa | | | Added 2026-10-11. Agreement between two judges, corrected for the agreement you'd get by chance. Compute it from a 2×2 table by hand. Why isn't raw agreement enough? What does kappa = 0 mean? |
 | The kappa paradox | | | Added 2026-10-11. Relevant cards are rare here (13 of 58 in the sample, by your verdicts). Why can kappa be low when two judges agree on 90% of cards? Why is positive agreement, 2a / (2a + b + c), reported beside it? |
+| Negation in sentence embeddings | | | Added 2026-10-27. Why does "customer support, no phone calls" embed CLOSER to phone-support jobs than "customer support" does? Why is the fix to remove the negated phrase before embedding and penalise the term in ranking, rather than to trust the model? What does the word-start match get wrong ("no phone calls required")? |
+| Relative vs absolute scores | | | Added 2026-10-27. The old percentage divided by the best score in the result set, so the top job always read 100%. Why is that misleading when the whole set is weak? How was 0.60 chosen as "100%", and why is it still a heuristic (13 relevant cards above 0.55, verdicts AI-proposed)? |
 | Sign test | | | Added 2026-09-30. `score.py` reports one. Why does it ignore ties? Why is it a better fit than a t-test for 0.0–1.0 scores in steps of 0.2 over ~13 queries? Why is a high p-value here *not* evidence that the ranker doesn't help? |
 
 ---

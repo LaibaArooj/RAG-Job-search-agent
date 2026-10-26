@@ -1,5 +1,23 @@
-Last updated: 2026-10-27 (**M4 in progress.** Second judge scored: kappa 0.26. Fresh
-queries written but not yet frozen.)
+Last updated: 2026-10-27, later (**M4 in progress.** Fresh experiment ready for hand
+judging. Match percentage and negated searches fixed.)
+
+## Where we left off — 2026-10-27, later (fresh sheet ready to judge)
+
+- **Your next step: judge `evaluation/fresh/judging/SHEET.md` by hand, with no AI.** 74
+  cards, 15 queries. Don't open `key.json` or `fresh/picks/` first. Then set the Status line
+  to `marked` and run `python evaluation/fresh/score_fresh.py`.
+- **Done today, in order:**
+  1. Raw pools frozen (Pakistan profile). 7 of 15 held 0 or 1 jobs.
+  2. Amendment F7: pools re-fetched as production does, with Groq job-title expansion
+     frozen per query (20-49 jobs each). The raw pools stay committed.
+  3. **Bug fixes in the app:**
+     - The match percentage is now absolute (similarity / 0.60, capped at 100).
+     - Negated searches ("no phone calls") now exclude the term instead of matching it.
+     - Intent budget raised to 1000 tokens.
+  4. Picks: 90 runs, 0 failed, 11 declined per arm. Not opened.
+- `verify_all.py --offline` is 553/553. `verify_live.py` was not run (it spends Adzuna quota).
+- **Still to do:** the demo-account checks, merging the branches via PR, and the report.
+  The items below dated 2026-10-27 (earlier) are now resolved.
 
 ## Where we left off — 2026-10-27 (second judge scored; fresh experiment not yet fetched)
 

@@ -15,12 +15,27 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
   under both judges); on all-sources it falls from +0.07 to 0.00. **L − K on all-sources falls
   from +0.13 to 0.00**, so the LLM stage's small lead depends on the judge. Absolute precision
   roughly doubles under judge 2. Six queries cannot show significance either way.
+- 2026-10-27: **fresh experiment, N01–N15, run up to judging.** Queries pre-registered as a
+  Pakistan profile. The raw fetch left 7 of 15 pools with 0 or 1 jobs, so amendment F7
+  fetches as production does: Groq job-title expansion, frozen per query, 20-49 jobs a pool.
+  Picks generated for L5 and L10, three runs each. The blind sheet waits for the developer
+  to judge by hand.
 ### Changed
+- 2026-10-27: **the match percentage is absolute.** It was relative to the best job in the
+  results, so the top job always read 100%, even at similarity 0.07 and when the AI panel
+  said nothing matched. Now similarity / 0.60, capped at 100. One job shows the same
+  percentage in the list and the AI panel. Feed bands follow, so the top feed card is no
+  longer a "Top Match" by construction.
 - 2026-10-25: Careerjet (Phase B) dropped; it will not be added. Sources stay Adzuna +
   Himalayas.
 - 2026-10-25: all emojis removed from the templates (navbar brand, page headings, and the
   "Open worldwide" / "Open to your country" badges). No verify script checks for them.
 ### Fixed
+- 2026-10-27: **negated searches.** "Customer support, no phone calls" used to rank phone
+  jobs first: the embedding has no "not". `parse_intent` now returns an `exclude` list. The
+  negated phrase is removed before embedding, and a job naming the term loses 0.25 (title)
+  or 0.10 (description) and shows a "Mentions:" badge. Intent budget 600 → 1000 tokens for
+  the extra key.
 ### Removed
 
 ---

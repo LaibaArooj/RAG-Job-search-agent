@@ -1,0 +1,137 @@
+{
+  "query_id": "N13",
+  "query": "technical product manager role with no coding",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "5bc8453b4d16236c",
+        "6b381e687cc73725",
+        "b3fd0909355d138b",
+        "a3683da4deee7eb2",
+        "33ddb64bfce9f790"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5bc8453b4d16236c",
+              "reason": "This role is titled Technical Product Manager, is fully remote and has no geographic restriction. It offers a technical product leadership position that generally does not require hands\u2011on coding."
+            },
+            {
+              "job_id": "6b381e687cc73725",
+              "reason": "The Technical Product Owner position is remote with worldwide hiring, providing a technical product role without location limits. It focuses on defining and delivering solutions rather than writing code."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The Senior Technical Product Manager role is remote and open worldwide, matching the seeker\u2019s need for unrestricted location. It emphasizes product strategy and data foundations, not direct coding work."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5bc8453b4d16236c",
+              "reason": "The role is a Technical Product Manager at a fully remote company with no geographic restriction, allowing you to apply from anywhere. The description focuses on product delivery and collaboration rather than hands\u2011on coding, matching your preference for a non\u2011coding position."
+            },
+            {
+              "job_id": "6b381e687cc73725",
+              "reason": "This Technical Product Owner position is remote with worldwide eligibility, so location is not a barrier. It emphasizes defining, prioritizing, and delivering technical solutions without stating any coding responsibilities, aligning with a no\u2011coding focus."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The Senior Technical Product Manager role is also fully remote and open to candidates worldwide. While senior, the job centers on platform and data strategy rather than writing code, fitting a technical product role that does not require coding."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5bc8453b4d16236c",
+              "reason": "The position is remote with no geographic restriction, allowing you to apply from anywhere. As a Technical Product Manager, the role focuses on product delivery and client projects rather than hands\u2011on coding."
+            },
+            {
+              "job_id": "6b381e687cc73725",
+              "reason": "This job is also remote with unrestricted hiring locations, so geography is not a barrier. The Technical Product Owner role emphasizes defining and prioritizing solutions, which typically does not require you to write code."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The Senior Technical Product Manager role is fully remote and open worldwide. It centers on platform and data strategy for educational software, a strategic position that generally does not involve direct coding."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "5bc8453b4d16236c",
+        "6b381e687cc73725",
+        "b3fd0909355d138b",
+        "a3683da4deee7eb2",
+        "33ddb64bfce9f790",
+        "69d6aba1b262ed2e",
+        "3ef1e18d35ea95e9",
+        "1315d8df3dd24ae0",
+        "d80202bc7df4b0bc",
+        "81dbfaa53cbfb0ec"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5bc8453b4d16236c",
+              "reason": "This role is titled Technical Product Manager and is remote with no geographic restriction, matching the seeker\u2019s desire for a technical product manager position that can be done from anywhere. The description emphasizes product delivery and client projects rather than coding, indicating it does not require programming skills."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The Senior Technical Product Manager position is remote and open to candidates worldwide, satisfying the requirement for no geographic limitation. The focus on platform and data foundations for educational software suggests a strategic product role without a coding mandate."
+            },
+            {
+              "job_id": "1315d8df3dd24ae0",
+              "reason": "Canonical\u2019s Technical Product Manager role is fully remote with no location constraints, aligning with the seeker\u2019s preferences. The job description highlights open source software and product management responsibilities, not coding tasks."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5bc8453b4d16236c",
+              "reason": "The role is remote with no geographic restriction, so you can apply from anywhere. It is a Technical Product Manager position that focuses on product delivery rather than hands\u2011on coding."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The position is fully remote and open to candidates worldwide. As a Senior Technical Product Manager, the job emphasizes strategy and platform leadership, not writing code."
+            },
+            {
+              "job_id": "1315d8df3dd24ae0",
+              "reason": "This job is remote with no location limits, allowing global applicants. It is a Technical Product Manager role at an open\u2011source company, centered on product management rather than development work."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5bc8453b4d16236c",
+              "reason": "This role is titled Technical Product Manager and is fully remote with no geographic restriction, matching the seeker\u2019s location flexibility. The description focuses on product delivery and client projects, suggesting a focus on coordination rather than hands\u2011on coding."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The Senior Technical Product Manager position is remote and unrestricted, aligning with the seeker\u2019s location preferences. It emphasizes platform and data strategy, which typically involve roadmap and stakeholder work rather than direct coding."
+            },
+            {
+              "job_id": "69d6aba1b262ed2e",
+              "reason": "The Product Manager role is fully remote with no geographic limits, fitting the seeker\u2019s location criteria. While it may involve technical understanding, product manager positions often center on vision and execution without requiring coding."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
