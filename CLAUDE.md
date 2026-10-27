@@ -133,7 +133,10 @@ The LLM stage measured differently (2026-10-11, `evaluation/rag_results.md`). It
 picks beat the first three of the same five by a small margin and never lost a query, but
 the headline is **not significant** (p = 0.25). Never write "the LLM improves results"
 without that qualifier. And the human second judge (2026-10-27, kappa 0.26,
-`evaluation/agreement_results.md`) erased the LLM's all-sources lead on its 6-query sample. **The relevance verdicts were proposed by Claude (Claude Sonnet 5.5,
+`evaluation/agreement_results.md`) erased the LLM's all-sources lead on its 6-query sample.
+On the fresh N01–N15 (2026-10-27, `evaluation/fresh/results.md`), K beat both LLM arms
+(p = 0.016) and 10 candidates did no better than 5. Always say why: the judge accepted 73 of
+74 cards, so the LLM lost only by declining or picking fewer than three. **The relevance verdicts were proposed by Claude (Claude Sonnet 5.5,
 claude.ai) and adopted by the developer**, not judged by hand (disclosed 2026-10-13,
 `evaluation/queries.md` § 10, `evaluation/provenance/`). Never write "judged by the developer"
 or describe the judging as human. For the RAG stage, always state the LLM-judging-LLM

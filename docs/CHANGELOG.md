@@ -18,8 +18,10 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 - 2026-10-27: **fresh experiment, N01–N15, run up to judging.** Queries pre-registered as a
   Pakistan profile. The raw fetch left 7 of 15 pools with 0 or 1 jobs, so amendment F7
   fetches as production does: Groq job-title expansion, frozen per query, 20-49 jobs a pool.
-  Picks generated for L5 and L10, three runs each. The blind sheet waits for the developer
-  to judge by hand.
+  Picks generated for L5 and L10, three runs each. Judged by the developer by hand (73 of 74
+  cards relevant) and scored: **L10 vs L5 no difference** (0.72 vs 0.70, p = 0.69), and
+  **K beat both LLM arms** (1.00 vs 0.70, p = 0.016), entirely through the LLM declining or
+  picking fewer than three where the judge accepted every card. See `docs/EVALUATION.md`.
 ### Changed
 - 2026-10-27: **the match percentage is absolute.** It was relative to the best job in the
   results, so the top job always read 100%, even at similarity 0.07 and when the AI panel

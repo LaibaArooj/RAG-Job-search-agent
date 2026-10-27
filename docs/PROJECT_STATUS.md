@@ -1,11 +1,19 @@
 Last updated: 2026-10-27, later (**M4 in progress.** Fresh experiment ready for hand
 judging. Match percentage and negated searches fixed.)
 
+## Where we left off — 2026-10-27, latest (fresh experiment scored)
+
+- **The fresh experiment is complete** (`evaluation/fresh/results.md`, `docs/EVALUATION.md`).
+  - L10 vs L5: no difference (p = 0.69).
+  - K beat both LLM arms (p = 0.016 and 0.031), because the judge accepted 73 of 74 cards,
+    so every LLM decline or short list cost points.
+  - Two `[x ]` marks and the `Marked` status line were normalised to the scorer's format
+    before scoring.
+- **Next:** the demo-account checks, merging the branches via PR, then the report.
+
 ## Where we left off — 2026-10-27, later (fresh sheet ready to judge)
 
-- **Your next step: judge `evaluation/fresh/judging/SHEET.md` by hand, with no AI.** 74
-  cards, 15 queries. Don't open `key.json` or `fresh/picks/` first. Then set the Status line
-  to `marked` and run `python evaluation/fresh/score_fresh.py`.
+- **Done:** judged by hand and scored, see above.
 - **Done today, in order:**
   1. Raw pools frozen (Pakistan profile). 7 of 15 held 0 or 1 jobs.
   2. Amendment F7: pools re-fetched as production does, with Groq job-title expansion

@@ -1,6 +1,6 @@
 # Fresh queries — judging sheet
 
-**Status:** unmarked
+**Status:** marked
 
 74 cards over 15 queries, shuffled within each query. Mark each `[x]` if RELEVANT
 under R1–R5 in `evaluation/queries.md` § 3, read with C1–C4 in § 7, on the card alone.
@@ -20,7 +20,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Title: Virtual Assistant Job Type: Full time Location: Remote The Role We’re looking for a proactive, highly organized Virtual Assistant to support day-to-day operations across our distributed team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N01.2. Executive Assistant / Operations Virtual Assistant
 
@@ -28,7 +28,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for an Executive Assistant / Operations Virtual Assistant to support business owners, executives, real estate teams, and operations managers with daily administrative and operational responsibilities.
 
-- [ ] relevant
+- [x] relevant
 
 ### N01.3. Sales Assistant
 
@@ -36,7 +36,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Sales Assistant – CRM, Sales Support & Pipeline CoordinationPosition Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N01.4. 🌍 Virtual Assistant, Remote- Full Time
 
@@ -44,7 +44,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Title: Virtual AssistantJob Type: Full timeLocation: Remote Required Skills:• Administrative Support • Vendor Management • Operational Organization The Role:We’re looking for a proactive, highly organized Virtual Assistant to support da
 
-- [ ] relevant
+- [x] relevant
 
 ### N01.5. Administrative Assistant
 
@@ -52,7 +52,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Administrative AssistantPosition Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N01.6. Data Entry Specialist
 
@@ -68,7 +68,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Executive Assistant – Executive Support, Calendar & OperationsFull-Time | Remote | U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N01.8. 🏖️Executive Assistant - Job Code: 1790882488656
 
@@ -76,7 +76,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - At Coconut 🥥, we connect founders and businesses with top-tier remote talent while prioritizing meaningful, reliable partnerships.
 
-- [ ] relevant
+- [x] relevant
 
 ## N02 — `jobs for introverts who are good at math`
 
@@ -86,7 +86,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Title: Financial Analyst / Data AnalystPosition Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N02.2. Data Analyst
 
@@ -94,7 +94,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a detail-oriented and analytical Data Analyst to join our growing team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N02.3. E-commerce Operations & Data Analyst
 
@@ -102,7 +102,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - E-commerce Operations & Data Analyst – RemotePosition Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N02.4. Data Analyst
 
@@ -110,7 +110,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - About the JobThe OpportunityAs a Data Analyst at Emetlab, you will turn data into decisions that shape the infrastructure behind elite AI training data.
 
-- [ ] relevant
+- [x] relevant
 
 ### N02.5. Junior Data Scientist | Remote - Contract
 
@@ -118,7 +118,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role Title: Junior Data Scientist Role Type: Contractor Location: Remote About the Role we are partnering with a leading AI lab to hire data scientists and quantitative professionals from top companies.
 
-- [ ] relevant
+- [x] relevant
 
 ### N02.6. BI Analyst
 
@@ -126,7 +126,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - At Nimble Gravity, we help organizations turn data, technology, and AI into measurable business results.
 
-- [ ] relevant
+- [x] relevant
 
 ## N03 — `remote work that lets you travel the world`
 
@@ -136,7 +136,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Join Our Vision: We are building the next generation of Spatial Media - a new way people experience videos through interaction, multi-user presence, haptics, AI, and immersive storytelling.
 
-- [ ] relevant
+- [x] relevant
 
 ### N03.2. Senior Technical Writer (Pakistan | Remote | PKR)
 
@@ -144,7 +144,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Title : Senior Technical Writer (Remote)About Client Our Client ﻿is a leading North American transportation management software company helping K-12 school districts streamline operations.
 
-- [ ] relevant
+- [x] relevant
 
 ### N03.3. Polygon High-Performance Writer (Entertainment & Gaming)
 
@@ -152,7 +152,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - This is a paid freelance, remote position Polygon is a leading digital publication covering gaming, entertainment, and culture, serving millions of readers with smart, authoritative stories on the biggest video games, movies, TV shows, fran
 
-- [ ] relevant
+- [x] relevant
 
 ### N03.4. Journalist/Writer
 
@@ -160,7 +160,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role Title: Journalist/WriterRole Type: ContractorLocation: Remotemicro1 is engaging Journalist/Writers to participate in a project evaluating advanced AI-generated writing.
 
-- [ ] relevant
+- [x] relevant
 
 ### N03.5. Senior Customer Success Manager*in (50-100%) Remote / Freelance
 
@@ -168,7 +168,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Imnoo ist ein Hightech-AI-Softwareunternehmen mit einer klaren Mission: Wir automatisieren und revolutionieren Kalkulations- und Angebotsprozesse in der Fertigungsindustrie.
 
-- [ ] relevant
+- [x] relevant
 
 ## N04 — `lowkey looking for a side hustle in tech that pays quick`
 
@@ -178,7 +178,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a talented and creative Front-End Developer to join our growing engineering team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N04.2. 🌍 Backend Security Engineer, Remote - Contract
 
@@ -186,7 +186,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Type: ContractLocation: RemoteSchedule: Flexible, you pick the hours and days (including weekends if desired) Required Skills:• Python3 • JAVA • Rust • Algorithms • Basics C++ • Typescript • Bug fixing • Feature implementation • Codebas
 
-- [ ] relevant
+- [x] relevant
 
 ### N04.3. Freelance Web and WordPress developer
 
@@ -194,7 +194,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - TechBiz Global is a leading IT recruitment company.
 
-- [ ] relevant
+- [x] relevant
 
 ### N04.4. 🌏 Gameplay Data Capture Specialist | Remote - Contract
 
@@ -202,7 +202,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Title: AAA Gameplay Data Capture Specialist Job Type: Contract {Pay Per Task Model} Location: Remote Job Summary: In this role, you'll apply your expertise to help train next-generation AI systems.
 
-- [ ] relevant
+- [x] relevant
 
 ## N05 — `Senior DevOps Engineer AWS Terraform Kubernetes CI/CD`
 
@@ -212,7 +212,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - At TechBiz Global, we are providing recruitment service to our TOP clients from our portfolio.
 
-- [ ] relevant
+- [x] relevant
 
 ### N05.2. Senior DevOps Engineer (AWS)
 
@@ -220,7 +220,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Description:• Responsible for ensuring adherence to the SLAs as per contract.
 
-- [ ] relevant
+- [x] relevant
 
 ### N05.3. DevOps Engineer
 
@@ -228,7 +228,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job SummaryWe are seeking an experienced DevOps Engineer with expertise in infrastructure as code (IaC) and modern deployment tools for both cloud and on-premises environments.
 
-- [ ] relevant
+- [x] relevant
 
 ### N05.4. Devops Engineer
 
@@ -236,7 +236,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role OverviewWe are looking for a highly skilled DevOps / Platform Engineer with strong hands-on experience in Golang, Kubernetes, and AWS to design, build, and operate scalable cloud-native platforms.
 
-- [ ] relevant
+- [x] relevant
 
 ### N05.5. Senior DevOps Engineer
 
@@ -244,7 +244,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a Senior DevOps Engineer to join our team!
 
-- [ ] relevant
+- [x] relevant
 
 ## N06 — `Staff Software Engineer distributed systems remote`
 
@@ -254,7 +254,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Description:B12's engineering team views software as a craft, but improving the world as the reason to practice it.
 
-- [ ] relevant
+- [x] relevant
 
 ### N06.2. Founding Software Engineer – Backend & Cloud Infrastructure
 
@@ -262,7 +262,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - About the RoleAs a Founding Software Engineer, you will work across backend engineering, cloud infrastructure, and distributed systems to build reliable and scalable services.
 
-- [ ] relevant
+- [x] relevant
 
 ### N06.3. Staff Software Engineer, Product
 
@@ -270,7 +270,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Hi, I'm Paul, VP of Engineering at Customer. io. We're looking for a staff product engineer — not a generalist who happens to touch frontend and backend, but someone who thinks like a product owner and ships like an engineer.
 
-- [ ] relevant
+- [x] relevant
 
 ### N06.4. Senior Distributed Systems Engineer
 
@@ -278,7 +278,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - This is a remote position with in-person onboarding and retreats a few times a year.
 
-- [ ] relevant
+- [x] relevant
 
 ### N06.5. Staff Software Engineer
 
@@ -286,7 +286,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - This role is part of our Prerenderteam, one of our growing brands at saas.
 
-- [ ] relevant
+- [x] relevant
 
 ## N07 — `Figma design systems UI prototyping`
 
@@ -296,7 +296,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Product Designer – UX/UI, Figma & Design Systems | RemotePosition Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N07.2. UI/UX Designer
 
@@ -304,7 +304,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Are you a user-obsessed, systems-minded designer who loves turning messy requirements into clear, intuitive, and scalable digital products?
 
-- [ ] relevant
+- [x] relevant
 
 ### N07.3. UX/UI Designer
 
@@ -312,7 +312,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - UX/UI Designer – Figma, Product Design & User Experience | Remote Position Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N07.4. Product Designer
 
@@ -320,7 +320,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Shape the Future on AutopilotAt Autopilot, you won’t just design screens – you’ll design how fintech works.
 
-- [ ] relevant
+- [x] relevant
 
 ## N08 — `Quantitative Developer Python C++ high frequency trading`
 
@@ -330,7 +330,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - 🌍 Hello World! We are The Codest - International Tech Software Company with tech hubs in Poland delivering global IT solutions and projects.
 
-- [ ] relevant
+- [x] relevant
 
 ### N08.2. Fullstack Developer (Python + React)
 
@@ -338,7 +338,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - You’ll join a team of passionate developers building web applications for local and international clients, including companies in the FMCG sector, as well as research projects.
 
-- [ ] relevant
+- [x] relevant
 
 ### N08.3. Python Developer
 
@@ -346,7 +346,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are Zoftify, a product development agency specializing in solutions for travel companies.
 
-- [ ] relevant
+- [x] relevant
 
 ## N09 — `No experience entry level junior data analyst`
 
@@ -356,7 +356,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Title: Financial Analyst / Data AnalystPosition Type: Full-Time, Remote Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N09.2. Data Analyst
 
@@ -364,7 +364,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a detail-oriented and analytical Data Analyst to join our growing team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N09.3. Data Analyst
 
@@ -372,7 +372,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - About the JobThe OpportunityAs a Data Analyst at Emetlab, you will turn data into decisions that shape the infrastructure behind elite AI training data.
 
-- [ ] relevant
+- [x] relevant
 
 ### N09.4. 🌎 Data Analyst - Remote, Contact
 
@@ -380,7 +380,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role Title: Data Analyst Role Type: Contractor Location: Remote We are engaging Data Analysts to contribute to a high-impact customer project focused on business data.
 
-- [ ] relevant
+- [x] relevant
 
 ### N09.5. Data Analyst
 
@@ -388,7 +388,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role Title: Data Analyst Role Type: Contractor Location: Remote micro1 is engaging Data Analysts to contribute to a high-impact customer project focused on business data.
 
-- [ ] relevant
+- [x] relevant
 
 ## N10 — `remote senior product manager minimum 150k USD`
 
@@ -398,7 +398,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - SE Ranking, an all-in-one SEO and digital marketing platform, is seeking a Senior Product Manager to scale our Data Product - our API and MCP offering - from early traction into a repeatable, scalable revenue line.
 
-- [ ] relevant
+- [x] relevant
 
 ### N10.2. Senior Product Manager, Payments
 
@@ -406,7 +406,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - The roleWe’re hiring a senior, hands-on Product Manager to join WooCommerce Payments and take ownership of a defined area within our payments products and partner integrations.
 
-- [ ] relevant
+- [x] relevant
 
 ### N10.3. Senior Product Manager Claims
 
@@ -414,7 +414,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - At TechBiz Global, we are providing recruitment service to our TOP clients from our portfolio.
 
-- [ ] relevant
+- [x] relevant
 
 ### N10.4. Senior Technical Product Manager - Keet (100% Remote)
 
@@ -422,7 +422,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Join Tether and Shape the Future of Digital Finance At Tether, we’re not just building products, we’re pioneering a global financial revolution.
 
-- [ ] relevant
+- [x] relevant
 
 ### N10.5. Senior Technical Product Manager (Sr TPM), Learning Intelligence
 
@@ -430,7 +430,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Overview:We are seeking a Senior Technical Product Manager, Learning Intelligence to pioneer the platform and data foundations of our next-generation educational software ecosystem.
 
-- [ ] relevant
+- [x] relevant
 
 ## N11 — `software engineer visa sponsorship provided H1B`
 
@@ -440,7 +440,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Your roleWhat you'll be doingWhat We NeedCorpay is currently looking to hire a Business Title IT Dev Senior (Software Engineer) – Contractor.
 
-- [ ] relevant
+- [x] relevant
 
 ### N11.2. Software Engineer
 
@@ -448,7 +448,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - • Job Title: Software Engineer • Job Type: Contractor (15 hours a week) • Location: Remote About the hiring company:Our client is a rapidly growing, venture-backed AI company helping shape the next generation of intelligent systems.
 
-- [ ] relevant
+- [x] relevant
 
 ### N11.3. Software Engineer - Open Source Contributions
 
@@ -456,7 +456,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role Title: Software Engineer — Open Source Contributions Role Type: Contract Location: Remote In this role, you'll apply your expertise to help train next-generation AI systems.
 
-- [ ] relevant
+- [x] relevant
 
 ## N12 — `night shift customer support immediate start no phone calls`
 
@@ -466,7 +466,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are an international online programming school for children and young people.
 
-- [ ] relevant
+- [x] relevant
 
 ### N12.2. Customer Service Representative
 
@@ -474,7 +474,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a friendly and detail-oriented Customer Service Representative to join our team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N12.3. Customer Success Associate
 
@@ -482,7 +482,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - AutoLeap is building a world-class Customer Experience practice, and we are looking for driven, talented, and passionate Customer Success Associates to help make it happen.
 
-- [ ] relevant
+- [x] relevant
 
 ### N12.4. Customer Success Manager
 
@@ -490,7 +490,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are seeking a proactive and customer-focused Customer Success Manager.
 
-- [ ] relevant
+- [x] relevant
 
 ### N12.5. Customer Service Representative
 
@@ -498,7 +498,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - About the RoleWe are looking for a Customer Service Representative to support customer accounts throughout the order fulfillment process.
 
-- [ ] relevant
+- [x] relevant
 
 ## N13 — `technical product manager role with no coding`
 
@@ -508,7 +508,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Job Overview:We are seeking a Senior Technical Product Manager, Learning Intelligence to pioneer the platform and data foundations of our next-generation educational software ecosystem.
 
-- [ ] relevant
+- [x] relevant
 
 ### N13.2. Product Manager -- Remote
 
@@ -516,7 +516,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for an experienced and innovative Product Manager to join our dynamic team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N13.3. Product Manager/Product Owner | Remote - Contract
 
@@ -524,7 +524,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Role Title: Product Manager / Product Owner Role Type: Contractor Location: Remote We are engaging Product Managers and Product Owners as expert contributors to an advanced customer project focused on AI system development.
 
-- [ ] relevant
+- [x] relevant
 
 ### N13.4. Technical Product Manager
 
@@ -532,7 +532,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Canonical is a leading provider of open source software and operating systems to the global enterprise and technology markets.
 
-- [ ] relevant
+- [x] relevant
 
 ### N13.5. Technical Product Manager
 
@@ -540,7 +540,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - ** This is an opportunity to join our top-notch product delivery team working closely together on interesting projects for our clients.
 
-- [ ] relevant
+- [x] relevant
 
 ### N13.6. Technical Product Owner
 
@@ -548,7 +548,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - 1. JOB PURPOSE – WHAT WILL YOU DO:The Technical Product Owner will play a pivotal role in defining, prioritizing, and delivering cutting-edge technical solutions for the company’s platform and services.
 
-- [ ] relevant
+- [x] relevant
 
 ## N14 — `remote digital marketing specialist jobs except crypto and web3`
 
@@ -558,7 +558,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - At Coconut 🥥, we connect founders and businesses with top-tier remote talent while prioritizing meaningful, reliable partnerships.
 
-- [ ] relevant
+- [x] relevant
 
 ### N14.2. Digital Marketing Manager
 
@@ -566,7 +566,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Content Marketing Manager – RemoteContent Marketing | SEO | Brand Growth | Fintech | Organic Marketing Position Type: Full-Time, Remote Location: Pakistan Working Hours: U.
 
-- [ ] relevant
+- [x] relevant
 
 ### N14.3. Marketing Coordinator & Digital Marketing Specialist
 
@@ -574,7 +574,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a Marketing Coordinator and Digital Marketing Specialist to support clients with social media content, digital campaigns, graphic design, paid advertising, lead generation, email marketing, funnels, reporting, and overall
 
-- [ ] relevant
+- [x] relevant
 
 ### N14.4. Recruitment Marketing Specialist
 
@@ -582,7 +582,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - Recruitment Marketing Specialist: Job Type: Full-time Location: Remote Job Summary: Join our team as a Recruitment Marketing Specialist and play a pivotal role in driving talent acquisition through innovative marketing strategies.
 
-- [ ] relevant
+- [x] relevant
 
 ### N14.5. Digital Marketing Specialist
 
@@ -590,7 +590,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a creative and results-driven Digital Marketing Specialist to join our growing marketing team.
 
-- [ ] relevant
+- [x] relevant
 
 ## N15 — `customer support position without phone calls or voice chats`
 
@@ -600,7 +600,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are an international online programming school for children and young people.
 
-- [ ] relevant
+- [x] relevant
 
 ### N15.2. Customer Care Specialist
 
@@ -608,7 +608,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for an empathetic, detail-oriented, and proactive Customer Care Specialist to join our team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N15.3. Customer Service Representative
 
@@ -616,7 +616,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - We are looking for a friendly and detail-oriented Customer Service Representative to join our team.
 
-- [ ] relevant
+- [x] relevant
 
 ### N15.4. Customer Service Representative
 
@@ -624,7 +624,7 @@ the Status line to `marked`.
 - **Location:** Remote
 - About the RoleWe are looking for a Customer Service Representative to support customer accounts throughout the order fulfillment process.
 
-- [ ] relevant
+- [x] relevant
 
 ### N15.5. Client Support Specialist
 
@@ -632,4 +632,4 @@ the Status line to `marked`.
 - **Location:** Remote
 - The Client Support Specialist is responsible for answering incoming customer inquiries, solving customer issues, and escalating cases to tier two teams or management when necessary.
 
-- [ ] relevant
+- [x] relevant
