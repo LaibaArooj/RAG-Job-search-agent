@@ -5,6 +5,9 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 ## [Unreleased]
 
 ### Added
+- 2026-10-29: **M4 closed.** All branches merged into `main` through PR #1 (merge commit
+  `17cc06b`, history kept). Full test pass `verify_all.py` 603/603, including `verify_live.py`
+  39/39 against the real services.
 - 2026-10-27: **the second judge's result.** A classmate, using no AI, marked the 58-card
   blind sample (Q16, Q12, Q20, Q11, Q09, Q01), and `score_agreement.py` wrote
   `evaluation/agreement_results.md`. Against the AI-proposed verdicts: raw agreement 0.64,

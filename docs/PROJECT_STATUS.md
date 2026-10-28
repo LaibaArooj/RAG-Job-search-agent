@@ -1,5 +1,25 @@
-Last updated: 2026-10-29 (**M4 in progress.** Demo checks passed; the two problems they
-found are fixed.)
+Last updated: 2026-10-29, later (**M4 complete.** All four milestones done. Merged to `main`
+via PR #1. Full test pass 603/603. What remains is the report and viva preparation.)
+
+## Where we left off — 2026-10-29, later (M4 closed)
+
+- **M4 is complete.** Its "done when" holds: the demo runs end to end, and precision@5 is
+  measured.
+  - Full test pass, including the live checks: `verify_all.py` **603/603**. That is
+    `verify_live.py` 39/39 against real Adzuna, Himalayas and Groq.
+  - Every branch is merged into `main` through **PR #1** (merge commit `17cc06b`, history
+    kept). Work continues on short branches from `main`; never commit to `main` directly.
+- **What remains is not code:**
+  1. **The report.** Methods, with the judging provenance disclosed. All four evaluation
+     results with their caveats (`docs/EVALUATION.md`). The source change. The prompt
+     tuned on Q01–Q05. The fresh-experiment amendment F7.
+  2. **Viva preparation** with `docs/VIVA_PREP.md`, plus the plain-language walkthrough
+     pending since 10-13.
+  3. **Demo day:** check the Adzuna quota that morning, and pre-download the model.
+- **Still yours:** delete the `DEMO_USERNAME` / `DEMO_PASSWORD` lines at the end of
+  `.env.example`.
+- The GitHub CLI is installed at `C:\Program Files\GitHub CLI\gh.exe` and signed in as
+  LaibaArooj.
 
 ## Where we left off — 2026-10-29 (demo checks done)
 
@@ -362,7 +382,7 @@ back on the table.
 | M1 | Auth, profile, database | **Done (2026-09-19)** — TC-001 to TC-005 pass, `verify_auth.py` 31/31 | TC-001 to TC-005 pass |
 | M2 | Search pipeline: LLM intent, query expansion, dedupe, semantic ranking | **Done (2026-09-20)** — intent parsing, `JobSearchAgent` and the route move all built and verified. 221/221 across the four verify scripts, plus a live end-to-end run against the running server | TC-006, TC-016 to TC-022 pass |
 | M3 | RAG, save/reject learning, For You feed | **Done (2026-09-21)** — RAG panel shipped in M2; categorisation, save/reject and the For You feed all built. `verify_agent.py` 129/129, `verify_routes.py` 57/57 | TC-008 to TC-014 pass |
-| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **In progress** — filters (TC-015) and autocomplete (TC-007) shipped 09-25. **P@5 measured 2026-09-30** (`evaluation/results.md`): a null result, 0.32 vs 0.31. Remaining: report write-up, viva prep for the result, demo rehearsal | Demo runs end to end + P@5 measured |
+| M4 | **Evaluation (precision@5)**, filters, autocomplete, full test pass, demo | **Done (2026-10-29)**. Filters (TC-015) and autocomplete (TC-007) 09-25. P@5 09-30 (null result, `evaluation/results.md`). RAG stage 10-11. Second judge 10-27 (kappa 0.26). Fresh N01–N15 10-27. Demo checks and fixes 10-29. `verify_all.py` 603/603. Merged as PR #1 | Demo runs end to end + P@5 measured |
 
 ## Completed
 
@@ -378,9 +398,9 @@ back on the table.
 
 ## In progress
 
-- **Currently working on:** M4 write-up. The precision@5 evaluation is done and scored
-  (2026-09-30); see the note at the top for next actions.
-- **Branch:** `feat/search-pipeline`
+- **Currently working on:** the report and viva preparation. All milestones are done; see
+  the note at the top.
+- **Branch:** `main` (short branches from it for any change)
 - **Related issue:** none yet
 
 ## Environment — rebuilt 2026-09-20
