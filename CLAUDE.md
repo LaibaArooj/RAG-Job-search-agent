@@ -12,8 +12,8 @@ Saving and rejecting jobs updates per-category preference scores that personalis
 rankings and a "For You" feed.
 
 Project type: **academic deliverable — must be demonstrable and defensible in a viva**
-Current milestone: **M4 — evaluation (precision@5), filters, autocomplete, demo** (M3 closed
-2026-09-21: categorisation, the save/reject loop and the For You feed all shipped)
+Current milestone: **none open. M4 closed 2026-10-29** (evaluation, filters, autocomplete,
+full test pass, demo; merged to `main` as PR #1). What remains is the report and viva prep.
 
 This is graded work. Correctness and my ability to explain the design matter more than speed
 or cleverness. When you make a design decision, tell me why, so I can defend it.
@@ -75,8 +75,8 @@ python evaluation/fresh/score_fresh.py           # fresh: precision@3, L10 vs L5
 
 `verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
 
-**`python verify_all.py` is the pre-demo check.** 577 assertions, about 290 seconds --
-538 of them offline, measured 2026-10-13; verify_live.py contributes the other 39. Use
+**`python verify_all.py` is the pre-demo check.** 603 assertions, about 7 minutes --
+564 of them offline, measured 2026-10-29; verify_live.py contributes the other 39. Use
 `--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
 Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
 rather than a regression; read which check failed before assuming the code broke.
