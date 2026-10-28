@@ -251,13 +251,13 @@ def main():
             print("\n3. TC-017 — empty submit")
             empty = search(c, "   ")
             check("TC-017  the SRS message is shown", "Please enter a search term" in empty)
-            check("TC-017  no job cards rendered", empty.count("% match") == 0)
+            check("TC-017  no job cards rendered", empty.count("% similar") == 0)
 
             print("\n4. TC-006 — a real search returns ranked, relevant results")
             real = search(c, "python developer")
             t = titles_in(real)
             check("results rendered", len(t) > 0)
-            check("match badges rendered", "% match" in real)
+            check("score badges rendered", "% similar" in real)
             check("a source badge is shown", "Adzuna" in real or "Himalayas" in real)
             # The descendant of a real bug: Adzuna nests company and location, and passing
             # them through raw once rendered Python dicts into the page.
@@ -299,7 +299,7 @@ def main():
                   "No jobs matched that search." in junk)
             check("TC-018  it is NOT the source-outage message",
                   "Job data temporarily unavailable" not in junk)
-            check("no job cards rendered for gibberish", junk.count("% match") == 0)
+            check("no job cards rendered for gibberish", junk.count("% similar") == 0)
 
         print("\n8. TC-021 — query expansion really happened")
         cached = list(db.db["job_cache"].find({}))

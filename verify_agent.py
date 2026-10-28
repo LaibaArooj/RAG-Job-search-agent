@@ -1734,6 +1734,37 @@ def test_feed_ranking_uses_scores():
           top["match_band"] == agent_module.match_band(top["normalized_score"]))
 
 
+def test_placeholders():
+    """2026-10-29: "send us your CV" pages are dropped from search and feed, real jobs kept."""
+    print("\n[placeholder adverts]")
+    placeholder = card("Don't see what you're looking for? (Technology)", company="Acme")
+    real = [card("Pool Technician", company="Beta"), card("Customer Service Representative")]
+    scores = {"Pool Technician": 0.5, "Customer Service Representative": 0.6,
+              placeholder.title: 0.9}
+
+    install(FetchRecorder(by_variant={"x": [placeholder] + real}), fixed_intent("x"))
+    titles = [j["title"] for j in JobSearchAgent(StubDB(), StubEngine(scores), StubRAG())
+              .run("laiba", "x")["jobs"]]
+    check("search drops the placeholder", placeholder.title not in titles)
+    check("search keeps 'Pool Technician' (not a talent pool)", "Pool Technician" in titles)
+    check("search keeps an ordinary vacancy", "Customer Service Representative" in titles)
+
+    install(FetchRecorder(by_variant={"x": [placeholder]}), fixed_intent("x"))
+    only = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).run("laiba", "x")
+    check("a pool of only placeholders is 'no results', not a crash",
+          only["error"] == agent_module.MSG_NO_RESULTS and only["jobs"] == [])
+
+    context = {"skills": [], "category_scores": {"technology": 5}, "rejected_jobs": []}
+    tech = card("Software Engineer", company="Gamma", description="software engineer")
+    feed_placeholder = card("Join our Talent Pool", description="software engineer")
+    ag, _, _, _ = feed_agent(["technology"], context,
+                             {"technology": [feed_placeholder, tech]},
+                             scores={"Software Engineer": 0.5, "Join our Talent Pool": 0.9})
+    feed_titles = [j["title"] for j in ag.build_feed("laiba")["feed_jobs"]]
+    check("the feed drops the placeholder", "Join our Talent Pool" not in feed_titles)
+    check("the feed keeps the real job", "Software Engineer" in feed_titles)
+
+
 def test_absolute_scores_and_exclusions():
     """2026-10-27: percentages are absolute, and an excluded term lowers a job's score."""
     print("\n[match percentage and exclusions]")
@@ -1794,6 +1825,7 @@ def main():
         test_deduplication()
         test_ranking()
         test_absolute_scores_and_exclusions()
+        test_placeholders()
         test_context_injection()
         test_category_boost()
         test_classification()

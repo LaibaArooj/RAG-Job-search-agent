@@ -116,9 +116,19 @@
         <span class="text-muted small ms-1 js-filter-count"></span>
     </div>
 
+    {# Added 2026-10-29. Only for a DECLINE ([]), not an outage (None): an outage says nothing
+       about fit, so it must not suggest the results are weak. #}
+    {% set declined = ai_recommendations is not none and not ai_recommendations %}
+    {% if declined %}
+    <p class="text-muted small mb-3 js-declined-note">
+        No strong match was found. Percentages show how closely each advert's wording matches
+        your search, not whether the job fits.
+    </p>
+    {% endif %}
+
     <div id="js-results">
         {% for job in jobs %}
-        {{ job_card(job, badge="score") }}
+        {{ job_card(job, badge="score", muted=declined) }}
         {% endfor %}
     </div>
 

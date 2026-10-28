@@ -10,10 +10,12 @@
    Parameters:
      job      - the job dict, exactly as JobSearchAgent.run / build_feed produce it
      reason   - the LLM's explanation, shown only in the AI panel (never from job data)
-     badge    - "score" for "% match" (search), "band" for the feed's match band, "" for none
+     badge    - "score" for "% similar" (search), "band" for the feed's match band, "" for none
      compact  - drop the description, for the AI panel where the same jobs appear again below
+     muted    - grey score badge, used when the AI panel declined: a high similarity must not
+                look like an endorsement the AI has just withheld
 #}
-{% macro job_card(job, reason=None, badge="score", compact=False) %}
+{% macro job_card(job, reason=None, badge="score", compact=False, muted=False) %}
 {# data-remote is derived from eligibility, not from a per-job remote flag, and the report
    must say so: Adzuna has no remote field at all (`where=remote` returns 0 results), so the
    honest rule available is "this came from a remote board". Himalayas is an all-remote
@@ -34,8 +36,11 @@
                 {% if badge == "band" and job.match_band %}
                 <span class="badge bg-success">{{ job.match_band }}</span>
                 {% elif badge == "score" and job.normalized_score is defined %}
-                <span class="badge bg-success">
-                    {{ job.normalized_score | round(1) }}% match
+                {# "similar", not "match", since 2026-10-29: the number is how closely the
+                   advert's WORDING matches the search (core.agent.rank), not whether the job
+                   fits. A declined AI panel above an "88% match" read as a contradiction. #}
+                <span class="badge {{ 'bg-secondary' if muted else 'bg-success' }} js-score">
+                    {{ job.normalized_score | round(1) }}% similar
                 </span>
                 {% endif %}
                 {# Added 2026-10-27: says WHY a job's score was lowered (core.agent.rank). #}

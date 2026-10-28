@@ -205,6 +205,9 @@ Panels love asking you to break your own system.
 - [ ] Adzuna quota checked the morning of the demo
 - [ ] Model pre-downloaded, first-run delay avoided
 - [ ] Fallback plan if the venue wifi fails — recorded video or cached fixtures
+- [ ] A search the AI declines (the quant/HFT query) → grey "% similar" badges and the note.
+  Be ready for "why does it still say 94%?": the number is wording similarity, the AI
+  judges fit, and the page now says so
 
 ## Things you should be able to draw on a whiteboard
 

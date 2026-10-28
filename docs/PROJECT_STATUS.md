@@ -1,5 +1,21 @@
-Last updated: 2026-10-27, later (**M4 in progress.** Fresh experiment ready for hand
-judging. Match percentage and negated searches fixed.)
+Last updated: 2026-10-29 (**M4 in progress.** Demo checks passed; the two problems they
+found are fixed.)
+
+## Where we left off — 2026-10-29 (demo checks done)
+
+- **Demo checks, on the Pakistan account at localhost:5001:**
+  - Exclusion search: absolute percentages, and "Mentions: phone" on phone jobs.
+  - No-match message shows.
+  - Saved jobs stay off `/feed`.
+- **Fixed from them:**
+  - The badge reads "% similar", and greys out under a declined AI panel, with a note.
+  - Placeholder adverts are dropped from search and feed.
+  - Both were checked again in the browser.
+- `verify_all.py --offline` is 564/564. `verify_live.py` was updated for the new wording but
+  not run (it spends Adzuna quota).
+- **You still need to** delete the `DEMO_USERNAME` / `DEMO_PASSWORD` lines at the end of
+  `.env.example`. Permissions blocked Claude from editing that file.
+- **Next:** merge the branches via PR, then the report.
 
 ## Where we left off — 2026-10-27, latest (fresh experiment scored)
 

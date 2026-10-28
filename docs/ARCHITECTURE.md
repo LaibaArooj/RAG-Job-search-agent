@@ -216,6 +216,17 @@ subtracts `EXCLUDE_PENALTY_TITLE` (0.25) for a title hit or `EXCLUDE_PENALTY_DES
 badge. Word-start matching, so it is crude: "no phone calls required" in a description still
 costs 0.10. The feed passes no exclusions.
 
+**What the card shows (2026-10-29).** The search badge reads "NN% similar": it is text
+similarity, and the LLM's verdict is a separate judgement. When the AI panel declines
+(`ai_recommendations == []`, not `None`), `index.html` passes `muted=True` to `job_card`,
+which greys the score badge, and shows a note that the percentage measures wording, not fit.
+
+**Placeholder adverts (2026-10-29).** `JobSearchAgent.drop_placeholders` runs straight after
+`deduplicate` in both `run()` and `build_feed()`. It removes titles matching
+`PLACEHOLDER_TITLE` (general/open application, talent pool, register your CV, ...). It checks
+the title only, so a CV-collection page with an ordinary title still gets through.
+`evaluation/build_export.rank_systems` does not call it, so frozen results are unchanged.
+
 Save and reject work on feed cards with no JavaScript change — `feed.html` and `index.html`
 share one decision-group markup block and one `static/js/decisions.js`.
 

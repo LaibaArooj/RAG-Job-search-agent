@@ -435,6 +435,19 @@ def main():
         check("picks and outages never show the no-match message",
               "strong match" not in up_html and "strong match" not in down_html)
 
+        # Added 2026-10-29. The score is text similarity, and after a decline it must not look
+        # like an endorsement: the badge greys out and a note says what the number measures.
+        pages = (up_html, down_html, declined_html)
+        check("every page labels the score '% similar'", all("% similar" in p for p in pages))
+        check("no page still says '% match'", all("% match" not in p for p in pages))
+        check("a decline adds the note on what the percentage means",
+              "js-declined-note" in declined_html)
+        # js-score marks the score badge; the source badge is grey on every page.
+        check("a decline greys the score badge", "bg-secondary js-score" in declined_html)
+        check("picks and outages keep green score badges and no note",
+              all("js-declined-note" not in p and "bg-secondary js-score" not in p
+                  and "bg-success js-score" in p for p in (up_html, down_html)))
+
         print("\n7c. TC-007 — autocomplete, and TC-015 — result filters")
         # Rendered through the ROUTE, not directly, because the suggestion list is assembled
         # by the controller from two sources and rendering the template by hand would skip

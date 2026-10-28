@@ -23,6 +23,11 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
   **K beat both LLM arms** (1.00 vs 0.70, p = 0.016), entirely through the LLM declining or
   picking fewer than three where the judge accepted every card. See `docs/EVALUATION.md`.
 ### Changed
+- 2026-10-29: **the score badge says "% similar", not "% match"**, because it measures how
+  closely an advert's wording matches the search, not whether the job fits. When the AI
+  panel declines, the list's score badges turn grey and a note says what the percentage
+  means. The demo had shown "88.2% match" directly under "no strong match". The numbers
+  themselves are unchanged.
 - 2026-10-27: **the match percentage is absolute.** It was relative to the best job in the
   results, so the top job always read 100%, even at similarity 0.07 and when the AI panel
   said nothing matched. Now similarity / 0.60, capped at 100. One job shows the same
@@ -33,6 +38,11 @@ All notable changes, newest first. Claude appends an entry after each shipped fe
 - 2026-10-25: all emojis removed from the templates (navbar brand, page headings, and the
   "Open worldwide" / "Open to your country" badges). No verify script checks for them.
 ### Fixed
+- 2026-10-29: **placeholder adverts are dropped** from search and the feed. "Don't see what
+  you're looking for?" had shown as a Great Match on the demo feed. `drop_placeholders`
+  matches an explicit list of title patterns (general/open application, talent pool, future
+  opportunities, register your CV, ...). It checks the title only, so a placeholder with an
+  ordinary-looking title still gets through. The frozen evaluation pools are not re-filtered.
 - 2026-10-27: **negated searches.** "Customer support, no phone calls" used to rank phone
   jobs first: the embedding has no "not". `parse_intent` now returns an `exclude` list. The
   negated phrase is removed before embedding, and a job naming the term loses 0.25 (title)

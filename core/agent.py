@@ -63,6 +63,20 @@ STRONG_MATCH_SIMILARITY = 0.60
 EXCLUDE_PENALTY_TITLE = 0.25
 EXCLUDE_PENALTY_DESCRIPTION = 0.10
 
+# Titles of "send us your CV" pages rather than vacancies (see drop_placeholders). An explicit
+# list rather than a classifier, so every rule can be read and defended; word boundaries keep
+# a real "Pool Technician" out of "talent pool".
+PLACEHOLDER_TITLE = re.compile(
+    r"\bdon['’]?t see (what|a role|the role|your)"
+    r"|\b(general|open|speculative) application"
+    r"|\btalent (pool|community|network)\b"
+    r"|\bfuture opportunit"
+    r"|\bregister your (cv|resume|interest)\b"
+    r"|\bsubmit your (cv|resume)\b"
+    r"|\bexpression of interest\b",
+    re.I,
+)
+
 # Hand-picked coefficient weighting learned category preference against raw similarity.
 # TODO(M4): this number has no justification yet. Either tune it during the precision@5
 # evaluation or state it plainly in the report as a heuristic. Do not leave it unexplained.
@@ -260,6 +274,15 @@ class JobSearchAgent:
             unique.append(job)
         return unique
 
+    @staticmethod
+    def drop_placeholders(jobs):
+        """Remove adverts whose title marks them as a CV-collection page, not a vacancy."""
+        # Added 2026-10-29 after the demo feed showed "Don't see what you're looking for?
+        # (Technology)" as a Great Match. Such pages fail R1 of the relevance rules. TITLE
+        # only, on purpose: descriptions of real jobs often say "join our talent community".
+        # So a placeholder with an ordinary-looking title still gets through.
+        return [job for job in jobs if not PLACEHOLDER_TITLE.search(job.get("title") or "")]
+
     # --- classification -----------------------------------------------------------
 
     @staticmethod
@@ -411,7 +434,7 @@ class JobSearchAgent:
                 if source not in failed_sources:
                     failed_sources.append(source)
 
-        jobs = self.deduplicate(raw_jobs)
+        jobs = self.drop_placeholders(self.deduplicate(raw_jobs))
 
         # intent_category is deliberately None here. In a search, a job whose text names no
         # category borrows the one the user was searching for; the feed has no single query,
@@ -628,7 +651,7 @@ class JobSearchAgent:
         raw_jobs, failed_sources = self._fetch_all_variants(
             intent["variants"], work_type, experience, context.get("country"),
         )
-        jobs = self.deduplicate(raw_jobs)
+        jobs = self.drop_placeholders(self.deduplicate(raw_jobs))
 
         # One category per job, from the job's own text (see classify above). Until this
         # existed, JobCard.category was "" for every job, so the CATEGORY_BOOST term in rank()
