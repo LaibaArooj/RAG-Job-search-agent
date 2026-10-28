@@ -64,4 +64,6 @@ def inject_csrf_token():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # PORT lets a second copy run beside one already on 5000 (the default, unchanged).
+    import os
+    app.run(debug=True, port=int(os.getenv("PORT", "5000")))
