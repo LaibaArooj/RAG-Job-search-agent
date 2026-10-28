@@ -1,0 +1,102 @@
+{
+  "query_id": "Q06",
+  "query": "junior frontend developer react remote",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "ee8e028037d1e725",
+        "122d094d7de1d6db",
+        "fe598bc67d5432ca",
+        "36ee77403bfd7f00",
+        "974f11479f1e4286"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "36ee77403bfd7f00",
+              "reason": "This position is advertised as Remote First, so you could work remotely, although it is limited to candidates based in the UK. The role focuses on technical implementation and integration, which may align with a junior frontend developer's skill set, especially if you have React experience."
+            },
+            {
+              "job_id": "122d094d7de1d6db",
+              "reason": "The Kerry Internship Programme is an entry\u2011level opportunity that could suit a junior candidate looking to gain experience. However, it requires on\u2011site work in Runcorn, Cheshire, so it is not a remote role."
+            },
+            {
+              "job_id": "fe598bc67d5432ca",
+              "reason": "The Technical Assurance Lead role involves technical work that might be of interest to a developer. It is restricted to on\u2011site work in Reading, Berkshire and is a senior\u2011level position, making it a poor fit for a junior remote frontend developer."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [
+            {
+              "job_id": "36ee77403bfd7f00",
+              "reason": "This role is advertised as Remote First, so you can work from anywhere, though the hiring note still limits candidates to the Spitalfields area. It involves technology implementation, which may align with a junior developer looking to grow technical skills, though it is not a frontend React position."
+            },
+            {
+              "job_id": "122d094d7de1d6db",
+              "reason": "The internship is a junior\u2011level opportunity that could provide entry\u2011level experience, but it is limited to candidates who can work on\u2011site in Runcorn, Cheshire, so it is not remote."
+            },
+            {
+              "job_id": "ee8e028037d1e725",
+              "reason": "The Senior Systems Developer role is a development position, yet it requires senior experience and is restricted to candidates able to work in Chesterfield, Derbyshire, making it neither junior nor remote."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "aabb8761b36cd6c6",
+        "4a6607d527b4e4f7",
+        "aafceba37cb837cc",
+        "2d13ff699e3ee183",
+        "07e59d263bd8e7a1"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "aabb8761b36cd6c6",
+              "reason": "The role is a Web Frontend Engineer focusing on JavaScript, CSS, and React, which aligns directly with a junior frontend developer\u2019s skill set. It is fully remote with no geographic restriction, allowing the seeker to apply from anywhere."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "aabb8761b36cd6c6",
+              "reason": "The role is remote with no geographic restriction. It focuses on web frontend technologies including React, matching the seeker\u2019s skill set."
+            },
+            {
+              "job_id": "4a6607d527b4e4f7",
+              "reason": "The position is remote with no geographic restriction. It is a senior full\u2011stack role, so it may be beyond the junior React focus of the seeker."
+            },
+            {
+              "job_id": "aafceba37cb837cc",
+              "reason": "The job is remote with no geographic restriction. It centers on backend authentication work rather than frontend React development, making it a less direct fit."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "aabb8761b36cd6c6",
+              "reason": "This role is remote with no geographic restriction, so you can apply from anywhere. It focuses on web frontend work using JavaScript, CSS, and React, which aligns directly with a junior frontend developer's skill set."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

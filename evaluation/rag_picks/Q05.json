@@ -1,0 +1,107 @@
+{
+  "query_id": "Q05",
+  "query": "somewhere I can use my writing and actually get paid",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "98162b028bc28b29",
+        "81e6b9d9466f65e6",
+        "26e3d9afa06b80e5",
+        "208c57f0dbd3594f",
+        "c42a241f375f28d9"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can already work in London, UK, so you must be based there or have the right to work locally. It focuses on reviewing and refining AI\u2011generated content, letting you apply your writing skills directly for a high\u2011pay rate of $60 per hour."
+            },
+            {
+              "job_id": "c42a241f375f28d9",
+              "reason": "This position also requires you to be able to work in the UK, so you need the appropriate work eligibility. It involves leading proposal writing projects, giving you regular paid work that leverages your writing expertise in a managerial capacity."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can work in London, UK, so you would need to be based there or able to relocate. It offers a clear writing-focused contract at $60 per hour, matching your desire to write and get paid."
+            },
+            {
+              "job_id": "c42a241f375f28d9",
+              "reason": "This position also requires you to be able to work in the UK, so geographic eligibility is a condition. It involves managing proposal writing, providing regular paid work that utilizes your writing skills."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can work in London, UK. It pays $60 per hour for reviewing and refining AI\u2011generated content, allowing you to apply your writing skills directly for compensation."
+            },
+            {
+              "job_id": "c42a241f375f28d9",
+              "reason": "This position requires you to be able to work in the UK. It involves leading proposal writing projects, giving you regular paid work that leverages your writing expertise."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "98162b028bc28b29",
+        "81e6b9d9466f65e6",
+        "26e3d9afa06b80e5",
+        "208c57f0dbd3594f",
+        "c42a241f375f28d9"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can work in London, UK, so you would need to be based there or able to relocate. It focuses on reviewing and refining AI\u2011generated content, offering a clear writing\u2011focused responsibility with a $60/hour compensation."
+            },
+            {
+              "job_id": "c42a241f375f28d9",
+              "reason": "The position is restricted to candidates who can work in the UK, so you must be eligible to work there. It involves leading proposal writing projects, allowing you to apply your writing skills in a paid, managerial capacity."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can work in London, UK. It offers paid contract work at $60/hour focused on reviewing and refining AI\u2011generated content, which directly uses writing skills."
+            },
+            {
+              "job_id": "c42a241f375f28d9",
+              "reason": "This position also requires the ability to work in the UK. It is a paid managerial role that involves leading proposal writing teams, providing ample opportunity to apply and be compensated for your writing expertise."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "98162b028bc28b29",
+              "reason": "This role is limited to candidates who can already work in London, UK, so you would need to be based there or have the right to work there. It offers a high hourly rate for reviewing and refining AI\u2011generated content, which directly uses your writing skills."
+            },
+            {
+              "job_id": "c42a241f375f28d9",
+              "reason": "The position requires candidates to be able to work in the UK, so it is geographically restricted to that region. It involves leading proposal writing projects, providing a steady paid opportunity to apply and manage professional writing work."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

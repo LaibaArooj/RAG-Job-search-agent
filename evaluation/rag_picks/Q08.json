@@ -1,0 +1,123 @@
+{
+  "query_id": "Q08",
+  "query": "graphic designer figma branding",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "0278522ffe832ce2",
+        "0543d778d1659834",
+        "8e395b59407b1007",
+        "094bf856bb167474",
+        "bd84aad16f911087"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "0278522ffe832ce2",
+              "reason": "This role is limited to candidates who can already work in London, UK. It focuses on brand and digital graphic design, a strong match for someone looking to apply Figma skills to branding projects."
+            },
+            {
+              "job_id": "bd84aad16f911087",
+              "reason": "This position is restricted to candidates able to work in Stockport, Greater Manchester. As a Design Lead for brand and studio, it offers senior\u2011level branding work where tools like Figma are commonly used."
+            },
+            {
+              "job_id": "8e395b59407b1007",
+              "reason": "Applicants must already be able to work in West Sussex, South East England. The role centers on retail and brand experience design, aligning with a graphic designer\u2019s branding expertise and likely involves modern design tools such as Figma."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "0278522ffe832ce2",
+              "reason": "This role is limited to candidates who can already work in London, UK. It focuses on graphic design for branding and digital projects, which aligns with your interest in Figma and brand work."
+            },
+            {
+              "job_id": "8e395b59407b1007",
+              "reason": "This position is restricted to candidates who can already work in West Sussex, South East England. It involves creating retail and brand experiences, offering ample opportunity to apply Figma for branding tasks."
+            },
+            {
+              "job_id": "bd84aad16f911087",
+              "reason": "This job is limited to candidates who can already work in Stockport, Greater Manchester. As a Design Lead for Brand & Studio, it requires strong branding expertise and likely extensive use of tools like Figma."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "0278522ffe832ce2",
+              "reason": "This role is limited to candidates who can work in London, UK, so you must be based there or have the right to work locally. It focuses on graphic design for brand and digital projects, which aligns with your interest in branding and likely involves tools like Figma."
+            },
+            {
+              "job_id": "bd84aad16f911087",
+              "reason": "This position is restricted to candidates able to work in Stockport, Greater Manchester, so location eligibility is required. As a Design Lead for Brand & Studio, it centers on brand identity development and would heavily use design systems tools such as Figma."
+            },
+            {
+              "job_id": "8e395b59407b1007",
+              "reason": "This job is limited to candidates who can work in West Sussex, South East England, so you need to meet that geographic requirement. It involves graphic design for retail and brand experience, matching your branding focus and likely includes Figma in the workflow."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "4c394bd43ea5f22e",
+        "503de9a24c4cf269",
+        "4a6607d527b4e4f7",
+        "76fe1d50f90c3552",
+        "db33274f761bb771"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "The Creative (Motion Design) role focuses on visual design work such as motion graphics and digital ads, which aligns closely with graphic design skills and often uses tools like Figma for asset creation. It is fully remote with no geographic restriction, so the seeker can apply worldwide."
+            },
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The Conceptual Copywriter position involves developing brand messaging and creative concepts, which complements a graphic designer\u2019s branding expertise and may require collaboration on visual assets. It is also remote with no geographic restriction."
+            },
+            {
+              "job_id": "76fe1d50f90c3552",
+              "reason": "The Product Growth Strategist role includes shaping brand positioning and growth strategies, offering opportunities to apply branding knowledge alongside design teams. This job is remote and open to applicants globally."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "The Creative (Motion Design) role focuses on visual design work, including branding assets, and likely uses tools like Figma for UI/UX collaboration. It is fully remote, matching the seeker\u2019s location flexibility."
+            },
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The Conceptual Copywriter position involves creating brand messaging and visual concepts, which aligns with branding experience and can complement graphic design skills. It also has no geographic hiring restrictions."
+            },
+            {
+              "job_id": "76fe1d50f90c3552",
+              "reason": "The Product Growth Strategist role works on brand positioning and growth strategies, offering exposure to branding projects even though it is less design\u2011centric. It is remote, so the seeker can apply without location limits."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "This role is remote with no geographic restriction, allowing you to apply from anywhere. It focuses on motion design and visual creation, which aligns with graphic design skills and may involve tools like Figma for branding projects."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

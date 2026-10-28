@@ -1,0 +1,4 @@
+/* Custom CSS is kept minimal by design — Bootstrap 5.3 components do the work,
+   which is a stated constraint in CLAUDE.md and keeps the frontend defensible
+   as the work of a single developer. Add overrides here only when a Bootstrap
+   utility class cannot express what is needed. */

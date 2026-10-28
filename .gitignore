@@ -13,9 +13,8 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Model cache
+# Model cache (HuggingFace download dir — NOT the models/ source package)
 .cache/
-models/
 
 # OS / editor
 .DS_Store

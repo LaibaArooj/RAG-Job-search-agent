@@ -1,0 +1,115 @@
+{
+  "query_id": "Q19",
+  "query": "coding job that isn't web development",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "c562d175798faa72",
+        "00d0d5a32160579b",
+        "62e418073ba50812",
+        "37822344507b5f73",
+        "277225ca3f5e14c4"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "277225ca3f5e14c4",
+              "reason": "This role focuses on AS/400 system modernization and legacy application work, which is not web development. It is limited to candidates who can already work in the UK."
+            },
+            {
+              "job_id": "00d0d5a32160579b",
+              "reason": "The Software Developer Trainee position offers general coding training without a web\u2011specific focus, making it suitable for a non\u2011web development path. It is restricted to candidates who can work in Blackpool, Lancashire."
+            },
+            {
+              "job_id": "62e418073ba50812",
+              "reason": "The Front End Developer role is primarily web\u2011focused, so it does not match the non\u2011web requirement, but it is the only remaining coding role; note it is limited to candidates who can work in London, UK."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "00d0d5a32160579b",
+              "reason": "This role is limited to candidates who can work in Blackpool, Lancashire, so you must be locally based or able to relocate. It offers a fully funded training program for software development, providing a pathway into coding without requiring prior experience."
+            },
+            {
+              "job_id": "277225ca3f5e14c4",
+              "reason": "There is no specific city restriction, only that you must be able to work in the UK. The position focuses on AS/400 system development and modernization, which involves coding but not web development."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "00d0d5a32160579b",
+              "reason": "This role is limited to candidates who can already work in Blackpool, Lancashire. It is a general software developer trainee position that does not focus on web development, making it a good fit for a coding job outside of web work."
+            },
+            {
+              "job_id": "277225ca3f5e14c4",
+              "reason": "This position requires candidates who can work in the UK. It involves AS/400 system development and maintenance, which is a non\u2011web coding role and aligns with the seeker\u2019s request."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "96a55d12722b1a0b",
+        "c562d175798faa72",
+        "1cdaf0a6ba1b56a4",
+        "00d0d5a32160579b",
+        "62e418073ba50812"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "96a55d12722b1a0b",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere. It focuses on engineering management and open\u2011source software rather than front\u2011end web development."
+            },
+            {
+              "job_id": "00d0d5a32160579b",
+              "reason": "This position is limited to candidates who can work in Blackpool, Lancashire, so you would need to be locally based or relocate. It offers a trainee software developer role with training, which is not specifically a web\u2011development position."
+            },
+            {
+              "job_id": "c562d175798faa72",
+              "reason": "This job is restricted to candidates already able to work in London, UK, so it is location\u2011specific. Although it mentions web design and programming, the broader media\u2011related responsibilities may include non\u2011web coding tasks."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "96a55d12722b1a0b",
+              "reason": "This role is a senior engineering manager position focused on open\u2011source software and infrastructure, not web development. It has no geographic restriction, so you can apply from anywhere."
+            },
+            {
+              "job_id": "00d0d5a32160579b",
+              "reason": "This is a software developer trainee role that provides full training and is not limited to web development. However, it is only open to candidates who can work on\u2011site in Blackpool, Lancashire."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "96a55d12722b1a0b",
+              "reason": "This position has no geographic restriction, allowing you to apply from anywhere. As an Engineering Manager at a leading open\u2011source company, it involves overseeing software projects beyond web development, matching your criteria."
+            },
+            {
+              "job_id": "00d0d5a32160579b",
+              "reason": "This role is limited to candidates who can work in Blackpool, Lancashire. It offers a fully funded training program for new software developers, making it a good fit for someone seeking a coding position outside of web development."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

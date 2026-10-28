@@ -1,0 +1,1875 @@
+"""Prove the search pipeline — TC-006, TC-016, TC-017, TC-018, TC-021, TC-022.
+
+Run with:  python verify_agent.py
+
+Unlike verify_intent.py, this script makes NO live calls at all. Every collaborator is a
+double: the database, the semantic engine, the RAG pipeline and the two job APIs. That is
+deliberate and it is the reason JobSearchAgent takes its collaborators as constructor
+arguments — a pipeline that built its own SemanticEngine could not be tested without
+loading 88 MB of model weights, and one that called the real Adzuna would spend demo quota
+every time this script ran.
+
+Three of these cases are only provable with doubles:
+  - TC-017 asserts that NO api call happens, which needs a call counter, not a return value.
+  - TC-018 needs Adzuna to fail on demand, which needs a stub, not a real outage.
+  - TC-006 needs similarity scores chosen in advance, so the expected order is known.
+
+Deliberately not pytest: pytest is not in requirements.txt and adding a dependency needs
+sign-off. This mirrors verify_db.py, verify_auth.py and verify_intent.py.
+"""
+
+import sys
+
+import config
+from adapters import api_client
+from core import agent as agent_module
+from core import intent_parser
+from core.agent import CATEGORY_BOOST, JobSearchAgent
+from core.intent_parser import classify_category
+from models.job_card import JobCard
+
+PASSED = []
+FAILED = []
+
+
+def check(label, condition):
+    """Record one assertion and print it as it happens."""
+    (PASSED if condition else FAILED).append(label)
+    print(f"  {'PASS' if condition else 'FAIL'}  {label}")
+
+
+# --- doubles ----------------------------------------------------------------------
+
+
+class StubDB:
+    """Stand-in for DatabaseManager, recording calls and serving a canned profile."""
+
+    def __init__(self, context=None, cached=None, raise_on_context=False,
+                 top_categories=None):
+        """Store the canned profile, cache contents and feed categories this double serves."""
+        self.context = context if context is not None else {}
+        self.cached = cached or {}
+        self.raise_on_context = raise_on_context
+        self.top_categories = top_categories or []
+        self.history = []
+        self.cache_writes = {}
+        self.top_category_calls = []
+
+    def get_user_context(self, username):
+        """Return the canned profile, or raise if this double is scripted to fail."""
+        if self.raise_on_context:
+            raise RuntimeError("Atlas unreachable")
+        return self.context
+
+    def cache_get(self, key):
+        """Return the canned cache entry for this key, or None."""
+        return self.cached.get(key)
+
+    def cache_put(self, key, query_text, results):
+        """Record a cache write."""
+        self.cache_writes[key] = results
+
+    def add_search_history(self, username, query):
+        """Record a search-history write."""
+        self.history.append((username, query))
+
+    def get_top_categories(self, username, n=3):
+        """Return the canned feed categories, recording that the feed asked for them."""
+        # The real method already filters to positive scores and is covered by verify_db.py.
+        # This double returns the result of that filter, so these cases test what build_feed
+        # does WITH the categories rather than re-testing how they are chosen.
+        self.top_category_calls.append((username, n))
+        return list(self.top_categories[:n])
+
+
+class StubEngine:
+    """Semantic engine double returning similarity scores decided in advance by job title."""
+
+    def __init__(self, scores=None):
+        """Store the title-to-similarity map this double should return."""
+        self.scores = scores or {}
+        self.encoded = []
+        self.batches = []
+
+    def encode(self, text):
+        """Record the enriched query text and return it as the 'vector' (TC-016 asserts on it)."""
+        self.encoded.append(text)
+        return text
+
+    def batch_encode(self, texts):
+        """Record the job texts and return them unchanged as 'vectors'."""
+        self.batches.append(texts)
+        return texts
+
+    def similarity(self, query_vector, job_vector):
+        """Return the pre-decided score for whichever job title this text starts with."""
+        for title, score in self.scores.items():
+            if job_vector.startswith(title):
+                return score
+        return 0.0
+
+
+class StubRAG:
+    """RAG pipeline double returning canned picks, or None to simulate a Groq failure."""
+
+    # Since 2026-09-25 RAGPipeline returns [{"index", "reason"}], not prose, because the AI
+    # panel renders real job cards. A double still returning a string would keep passing its
+    # own assertions while the production join broke -- the same shape of gap that let
+    # TC-021 sit green for a day while query expansion did not happen.
+    DEFAULT = ({"index": 1, "reason": "canned reason"},)
+
+    def __init__(self, reply="__default__"):
+        """Store the canned reply (None simulates the FR-018 fallback)."""
+        self.reply = list(self.DEFAULT) if reply == "__default__" else reply
+        self.received = None
+
+    def run(self, query, jobs):
+        """Record the jobs it was handed and return the canned picks."""
+        self.received = jobs
+        return self.reply
+
+
+class FetchRecorder:
+    """Replaces api_client.fetch_variant, serving canned jobs per variant and counting calls."""
+
+    def __init__(self, by_variant=None, failed_sources=None, empty_sources=None):
+        """Store the per-variant canned job lists and any sources scripted to fail or be empty."""
+        self.by_variant = by_variant or {}
+        self.failed_sources = failed_sources or []
+        self.empty_sources = empty_sources or []
+        self.calls = []
+        self.work_types = []
+        self.experiences = []
+        self.countries = []
+
+    def __call__(self, query, app_id, app_key, work_type=None, experience=None,
+                 country=None):
+        """Mimic fetch_variant, recording the variant, work type and experience asked for."""
+        # The signature tracks the real fetch_variant deliberately. A double that keeps an
+        # older interface than the code it stands in for stops testing anything and starts
+        # hiding the difference.
+        self.calls.append(query)
+        self.work_types.append(work_type)
+        self.experiences.append(experience)
+        self.countries.append(country)
+        return {
+            "jobs": list(self.by_variant.get(query, [])),
+            "failed_sources": list(self.failed_sources),
+            "empty_sources": list(self.empty_sources),
+        }
+
+
+def card(title, company="Acme", description="a job", source="Fixture", category=""):
+    """Build one JobCard with a real job_id, so dedupe is tested against the real hash."""
+    # source="Fixture" is deliberately NOT in SEARCHING_SOURCES. It stands for "a source that
+    # did not search", which is what the cache tests need the default to mean. Until
+    # 2026-10-13 the default was "Remotive", the real source that ignored its search parameter.
+    return JobCard(
+        job_id=JobCard.make_job_id(title, company),
+        title=title,
+        company=company,
+        description=description,
+        source=source,
+        category=category,
+    )
+
+
+def install(monkey_fetch=None, monkey_intent=None):
+    """Swap fetch_variant and parse_intent inside core.agent for the duration of one case."""
+    # Patched on the agent module, not on their home modules: the agent imported the names
+    # directly, so rebinding them where they are USED is what takes effect.
+    if monkey_fetch is not None:
+        agent_module.fetch_variant = monkey_fetch
+    if monkey_intent is not None:
+        agent_module.parse_intent = monkey_intent
+
+
+def fixed_intent(*variants):
+    """Return a parse_intent double that always yields the given variants, counting calls."""
+
+    def _parse(query):
+        _parse.calls += 1
+        return {
+            "work_type": None,
+            "experience": None,
+            "category": "other",
+            "variants": list(variants) or [query],
+            "exclude": [],
+            "source": "stub",
+        }
+
+    _parse.calls = 0
+    return _parse
+
+
+# --- TC-017: empty query makes no external call -----------------------------------
+
+
+def test_empty_query():
+    """TC-017: an empty search returns the prompt message and calls nothing external."""
+    print("\nTC-017 — empty query")
+    fetch = FetchRecorder()
+    intent = fixed_intent("x")
+    install(fetch, intent)
+    db = StubDB()
+
+    result = JobSearchAgent(db, StubEngine(), StubRAG()).run("laiba", "")
+
+    check("empty query returns the SRS message", result["error"] == "Please enter a search term")
+    check("empty query returns no jobs", result["jobs"] == [])
+    # The point of the whole case: proving an absence needs a counter.
+    check("no API call was made", fetch.calls == [])
+    check("no Groq intent call was made", intent.calls == 0)
+    check("no search history was written", db.history == [])
+
+    result = JobSearchAgent(db, StubEngine(), StubRAG()).run("laiba", "    ")
+    check("whitespace-only query is treated as empty", result["error"] == "Please enter a search term")
+    check("whitespace-only query made no API call", fetch.calls == [])
+
+
+# --- TC-018: a failed source is not the same as no results ------------------------
+
+
+def test_source_failure():
+    """TC-018: Adzuna failing with no jobs shows the outage banner, not 'no results'."""
+    print("\nTC-018 — rate-limited source")
+    install(FetchRecorder(by_variant={}, failed_sources=["Adzuna"]), fixed_intent("q"))
+    down = JobSearchAgent(StubDB(), StubEngine(), StubRAG()).run("laiba", "q")
+    check("no jobs + failed source -> outage banner",
+          down["error"] == "Job data temporarily unavailable")
+
+    install(FetchRecorder(by_variant={}, failed_sources=[]), fixed_intent("q"))
+    empty = JobSearchAgent(StubDB(), StubEngine(), StubRAG()).run("laiba", "q")
+    check("no jobs + healthy sources -> no-results message",
+          empty["error"].startswith("No jobs matched"))
+    check("the two causes give different messages", down["error"] != empty["error"])
+
+    # Partial failure: some results arrived, so they must still be shown.
+    install(
+        FetchRecorder(by_variant={"q": [card("Writer")]}, failed_sources=["Adzuna"]),
+        fixed_intent("q"),
+    )
+    partial = JobSearchAgent(StubDB(), StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("partial failure still returns the jobs that arrived", len(partial["jobs"]) == 1)
+    check("partial failure sets a warning, not an error",
+          partial["error"] is None and partial["warning"] is not None)
+
+
+# --- TC-021: query expansion widens the pool --------------------------------------
+
+
+def test_query_expansion():
+    """TC-021: the union across variants is strictly larger than any single variant."""
+    print("\nTC-021 — query expansion")
+    by_variant = {
+        "remote writing job no experience": [card("Content Writer"), card("Copywriter")],
+        "junior copywriter remote": [card("Copywriter"), card("Junior Copywriter")],
+        "entry level content writer": [card("Content Associate")],
+    }
+    variants = list(by_variant)
+    fetch = FetchRecorder(by_variant=by_variant)
+    install(fetch, fixed_intent(*variants))
+
+    scores = {"Content Writer": 0.9, "Copywriter": 0.8, "Junior Copywriter": 0.7,
+              "Content Associate": 0.6}
+    result = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).run(
+        "laiba", "remote writing job no experience"
+    )
+
+    check("the API was called once per variant", fetch.calls == variants)
+    biggest_single = max(len(v) for v in by_variant.values())
+    check(f"union ({len(result['jobs'])}) is larger than the biggest single variant ({biggest_single})",
+          len(result["jobs"]) > biggest_single)
+    check("union is exactly the 4 distinct jobs", len(result["jobs"]) == 4)
+    check("the original query is fetched first", fetch.calls[0] == variants[0])
+
+
+# --- TC-022: cross-source deduplication -------------------------------------------
+
+
+def test_deduplication():
+    """TC-022: the same listing from both APIs appears exactly once."""
+    print("\nTC-022 — cross-source dedupe")
+    same_from_remotive = card("Content Writer", "Acme Ltd", source="Himalayas")
+    # Same listing as Adzuna syndicates it: different case, padded, different description.
+    same_from_adzuna = card("  content WRITER ", "acme ltd", description="other text",
+                            source="Adzuna")
+
+    check("differing case and padding hash to the same job_id",
+          same_from_remotive.job_id == same_from_adzuna.job_id)
+    check("a different company hashes differently",
+          card("Content Writer", "Other Ltd").job_id != same_from_remotive.job_id)
+    # The separator case: without "|", these two would collide.
+    check("('Data','Xco') and ('DataX','co') do not collide",
+          JobCard.make_job_id("Data", "Xco") != JobCard.make_job_id("DataX", "co"))
+
+    install(
+        FetchRecorder(by_variant={"writer": [same_from_remotive, same_from_adzuna]}),
+        fixed_intent("writer"),
+    )
+    result = JobSearchAgent(StubDB(), StubEngine({"Content Writer": 0.9}), StubRAG()).run(
+        "laiba", "writer"
+    )
+    check("the syndicated job appears exactly once", len(result["jobs"]) == 1)
+    check("the first occurrence is the one kept", result["jobs"][0]["source"] == "Himalayas")
+
+    dropped = JobSearchAgent.deduplicate([{"title": "no id"}, {"job_id": "abc"}])
+    check("a job with no job_id is dropped rather than passed on", len(dropped) == 1)
+
+
+# --- TC-006: results come back ranked ---------------------------------------------
+
+
+def test_ranking():
+    """TC-006: jobs are returned sorted by score, highest first, with display scores set."""
+    print("\nTC-006 — semantic ranking")
+    jobs = [card("Accountant"), card("Content Writer"), card("Warehouse Packer")]
+    install(FetchRecorder(by_variant={"writing": jobs}), fixed_intent("writing"))
+    scores = {"Content Writer": 0.91, "Accountant": 0.22, "Warehouse Packer": 0.05}
+
+    result = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).run("laiba", "writing")
+    titles = [j["title"] for j in result["jobs"]]
+
+    check("the most similar job ranks first", titles[0] == "Content Writer")
+    check("results are sorted by score descending",
+          all(result["jobs"][i]["final_score"] >= result["jobs"][i + 1]["final_score"]
+              for i in range(len(result["jobs"]) - 1)))
+    check("a strong top result (0.91) caps at 100%", round(result["jobs"][0]["normalized_score"], 6) == 100.0)
+    check("every job carries a similarity score",
+          all("similarity_score" in j for j in result["jobs"]))
+
+    # A negative top score must not produce a negative or exploded percentage.
+    install(FetchRecorder(by_variant={"x": [card("Accountant")]}), fixed_intent("x"))
+    negative = JobSearchAgent(StubDB(), StubEngine({"Accountant": -0.4}), StubRAG()).run("laiba", "x")
+    check("a negative top score gives 0% rather than a broken divide",
+          negative["jobs"][0]["normalized_score"] == 0.0)
+
+
+# --- TC-016: the profile reaches the query vector ---------------------------------
+
+
+def test_context_injection():
+    """TC-016: profile skills are folded into the encoded query, not into the job text."""
+    print("\nTC-016 — context injection")
+    engine = StubEngine({"Developer": 0.8})
+    install(FetchRecorder(by_variant={"developer job": [card("Developer")]}),
+            fixed_intent("developer job"))
+    db = StubDB(context={"skills": ["Python", "Flask"], "experience": "entry level"})
+
+    JobSearchAgent(db, engine, StubRAG()).run("laiba", "developer job")
+
+    encoded = engine.encoded[0]
+    check("the encoded query contains the profile skill", "Python" in encoded)
+    check("the encoded query contains the experience level", "entry level" in encoded)
+    check("the encoded query still contains the search term", "developer job" in encoded)
+    # The other half of the claim: the JOB text is untouched, so this personalisation
+    # changes what THIS user sees, not what every user sees.
+    check("the job text is not modified by the profile",
+          all("Python" not in text for text in engine.batches[0]))
+
+    # A database outage degrades to unpersonalised rather than failing the search.
+    engine2 = StubEngine({"Developer": 0.8})
+    install(FetchRecorder(by_variant={"developer job": [card("Developer")]}),
+            fixed_intent("developer job"))
+    result = JobSearchAgent(StubDB(raise_on_context=True), engine2, StubRAG()).run(
+        "laiba", "developer job"
+    )
+    check("a profile read failure still returns results", len(result["jobs"]) == 1)
+
+
+# --- category boost ----------------------------------------------------------------
+
+
+def test_category_boost():
+    """The learned category score reorders near-equal jobs, and provably would not at 0.0."""
+    print("\nCategory boost")
+    jobs = [card("Design Role", category="design"), card("Tech Role", category="technology")]
+    scores = {"Design Role": 0.50, "Tech Role": 0.51}
+    # Tech leads on raw similarity by 0.01. A design score of 10 adds 10 x 0.02 = 0.2,
+    # which is enough to overturn it; that is the boost doing its job.
+    category_scores = {"design": 10, "technology": 0}
+
+    engine = StubEngine(scores)
+    ranked = JobSearchAgent(StubDB(), engine, StubRAG()).rank("q", list(jobs_as_dicts(jobs)), category_scores)
+    check("a strong learned preference reorders near-equal jobs",
+          ranked[0]["title"] == "Design Role")
+
+    unboosted = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).rank(
+        "q", list(jobs_as_dicts(jobs)), {}
+    )
+    check("without the boost, raw similarity wins", unboosted[0]["title"] == "Tech Role")
+    check("CATEGORY_BOOST is still the documented 0.02", CATEGORY_BOOST == 0.02)
+
+    # It must remain a nudge: it cannot lift an irrelevant job over a relevant one.
+    far_apart = [card("Design Role", category="design"), card("Tech Role", category="technology")]
+    ranked_far = JobSearchAgent(StubDB(), StubEngine({"Design Role": 0.10, "Tech Role": 0.90}),
+                                StubRAG()).rank("q", list(jobs_as_dicts(far_apart)),
+                                                {"design": 10})
+    check("the boost cannot overturn a large similarity gap",
+          ranked_far[0]["title"] == "Tech Role")
+
+
+def test_classification():
+    """Every job leaves run() with a category, which is what makes the boost above live."""
+    print("\nJob categorisation")
+
+    # classify_category on its own. Substring matching, first key in CATEGORY_HINTS wins.
+    check("a writing title classifies as writing",
+          classify_category("Senior Technical Writer") == "writing")
+    check("a nursing title classifies as healthcare",
+          classify_category("Registered Nurse, ICU") == "healthcare")
+    check("unmatched text falls back to the intent's category",
+          classify_category("Zxqv Wibble Officer", "design") == "design")
+    check("unmatched text with no fallback lands in other",
+          classify_category("Zxqv Wibble Officer") == "other")
+    # The fallback reaches a MongoDB field path through save_job, so it is validated too.
+    check("a fallback outside CATEGORIES is refused, not passed through",
+          classify_category("Zxqv Wibble Officer", "writing.$ne") == "other")
+    check("every CATEGORY_HINTS key is a real category",
+          set(config.CATEGORY_HINTS).issubset(set(config.CATEGORIES)))
+
+    # --- Regression: the five jobs three real users actually saved -----------------------
+    #
+    # Found 2026-09-22 by reading the live user documents. FOUR of these five were stored as
+    # "design", which is why two accounts carry a design preference they never expressed --
+    # every one of these searches was for a software job.
+    #
+    # The cause has two halves and both are asserted below:
+    #
+    #   1. "ui" is a design hint and the matcher tested every hint as a bare SUBSTRING, so it
+    #      matched inside s-ui-ted, b-ui-lt and req-ui-rements. Almost every job advert in
+    #      existence contains one of those words.
+    #   2. design is listed before technology in CATEGORY_HINTS and the matcher returned the
+    #      FIRST key that matched, so design won on one incidental hint even where technology
+    #      matched four real ones (developer, software, python, data).
+    #
+    # The descriptions are the excerpts recorded around the winning keyword on 2026-09-22,
+    # read out of job_cache before its 60-minute TTL expired them. This is real advert text,
+    # not invented fixture text, and that is the point -- the bug only shows on real prose.
+    #
+    # Routed through JobSearchAgent.classify rather than classify_category directly so the
+    # assertion is independent of the classifier's signature and exercises the agent's call
+    # site too.
+    def cat(title, description="", fallback=None):
+        """Classify one job through the agent and return the category it was assigned."""
+        return JobSearchAgent.classify(
+            [{"title": title, "description": description}], fallback
+        )[0]["category"]
+
+    real_saved_jobs = (
+        ("Junior Software Engineers",
+         "lti-national project, you will actively design, build, and integrate the next ge"),
+        ("Software Developer (Entry Level)",
+         "lutions. our employees enjoy a culture built on innovation and a commitment to c"),
+        ("Junior Software Developer",
+         "junior software developer. i have a newly created vacanc"),
+        ("Junior Software Developer (Python)",
+         "ence. if our team feels you are better suited for another role, we will reach ou"),
+        ("Junior Software Developer - Front-end",
+         "ence. if our team feels you are better suited for another role, we will reach ou"),
+    )
+    for title, description in real_saved_jobs:
+        check(f"real saved job {title!r} classifies as technology",
+              cat(title, description) == "technology")
+
+    # Rule 1 -- the TITLE decides. The description is consulted only when the title names no
+    # category at all. Every one of the five above says "Software" or "Developer" in its
+    # title, so title-first alone would have filed all five correctly.
+    check("the title beats the description",
+          cat("Graphic Designer", "python software developer") == "design")
+    check("the description is used when the title names nothing",
+          cat("Specialist", "python software developer") == "technology")
+
+    # Rule 2a -- hints shorter than four characters match WHOLE WORDS only. This is the half
+    # of the fix that stops "ui" matching inside "suited" and "built".
+    check("'ui' does not match inside 'suited'",
+          cat("Analyst", "better suited for another role", "other") == "other")
+    check("'seo' does not match inside 'seoul'",
+          cat("Analyst", "based in seoul", "other") == "other")
+    check("'ui' still matches as a whole word", cat("UI Engineer") == "design")
+    check("'ux' still matches as a whole word", cat("UX Researcher") == "design")
+
+    # Rule 2b -- longer hints match at a word START, so the deliberate stems in the table
+    # (copywrit, illustrat, programm, journalis) keep working, but nothing matches mid-word.
+    check("a stem hint still matches at a word start",
+          cat("Copywriting Lead") == "writing")
+    check("a stem hint does not match mid-word",
+          cat("Nondeveloper Role", "", "other") == "other")
+
+    # Rule 3 -- the category with the MOST hint matches wins. CATEGORY_HINTS order is now
+    # only the tie-break, not the decision. Here design matches once ("design") and
+    # technology four times, so technology takes it despite being listed later.
+    check("the category with the most hints wins over table order",
+          cat("Engineer", "design and build python software for developers", "other")
+          == "technology")
+
+
+def test_country_source_selection():
+    """Only a source that can serve this user's country is queried (2026-09-23)."""
+    print("\nCountry — which sources can serve this user")
+
+    from adapters.api_client import adzuna_market
+
+    check("an Adzuna market maps to itself", adzuna_market("gb") == "gb")
+    check("case and padding do not matter", adzuna_market("  GB ") == "gb")
+    # Measured 2026-09-23: jobs/pk/search returns 404. There is no endpoint to call, so this
+    # is not "Pakistan is excluded" -- the source genuinely cannot serve that user.
+    check("a country Adzuna does not cover maps to None", adzuna_market("pk") is None)
+    check("so does another one", adzuna_market("ng") is None)
+    # A user whose document predates the field must keep the old behaviour. If missing meant
+    # "skip Adzuna", every existing account would silently lose most of its results on deploy.
+    check("a missing country falls back to the old default",
+          adzuna_market(None) == config.DEFAULT_ADZUNA_COUNTRY)
+    check("an empty country falls back too",
+          adzuna_market("") == config.DEFAULT_ADZUNA_COUNTRY)
+    check("every Adzuna market is a real country",
+          config.ADZUNA_COUNTRIES.issubset(set(config.COUNTRIES)))
+    check("the user's own country is selectable", "pk" in config.COUNTRIES)
+
+    # The cache key must include the market. Two users searching identical words now get
+    # genuinely different result sets, so a key naming only the variant would serve whichever
+    # of them searched first to the other.
+    key = agent_module._cache_key
+    check("the cache key separates two markets", key("python", "gb") != key("python", None))
+    check("the cache key is stable for one market", key("python", "gb") == key(" Python ", "gb"))
+    # Added 2026-09-26 after verify_live.py caught it: fetch_variant filters out wrong-level
+    # titles, but a CACHE HIT bypasses fetch_variant entirely. With the level absent from the
+    # key, a pool cached by a user with no stated level was served unfiltered to an
+    # entry-level user -- senior roles reappearing for exactly the person the filter protects.
+    check("the cache key separates two experience levels",
+          key("python", "gb", "entry level") != key("python", "gb", "senior"))
+    check("a stated level is not shared with an unstated one",
+          key("python", "gb", "entry level") != key("python", "gb", None))
+    # work_type becomes an Adzuna request parameter, so it genuinely changes the response.
+    check("the cache key separates two work types",
+          key("python", "gb", None, "remote") != key("python", "gb", None, "freelance"))
+    check("the key is still stable when all four agree",
+          key("python", "gb", "entry level", "remote")
+          == key(" Python ", "gb", "entry level", "remote"))
+
+    # The subtle one. A skipped source is not a failed source: failed_sources drives TC-018's
+    # outage banner, which would otherwise fire on every search a Pakistan-based user ran.
+    recorder = FetchRecorder(by_variant={"q": [card("Remote Dev", source="Himalayas")]})
+    install(recorder, fixed_intent("q"))
+    db = StubDB(context={"country": "pk"})
+    result = JobSearchAgent(db, StubEngine({"Remote Dev": 0.9}), StubRAG()).run("laiba", "q")
+    check("a search from an uncovered country still returns jobs", len(result["jobs"]) == 1)
+    check("and shows no outage banner", result["warning"] is None)
+    check("and no error", result["error"] is None)
+    check("the country reached the fetch layer", recorder.countries == ["pk"])
+
+    recorder = FetchRecorder(by_variant={"q": [card("UK Dev", source="Adzuna")]})
+    install(recorder, fixed_intent("q"))
+    JobSearchAgent(StubDB(context={"country": "gb"}), StubEngine({"UK Dev": 0.9}),
+                   StubRAG()).run("laiba", "q")
+    check("a covered country is passed through unchanged", recorder.countries == ["gb"])
+
+
+def _raises(fn, *args):
+    """Return True if fn(*args) raises ValueError — used for the reply-validation cases."""
+    try:
+        fn(*args)
+    except ValueError:
+        return True
+    return False
+
+
+def test_profile_fills_in_what_the_query_omits():
+    """A recent graduate who types "software engineer" must still be filtered to their level."""
+    print("\nProfile level and work type reach the fetch filter")
+
+    # The defect this covers, measured 2026-09-26 on the author's own profile: the query
+    # "software engineer" returned 77 jobs of which 51% were senior-titled, because
+    # intent["experience"] was None and the level filter never ran. The same user typing
+    # "junior software developer" got a clean list. The system was working WORST for exactly
+    # the user it exists for -- someone who does not know the search vocabulary.
+    profile = {"experience": "entry level", "preferred_work": ["remote"], "country": "gb"}
+
+    recorder = FetchRecorder(by_variant={"q": [card("A", source="Himalayas")]})
+    install(recorder, fixed_intent("q"))
+    JobSearchAgent(StubDB(context=profile), StubEngine({"A": 0.5}), StubRAG()).run("laiba", "q")
+    check("the profile's level reaches the fetch when the query is silent",
+          recorder.experiences == ["entry level"])
+    check("the profile's work type reaches it too", recorder.work_types == ["remote"])
+
+    # The query must still win. Someone entry-level on paper who searches for senior roles
+    # means the search, not the profile -- the same precedence enrich_query already applies.
+    def senior_intent(query):
+        """parse_intent double that reports a senior, freelance query."""
+        return {"work_type": "freelance", "experience": "senior", "category": "other",
+                "variants": ["q"], "source": "stub"}
+
+    recorder = FetchRecorder(by_variant={"q": [card("B", source="Himalayas")]})
+    install(recorder, senior_intent)
+    JobSearchAgent(StubDB(context=profile), StubEngine({"B": 0.5}), StubRAG()).run("laiba", "q")
+    check("a level stated in the query overrides the profile",
+          recorder.experiences == ["senior"])
+    check("a work type stated in the query overrides the profile",
+          recorder.work_types == ["freelance"])
+
+    # A user with neither must not have a level invented for them.
+    recorder = FetchRecorder(by_variant={"q": [card("C", source="Himalayas")]})
+    install(recorder, fixed_intent("q"))
+    JobSearchAgent(StubDB(context={}), StubEngine({"C": 0.5}), StubRAG()).run("laiba", "q")
+    check("no level is invented when neither query nor profile states one",
+          recorder.experiences == [None] and recorder.work_types == [None])
+
+
+def test_level_filter_titles():
+    """_wrong_level must catch senior titles without deleting junior ones (2026-09-26)."""
+    print("\nSeniority filter — titles")
+
+    from adapters.api_client import _wrong_level
+
+    def drops(title):
+        """Would this title be filtered out for an entry-level user?"""
+        return _wrong_level(title.lower(), "entry level")
+
+    # Titles that were slipping through: _SENIOR_MARKERS had no manager, sr, vp, staff or
+    # roman-numeral grade, so 17 of 77 senior roles survived on a real search.
+    must_drop = [
+        "Software Engineering Director", "Senior AI Engineer", "Engineering Manager",
+        "Staff Software Engineer (SRE)", "Sr. Backend Developer", "Principal Engineer",
+        "Tech Lead", "Head of Engineering", "VP of Engineering", "Software Engineer II",
+        "Software Engineer III", "Experienced Python Developer", "Technical Manager",
+        "Product Manager",
+    ]
+    for title in must_drop:
+        check(f"drops a senior title: {title}", drops(title))
+
+    # The false positives. Matching was a bare substring, so "lead" hit "Leadership" and
+    # "Lead Generation", and a junior marker could not override a senior one -- so titles
+    # that SAY "Junior" were being deleted. Nine of nine were wrong before the rewrite.
+    must_keep = [
+        "Lead Generation Specialist", "Leadership Development Intern", "Junior Team Lead",
+        "Graduate Architect", "Data Architect Intern", "Trainee Architect",
+        "Junior Solutions Architect", "Junior Software Developer", "Graduate Engineer",
+        "Software Engineer",
+        # Industry collisions: a Staff Nurse is an entry-level clinical role, "Senior Care"
+        # names who is cared for, and IV is intravenous rather than a grade.
+        "Staff Nurse", "Senior Care Assistant", "Registered Nurse IV Therapy",
+    ]
+    for title in must_keep:
+        check(f"keeps an entry-level title: {title}", not drops(title))
+
+    # The rule is symmetric, and nothing is filtered when no level is known at all.
+    check("a senior search drops a junior title",
+          _wrong_level("junior developer", "senior"))
+    check("a senior search keeps a senior title",
+          not _wrong_level("senior developer", "senior"))
+    check("no level means no filtering", not _wrong_level("senior developer", None))
+
+
+def test_cache_requires_a_searching_source():
+    """A pool no searching source contributed to must not be cached (found live 2026-09-25)."""
+    print("\nJob cache — only cache a pool a real search produced")
+
+    # This existed as a live-only check and therefore was not caught when it broke. The rule
+    # used to be `"Adzuna" in empty_sources`; once Adzuna became skippable per country it was
+    # never in empty_sources for those users, so the guard could not fire and their searches
+    # cached pools built from Remotive alone -- the source that ignored its search parameter.
+    # Remotive was removed on 2026-10-13; "Fixture" below stands in for any non-searching source.
+    # Asserted offline now, because a rule only one script can see is a rule that rots.
+    def cached_after(jobs, failed=None, empty=None):
+        """Run one search with these canned sources and return what reached the cache."""
+        install(FetchRecorder(by_variant={"q": jobs}, failed_sources=failed or [],
+                              empty_sources=empty or []), fixed_intent("q"))
+        db = StubDB()
+        scores = {j.title: 0.5 for j in jobs}
+        JobSearchAgent(db, StubEngine(scores), StubRAG()).run("laiba", "q")
+        return db.cache_writes
+
+    check("a pool with Adzuna in it is cached",
+          len(cached_after([card("A", source="Adzuna")])) == 1)
+    check("a pool with Himalayas in it is cached",
+          len(cached_after([card("B", source="Himalayas")])) == 1)
+    # The regression. A fixed-list source returns the same jobs for every query, so a pool
+    # built from it alone is the "same 20 jobs for everything" state and must not be pinned
+    # for an hour. Before 2026-09-25 this was cached for any user whose country skipped Adzuna.
+    check("a pool built from a non-searching source alone is NOT cached",
+          len(cached_after([card("C", source="Fixture")])) == 0)
+    check("a non-searching source plus a searching one IS cached",
+          len(cached_after([card("D", source="Fixture"),
+                            card("E", source="Himalayas")])) == 1)
+    # A failed source still blocks the write, or an outage would outlive the API's recovery.
+    check("a failed source still blocks the cache write",
+          len(cached_after([card("F", source="Himalayas")], failed=["Adzuna"])) == 0)
+    check("the searching-source list names the sources that really search",
+          agent_module.SEARCHING_SOURCES == frozenset({"Adzuna", "Himalayas"}))
+
+
+def test_adzuna_signal_terms():
+    """A natural-language query must still reach Adzuna's AND match (2026-09-26)."""
+    print("\nAdzuna keyword narrowing")
+
+    from adapters.api_client import _signal_terms
+
+    # Adzuna's `what=` requires EVERY word to appear in the advert. Measured over the twenty
+    # pre-registered evaluation queries: only 3 returned the five results precision@5 needs,
+    # and 16 returned nothing at all. The keyword baseline was failing for exactly the casual
+    # phrasing the SRS says users type -- the project's founding premise, showing up as a bug.
+    check("a job title survives an apologetic query",
+          _signal_terms("paralegal position no prior experience") == ["paralegal"])
+    check("the field word is picked, not the longest word",
+          _signal_terms("somewhere I can use my writing and actually get paid") == ["writing"])
+    check("a plain query narrows to its field word",
+          _signal_terms("registered nurse night shift") == ["nurse"])
+
+    # The words kept come from config.CATEGORY_HINTS -- the same vocabulary the classifier
+    # uses. Reusing it means a word worth classifying a job by is a word worth searching on,
+    # and there is no second table to drift.
+    check("the vocabulary is the classifier's, not a second list",
+          all(any(t.startswith(h) or h.startswith(t) for h in
+                  (hint for hints in config.CATEGORY_HINTS.values() for hint in hints))
+              for t in _signal_terms("graphic designer figma branding")))
+
+    # When nothing in the query names a field there is nothing to narrow to, and inventing a
+    # term would be worse than admitting it. "numbers" means finance, but only the LLM's
+    # query expansion can make that leap.
+    check("a query naming no field falls back to its meaningful words",
+          _signal_terms("work with numbers but not boring") != [])
+    check("an empty query yields nothing", _signal_terms("") == [])
+
+    # Known limitation, asserted so it is not forgotten: the terms are chosen by vocabulary,
+    # not by grammar, so a NEGATED field word is still sent. "not journalism" narrows to a
+    # list containing "journalism". Embeddings handle negation no better -- see Q16-Q20 in
+    # evaluation/queries.md, chosen to expose exactly this.
+    check("negation is NOT handled, and this records that",
+          "journalism" in _signal_terms("job where I write stuff but not journalism"))
+
+
+def test_model_fallback_chain():
+    """A retired model must cost different wording, not the whole AI panel (2026-09-26)."""
+    print("\nGroq model chain")
+
+    from core.rag_pipeline import GROQ_MODEL, GROQ_MODELS, complete, model_is_gone
+
+    # Groq retired this project's LLM twice in two weeks. Each time the panel vanished
+    # silently, because FR-018's fallback is graceful enough to hide the cause -- the second
+    # one went unnoticed for two days.
+    check("the chain has more than one model", len(GROQ_MODELS) > 1)
+    check("the primary is the head of the chain", GROQ_MODEL == GROQ_MODELS[0])
+    check("the chain has no duplicates", len(set(GROQ_MODELS)) == len(GROQ_MODELS))
+
+    # Telling a retirement from an outage is the distinction that cost those two days:
+    # verify_intent.py reported a dead model as "Groq unreachable" and it was read as a
+    # network blip for two sessions.
+    gone = Exception("Error code: 404 - {'error': {'code': 'model_not_found'}}")
+    check("a 404 model_not_found is read as a retirement", model_is_gone(gone))
+    check("'has been decommissioned' is read as a retirement",
+          model_is_gone(Exception("model has been decommissioned")))
+    check("a network error is NOT read as a retirement",
+          not model_is_gone(Exception("Connection aborted, read timed out")))
+
+    class Client:
+        """Groq client double whose models fail according to a script."""
+
+        def __init__(self, behaviour):
+            self.behaviour = behaviour
+            self.tried = []
+            outer = self
+
+            class _Completions:
+                def create(self, model=None, **kwargs):
+                    outer.tried.append(model)
+                    outcome = outer.behaviour.get(model, "ok")
+                    if outcome == "gone":
+                        raise Exception("404 model_not_found")
+                    if outcome == "down":
+                        raise Exception("Connection aborted")
+                    message = type("M", (), {"content": f"reply from {model}"})()
+                    return type("R", (), {"choices": [type("C", (), {"message": message})()]})()
+
+            self.chat = type("Chat", (), {"completions": _Completions()})()
+
+    first, second, third = GROQ_MODELS[0], GROQ_MODELS[1], GROQ_MODELS[2]
+
+    client = Client({})
+    check("a healthy primary answers and nothing else is tried",
+          complete(client, []) == f"reply from {first}" and client.tried == [first])
+
+    client = Client({first: "gone"})
+    check("a retired primary falls through to the next model",
+          complete(client, []) == f"reply from {second}")
+    check("and it tried them in order", client.tried == [first, second])
+
+    client = Client({first: "gone", second: "gone"})
+    check("two retirements fall through to the third",
+          complete(client, []) == f"reply from {third}")
+
+    # A network outage must NOT walk the chain: three timeouts would triple how long the user
+    # waits before the fallback they were going to get anyway.
+    client = Client({first: "down"})
+    raised = False
+    try:
+        complete(client, [])
+    except Exception:
+        raised = True
+    check("a network error fails fast instead of walking the chain",
+          raised and client.tried == [first])
+
+    # Everything retired still reaches FR-018's fallback rather than hanging or returning junk.
+    client = Client({m: "gone" for m in GROQ_MODELS})
+    raised = False
+    try:
+        complete(client, [])
+    except Exception:
+        raised = True
+    check("an entirely retired chain raises, so the caller can fall back",
+          raised and client.tried == list(GROQ_MODELS))
+
+
+def test_rag_structured_picks():
+    """The AI panel renders real job cards, so RAGPipeline must return indices, not prose."""
+    print("\nAI picks — structured output and the join")
+
+    from core.rag_pipeline import MAX_PICKS, RAGPipeline
+
+    v = RAGPipeline.validate_picks
+
+    check("a well-formed reply is accepted",
+          v({"picks": [{"index": 1, "reason": "good"}]}, 5)
+          == [{"index": 1, "reason": "good"}])
+    # The index selects which of OUR job dicts becomes a card with a live Save button, so an
+    # out-of-range value would either crash the join or attach the reasoning to the wrong job.
+    check("an out-of-range index is refused", _raises(v, {"picks": [{"index": 9, "reason": "x"}]}, 5))
+    check("a zero index is refused", _raises(v, {"picks": [{"index": 0, "reason": "x"}]}, 5))
+    # bool is a subclass of int in Python, so True would otherwise sail through as index 1.
+    check("a boolean index is refused", _raises(v, {"picks": [{"index": True, "reason": "x"}]}, 5))
+    check("a blank reason is refused", _raises(v, {"picks": [{"index": 1, "reason": "  "}]}, 5))
+    check("a missing picks list is refused", _raises(v, {"nope": 1}, 5))
+    # Changed 2026-10-11. This used to be refused. Diagnosing the 9 failed evaluation runs
+    # showed every one was the model DECLINING -- a deliberate {"picks": []} when nothing
+    # fitted -- and refusing it made a considered "no match" look exactly like an outage.
+    # An empty list is now a valid answer; the band renders a message, never empty cards.
+    check("an empty picks list is a valid decline, not a failure", v({"picks": []}, 5) == [])
+    # The other half of the line: a list that is non-empty but entirely unusable is still
+    # garbage, and garbage still takes the FR-018 fallback.
+    check("a list of only unusable picks still fails",
+          _raises(v, {"picks": [{"index": 9, "reason": "x"}, {"index": 1, "reason": ""}]}, 5))
+    check("a duplicate index is dropped, not repeated",
+          v({"picks": [{"index": 1, "reason": "a"}, {"index": 1, "reason": "b"}]}, 5)
+          == [{"index": 1, "reason": "a"}])
+    check("more than three picks are capped",
+          len(v({"picks": [{"index": i, "reason": "r"} for i in range(1, 6)]}, 5)) == MAX_PICKS)
+    check("a long reason is truncated",
+          len(v({"picks": [{"index": 1, "reason": "x" * 999}]}, 5)[0]["reason"]) == 400)
+
+    # The join is what makes the panel safe: the model supplies an index and a sentence, and
+    # every other field on the card comes from the dict we passed it.
+    candidates = [
+        {"title": "First", "url": "https://example.com/1", "job_id": "a", "category": "writing"},
+        {"title": "Second", "url": "https://example.com/2", "job_id": "b", "category": "technology"},
+    ]
+    joined = JobSearchAgent.join_picks([{"index": 2, "reason": "because"}], candidates)
+    check("the pick is joined onto the right job", joined[0]["title"] == "Second")
+    check("the reason rides along", joined[0]["ai_reason"] == "because")
+    check("the real url comes from our data, never the model",
+          joined[0]["url"] == "https://example.com/2")
+    check("the job_id survives, so Save still deduplicates", joined[0]["job_id"] == "b")
+    # Copied, not mutated: the same dict is rendered again in the ranked list below, and it
+    # must not pick up an AI reason it is not supposed to show.
+    check("the original candidate dict is not mutated", "ai_reason" not in candidates[1])
+    # Three states, and the template tells them apart: None = Groq failed (band hidden,
+    # TC-009), [] = the model declined (band shows "no strong match"), a list = picks.
+    check("a failure still means no panel", JobSearchAgent.join_picks(None, candidates) is None)
+    check("a decline stays an empty list, distinct from a failure",
+          JobSearchAgent.join_picks([], candidates) == [])
+
+    # End to end through run(): the panel is a list of real jobs, not a string.
+    jobs = [card("Alpha"), card("Beta")]
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+    rag = StubRAG(reply=[{"index": 1, "reason": "top pick"}])
+    result = JobSearchAgent(StubDB(), StubEngine({"Alpha": 0.9, "Beta": 0.5}), rag).run(
+        "laiba", "q"
+    )
+    panel = result["ai_recommendations"]
+    check("run() returns a list of jobs, not prose", isinstance(panel, list))
+    check("the panel job carries everything a card needs",
+          {"title", "url", "job_id", "category", "ai_reason"} <= set(panel[0]))
+    check("the panel job is one the pipeline actually ranked",
+          panel[0]["job_id"] in {j["job_id"] for j in result["jobs"]})
+
+    # A decline travels through run() intact, and costs the user nothing else.
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+    declined = JobSearchAgent(StubDB(), StubEngine({"Alpha": 0.9, "Beta": 0.5}),
+                              StubRAG(reply=[])).run("laiba", "q")
+    check("a decline reaches the page as an empty list", declined["ai_recommendations"] == [])
+    check("a decline raises no error banner", declined["error"] is None)
+    check("a decline still returns the full ranked list", len(declined["jobs"]) == 2)
+
+
+def test_rag_prompt_allows_no_match():
+    """The prompt must let the model decline rather than force three picks."""
+    print("\nRAG prompt — up to three, or none")
+
+    # Added 2026-10-11. "Recommend the three best matches" forced picks when nothing fitted,
+    # and the model complied with reasons like "This is a recruitment-focused role, which does
+    # not meet the requirement" -- an anti-recommendation under an AI Recommendations header.
+    from core.rag_pipeline import RAGPipeline
+
+    prompt = RAGPipeline(top_k=5).build_prompt("q", [{"title": "T", "description": "x"}])
+    check("the prompt asks for up to three, not exactly three", "up to three" in prompt)
+    check("the prompt no longer demands the three best", "the three best" not in prompt)
+    check("the prompt says how to decline", '{"picks": []}' in prompt)
+    check("the prompt forbids recommending a job that does not fit",
+          "does not fit" in prompt)
+
+
+def test_rag_prompt_states_eligibility():
+    """The AI panel must not recommend jobs the seeker is not allowed to apply for."""
+    print("\nRAG prompt — candidate eligibility")
+
+    # build_prompt is a pure function, so this runs offline with no Groq call and no key.
+    # Added 2026-09-23: before it, the prompt showed only `location`, so the model could not
+    # tell a worldwide role from a UK-only one and spent picks on jobs the seeker could not
+    # act on. Measured on a real run, it recommended a UK-local Adzuna role first.
+    from core.rag_pipeline import RAGPipeline
+
+    jobs = [
+        {"title": "Remote Dev", "company": "A", "location": "Remote",
+         "candidate_location": "Worldwide", "eligibility": "open", "description": "x"},
+        {"title": "Euro Dev", "company": "B", "location": "Remote",
+         "candidate_location": "Europe", "eligibility": "regional", "description": "x"},
+        {"title": "London Dev", "company": "C", "location": "London",
+         "candidate_location": "London, UK", "eligibility": "local", "description": "x"},
+        {"title": "Mystery Dev", "company": "D", "location": "Remote",
+         "candidate_location": "", "eligibility": "unknown", "description": "x"},
+        {"title": "PK Dev", "company": "E", "location": "Remote",
+         "candidate_location": "India, Pakistan", "eligibility": "country", "description": "x"},
+    ]
+    prompt = RAGPipeline(top_k=5).build_prompt("developer", jobs)
+
+    check("the prompt carries a Hiring from line per job",
+          prompt.count("- Hiring from:") == 5)
+    # Added 2026-10-13 with Himalayas' structured country lists.
+    check("a country-restricted job says the list includes the seeker's country",
+          "which include the seeker's: India, Pakistan" in prompt)
+    check("an open job is described as unrestricted",
+          "anywhere in the world, no geographic restriction" in prompt)
+    check("a regional job names its restriction",
+          "ONLY candidates in: Europe" in prompt)
+    check("a local job is marked as local, not remote",
+          "ONLY candidates already able to work in London, UK" in prompt)
+    # The state that must never be smoothed over: an unknown restriction is stated as
+    # unknown, so the model cannot present a guess to the user as a fact.
+    check("an unknown restriction is stated, not guessed",
+          "not stated by the employer" in prompt)
+    check("the prompt tells the model to prefer jobs the seeker can apply for",
+          "Prefer jobs whose 'Hiring from' line shows no geographic restriction" in prompt)
+    check("the prompt still forbids inventing jobs",
+          "Do not invent jobs." in prompt)
+
+    # Telling the prompt to prefer applicable jobs does nothing if none are handed to it.
+    # Measured on a real search: all five top-ranked jobs were UK-local, so every AI pick
+    # was unreachable. rag_candidates re-partitions the top of the list before the call.
+    def j(title, eligibility):
+        return {"title": title, "eligibility": eligibility}
+
+    ranked = [j("L1", "local"), j("L2", "local"), j("O1", "open"),
+              j("L3", "local"), j("R1", "regional"), j("O2", "open"),
+              j("U1", "unknown")]
+    picked = [p["title"] for p in JobSearchAgent.rag_candidates(ranked)]
+    check("applicable jobs are handed to the AI panel ahead of restricted ones",
+          picked[:3] == ["O1", "O2", "U1"])
+    check("the panel is topped up to top_k rather than left short",
+          len(picked) == 5)
+    check("restricted jobs still fill the remaining slots, in rank order",
+          picked[3:] == ["L1", "L2"])
+    check("rank order is preserved within the applicable group",
+          [p for p in picked if p in ("O1", "O2")] == ["O1", "O2"])
+    # A result set with nothing applicable must still produce a full panel, because the
+    # prompt states each restriction and a silent empty panel teaches the user nothing.
+    all_local = [j("L1", "local"), j("L2", "local")]
+    check("a result set with no applicable job still fills the panel",
+          [p["title"] for p in JobSearchAgent.rag_candidates(all_local)] == ["L1", "L2"])
+
+    # Added 2026-10-13. "country" is applicable by construction, and "local" becomes applicable
+    # when the user has a country, because sources are now chosen per country and every local
+    # job is in the user's own one. The default stays False so the evaluation scripts keep
+    # reproducing the system that was evaluated.
+    mixed = [j("L1", "local"), j("C1", "country"), j("R1", "regional"), j("O1", "open")]
+    check("a job open to the user's country is applicable",
+          [p["title"] for p in JobSearchAgent.rag_candidates(mixed)][:2] == ["C1", "O1"])
+    check("local jobs count as applicable when the user has a country",
+          [p["title"] for p in JobSearchAgent.rag_candidates(mixed, local_applicable=True)]
+          == ["L1", "C1", "O1", "R1"])
+    check("the default is unchanged, so the evaluation reproduces the evaluated system",
+          [p["title"] for p in JobSearchAgent.rag_candidates(mixed)] == ["C1", "O1", "L1", "R1"])
+
+    # End to end: run() turns this on for a user with a country, and only then.
+    def handed(country):
+        """Titles the AI panel is handed for a search by a user in this country."""
+        local = JobCard(job_id="l1", title="UK Local", source="Adzuna", eligibility="local")
+        euro = JobCard(job_id="r1", title="Euro Only", source="Himalayas",
+                       eligibility="regional")
+        install(FetchRecorder(by_variant={"q": [local, euro]}), fixed_intent("q"))
+        rag = StubRAG()
+        context = {"country": country} if country else {}
+        JobSearchAgent(StubDB(context=context), StubEngine({"UK Local": 0.8, "Euro Only": 0.9}),
+                       rag).run("laiba", "q")
+        return [x["title"] for x in rag.received]
+
+    check("run() treats local jobs as applicable for a user with a country",
+          handed("gb") == ["UK Local", "Euro Only"])
+    check("but not for a legacy user with no country",
+          handed(None) == ["Euro Only", "UK Local"])
+
+    # The job's own text decides, never the query's category. TC-011 depends on this: a tech
+    # job rejected during a writing search must lower the TECH score.
+    classified = JobSearchAgent.classify(
+        [{"title": "Backend Developer", "description": "python"}], "writing"
+    )
+    check("the job's own text beats the query's category",
+          classified[0]["category"] == "technology")
+
+    # End to end through run(). Until 2026-09-21 JobCard.category was "" for every job, so
+    # the boost term scored 0 on every listing however strong the learned preference was.
+    # This is the assertion that would have failed then and passes now.
+    jobs = [card("Graphic Designer", description="branding"),
+            card("Software Developer", description="python services")]
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+    scores = {"Graphic Designer": 0.50, "Software Developer": 0.51}
+    db = StubDB(context={"category_scores": {"design": 10}})
+
+    ranked = JobSearchAgent(db, StubEngine(scores), StubRAG()).run("laiba", "q")["jobs"]
+    check("run() assigns a category to every job",
+          all(j["category"] in config.CATEGORIES for j in ranked))
+    check("the categories come from the job text, not the source",
+          {j["title"]: j["category"] for j in ranked}
+          == {"Graphic Designer": "design", "Software Developer": "technology"})
+    # Developer leads on raw similarity by 0.01; design +10 adds 0.2 and overturns it.
+    check("a learned preference now reorders results through the full pipeline",
+          ranked[0]["title"] == "Graphic Designer")
+
+
+def jobs_as_dicts(cards):
+    """Convert JobCards to the dict shape rank() operates on."""
+    return [c.to_dict() for c in cards]
+
+
+# --- RAG failure and caching --------------------------------------------------------
+
+
+class _DownGroq:
+    """Groq client double whose completion call raises — TC-009's "Groq API down (mocked)"."""
+
+    class _Completions:
+        def create(self, **kwargs):
+            """Raise the way the SDK does on a transport failure, a 404 or a 429."""
+            raise RuntimeError("Groq API is down (simulated)")
+
+    class _Chat:
+        completions = None
+
+    def __init__(self):
+        """Wire the nested chat.completions shape the real SDK exposes."""
+        self.chat = self._Chat()
+        self.chat.completions = self._Completions()
+
+
+class _BlankGroq:
+    """Groq client double that answers successfully with empty content."""
+
+    class _Message:
+        content = "   "
+
+    class _Choice:
+        message = None
+
+    class _Response:
+        choices = None
+
+    class _Completions:
+        def create(self, **kwargs):
+            """Return a well-formed response whose content is whitespace only."""
+            choice = _BlankGroq._Choice()
+            choice.message = _BlankGroq._Message()
+            response = _BlankGroq._Response()
+            response.choices = [choice]
+            return response
+
+    class _Chat:
+        completions = None
+
+    def __init__(self):
+        """Wire the nested chat.completions shape the real SDK exposes."""
+        self.chat = self._Chat()
+        self.chat.completions = self._Completions()
+
+
+def test_rag_fallback():
+    """TC-009 / FR-018: a Groq failure hides the AI band but still returns the ranked list."""
+    print("\nTC-009 / FR-018 — RAG fallback")
+
+    from core.rag_pipeline import RAGPipeline
+
+    sample = [{"title": "Dev", "company": "Acme", "description": "python",
+               "eligibility": "open", "candidate_location": "Worldwide"}]
+
+    # TC-009 proper. Until 2026-09-25 the only fallback assertions used StubRAG(reply=None),
+    # which proves the AGENT copes with a None -- it never once exercised RAGPipeline's own
+    # try/except, so the line FR-018 actually rests on was unmeasured. It was a dead model
+    # (2026-09-23) rather than a test that caught the AI panel silently vanishing.
+    down = RAGPipeline()
+    down.client = _DownGroq()
+    check("TC-009  a Groq outage returns None rather than raising",
+          down.run("developer", sample) is None)
+
+    # The other route to an empty panel: a call that succeeds and says nothing. `text or
+    # self.fallback()` handles it, and an empty string reaching the template would render an
+    # empty highlighted band rather than no band at all.
+    blank = RAGPipeline()
+    blank.client = _BlankGroq()
+    check("TC-009  a blank reply also falls back", blank.run("developer", sample) is None)
+
+    # No jobs means no prompt worth building, and it must not cost a Groq call.
+    never_called = RAGPipeline()
+    never_called.client = _DownGroq()
+    check("TC-009  an empty job list returns None without calling Groq",
+          never_called.run("developer", []) is None)
+
+    # Agent level: the ranked list survives the outage intact.
+    jobs = [card(f"Job {i}") for i in range(8)]
+    scores = {f"Job {i}": 0.9 - i / 100 for i in range(8)}
+    install(FetchRecorder(by_variant={"q": jobs}), fixed_intent("q"))
+
+    rag = StubRAG(reply=None)
+    result = JobSearchAgent(StubDB(), StubEngine(scores), rag).run("laiba", "q")
+    check("TC-009  a RAG failure returns no recommendations",
+          result["ai_recommendations"] is None)
+    check("TC-009  a RAG failure does not set an error", result["error"] is None)
+    check("TC-009  the full ranked list is still returned", len(result["jobs"]) == 8)
+    check("only the top 5 were sent to the LLM", len(rag.received) == 5)
+    # The banner belongs to a failed SOURCE, not a failed LLM. A Groq outage costs the
+    # explanation and nothing else, so warning stays None and the user sees no alarm.
+    check("TC-009  a RAG failure raises no warning banner either",
+          result["warning"] is None)
+
+
+def test_cache():
+    """The job cache is read before fetching and written after a clean fetch."""
+    print("\nJob cache")
+    # source="Himalayas" matters: since 2026-09-25 a pool no SEARCHING source contributed to is
+    # not cached at all, and card()'s default source is Remotive, which ignores its search
+    # parameter. See test_cache_requires_a_searching_source for the rule itself.
+    fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]})
+    install(fetch, fixed_intent("q"))
+    db = StubDB()
+
+    JobSearchAgent(db, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("a cache miss fetches and then writes one entry", len(db.cache_writes) == 1)
+    check("the fetch actually happened on a miss", fetch.calls == ["q"])
+
+    # Feed what was just written back in as the cache contents.
+    key, results = next(iter(db.cache_writes.items()))
+    warm_fetch = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]})
+    install(warm_fetch, fixed_intent("q"))
+    warm = JobSearchAgent(StubDB(cached={key: {"results": results}}),
+                          StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("a cache hit skips the API call entirely", warm_fetch.calls == [])
+    check("a cache hit still returns the jobs", len(warm["jobs"]) == 1)
+
+    # A failed fetch must not be cached, or the outage outlives the API's recovery.
+    failing = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]},
+                            failed_sources=["Adzuna"])
+    install(failing, fixed_intent("q"))
+    db3 = StubDB()
+    JobSearchAgent(db3, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("a partial fetch is not cached", db3.cache_writes == {})
+
+
+# --- JobCard normalisation ----------------------------------------------------------
+
+
+def test_job_card():
+    """JobCard flattens both API shapes and survives missing fields."""
+    print("\nJobCard normalisation")
+    adzuna = JobCard.from_adzuna({
+        "title": "Data Analyst",
+        "company": {"display_name": "Acme"},
+        "location": {"display_name": "London"},
+        "description": "work with data",
+        "redirect_url": "https://example.com/1",
+        "salary_min": 30000,
+    })
+    check("Adzuna company is flattened to a string", adzuna.company == "Acme")
+    check("Adzuna location is flattened to a string", adzuna.location == "London")
+    check("Adzuna source is labelled", adzuna.source == "Adzuna")
+
+    # The bug this class exists to prevent: nested objects absent entirely.
+    bare = JobCard.from_adzuna({"title": "Analyst"})
+    check("a missing company object does not raise", bare.company == "Unknown")
+    check("a missing location object does not raise", bare.location == "Unknown")
+    check("an empty raw result does not raise", JobCard.from_adzuna({}).title == "Unknown Title")
+
+    himalayas = JobCard.from_himalayas({
+        "title": "Writer",
+        "companyName": "Beta",
+        "locationRestrictions": [],
+        "excerpt": "x" * 900,
+        "applicationLink": "https://example.com/2",
+    }, "Pakistan")
+    check("Himalayas jobs are labelled remote", himalayas.location == "Remote")
+    check("Himalayas description is truncated to 500 chars", len(himalayas.description) == 500)
+    check("Himalayas url is the application link", himalayas.url == "https://example.com/2")
+    check("to_dict gives the dict shape the templates read",
+          himalayas.to_dict()["title"] == "Writer")
+    check("every card carries a job_id", bool(adzuna.job_id) and bool(himalayas.job_id))
+    check("an empty Himalayas result does not raise",
+          JobCard.from_himalayas({}).title == "Unknown Title")
+
+    # Eligibility from a STRUCTURED list (added 2026-10-13). An empty list is Himalayas' own
+    # encoding of "no restriction"; a list naming the user's country is "country"; anything
+    # else is shown as regional rather than guessed at.
+    def elig(restrictions, country="Pakistan"):
+        """Eligibility of a Himalayas job with these restrictions, for a user in country."""
+        return JobCard.from_himalayas({"title": "T", "locationRestrictions": restrictions},
+                                      country).eligibility
+
+    check("an empty restriction list is open worldwide", elig([]) == "open")
+    check("a list naming the user's country is 'country'", elig(["India", "Pakistan"]) == "country")
+    check("matching ignores case and padding", elig([" pakistan "]) == "country")
+    check("a list without the user's country is regional", elig(["Germany"]) == "regional")
+    check("with no known country a restricted job is regional, never guessed",
+          elig(["Pakistan"], None) == "regional")
+    # The rule that stays: free text is never matched against a country. A region name is
+    # not a country name, so "APAC" does not become "country" for a Pakistan user.
+    check("a region name is not treated as the user's country", elig(["APAC"]) == "regional")
+    shown = JobCard.from_himalayas({"title": "T", "locationRestrictions": ["India", "Pakistan"]},
+                                   "Pakistan")
+    check("the raw list is kept for display", shown.candidate_location == "India, Pakistan")
+    check("an unrestricted job displays as Worldwide",
+          JobCard.from_himalayas({"title": "T"}, "Pakistan").candidate_location == "Worldwide")
+
+
+# --- intent parser still intact ------------------------------------------------------
+
+
+def test_enrich_query_does_not_swamp_the_query():
+    """The enrichment must not drown the thing the user actually searched for."""
+    print("\nenrich_query — the query keeps its share of the text")
+
+    # These assertions replace an exact-string check that the wording was unchanged. That
+    # guard was doing the opposite of its job: it locked in a format which, measured on
+    # 2026-09-26, destroyed ~90% of the query's discriminating power, because for a two-word
+    # query the labels "job search:", "Skills:" and "Level:" were most of the embedded text.
+    # What follows asserts the property whose ABSENCE caused that, rather than a byte string.
+    text = intent_parser.enrich_query(
+        "developer job", {"skills": ["Python"], "experience": "entry level"}
+    )
+    check("the query is present", "developer job" in text)
+    # Repeated once, deliberately. Measured: repeating it a third time adds nothing, so the
+    # number is two by evidence rather than by taste.
+    check("the query is repeated so it is not outweighed by the profile",
+          text.count("developer job") == 2)
+    check("the profile's skills are still folded in (TC-016)", "Python" in text)
+    check("the profile's level is still folded in", "entry level" in text)
+    # The labels are the specific thing that was diluting it. A job advert cannot match the
+    # word "Skills:", so embedding it only adds noise.
+    check("no label text is embedded",
+          not any(label in text for label in ("job search:", "Skills:", "Level:")))
+
+    # A naive join left dangling separators for a user with no profile, which measurably cost
+    # accuracy on the neutral case.
+    bare = intent_parser.enrich_query("x", None)
+    check("a missing profile does not raise", "x" in bare)
+    check("a missing profile leaves no empty segments", ". ." not in bare)
+    check("an empty profile leaves no empty segments either",
+          ". ." not in intent_parser.enrich_query("x", {}))
+    check("an empty query does not produce a stray separator",
+          intent_parser.enrich_query("", {}) == "")
+
+
+# --- candidate generation: the 2026-09-20 senior-results bug -----------------------
+#
+# Root cause chain, all four links covered below: Groq expanded a query into variants that
+# every one kept the word "remote"; Adzuna's AND keyword match returned nothing for them;
+# Adzuna reports that as HTTP 200 with no results, which is not a failure, so no banner
+# showed; Remotive ignores its search parameter and filled the pool with a fixed, senior
+# heavy list; and the whole degraded pool was then cached for an hour.
+
+
+def test_adzuna_keywords():
+    """Work-type words are stripped from the Adzuna keyword query, never passed through."""
+    print("\nAdzuna keyword cleaning")
+    check("'remote' is removed", api_client._adzuna_keywords("remote junior software engineer")
+          == "junior software engineer")
+    check("multi-word terms go before their parts",
+          api_client._adzuna_keywords("work from home writing gig") == "writing")
+    check("an ordinary query is left alone",
+          api_client._adzuna_keywords("beginner level software engineer")
+          == "beginner level software engineer")
+    # "remote work" would otherwise become an empty keyword search, which Adzuna answers
+    # with everything or nothing depending on the day. Falling back is no worse than before.
+    check("a query of nothing but work-type words does not become empty",
+          api_client._adzuna_keywords("remote") == "remote")
+
+
+def test_adzuna_work_type_params():
+    """Only the three work types Adzuna actually supports become parameters."""
+    print("\nAdzuna work-type parameters")
+    p = api_client.ADZUNA_WORK_TYPE_PARAMS
+    check("full-time maps to full_time=1", p.get("full-time") == {"full_time": 1})
+    check("part-time maps to part_time=1", p.get("part-time") == {"part_time": 1})
+    check("freelance maps to contract=1", p.get("freelance") == {"contract": 1})
+    # Verified live: Adzuna has no remote filter and where=remote returns 0. Sending an
+    # unknown parameter is worse than sending none -- Adzuna answers HTTP 400.
+    check("remote maps to NO parameter (Adzuna has no remote filter)", "remote" not in p)
+
+    # The parsed work_type has to actually REACH the fetch, or the mapping above is dead
+    # code. FetchRecorder records what it was handed, which is the only way to show it.
+    fetch = FetchRecorder(by_variant={"q": [card("Writer")]})
+
+    def intent_with_work_type(query):
+        """A parse_intent double that reports a work type alongside one variant."""
+        return {"work_type": "part-time", "experience": "entry level",
+                "category": "other", "variants": ["q"], "source": "stub"}
+
+    install(fetch, intent_with_work_type)
+    JobSearchAgent(StubDB(), StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("the agent passes the parsed work_type down to the fetch",
+          fetch.work_types == ["part-time"])
+    check("the agent passes the parsed experience down to the fetch",
+          fetch.experiences == ["entry level"])
+
+
+def test_narrowed_retry_rule():
+    """One retry rule for every source: only ever narrow to words that name a field (2026-10-13)."""
+    print("\nRetry rule — narrow to a field word or do not retry")
+    attempts = api_client._narrowed_attempts
+
+    # The defect, reproduced 2026-10-13 as a Pakistan user: Jobicy retried on the LONGEST
+    # word, so these two queries searched for "people" and "degree" and both returned the
+    # same four interpreter jobs.
+    check("Q02 never retries on 'people'",
+          all("people" != a for a in attempts("a job where I help people all day")))
+    check("Q04 never retries on 'degree'",
+          all("degree" != a for a in attempts("I want to get into tech but I have no degree")))
+    # A query naming no field gets exactly one attempt: no guess, an honest empty result.
+    check("a query naming no field is tried once, with no retry",
+          attempts("work with numbers but not boring") == ["numbers but not boring"])
+    check("a query naming a field retries on that field word",
+          attempts("somewhere I can use my writing and actually get paid")[-1] == "writing")
+    check("a short query that is already narrow is not retried",
+          attempts("graphic designer") == ["graphic designer"])
+    check("work-type words are stripped before the first attempt",
+          attempts("remote customer service")[0] == "customer service")
+    # Added 2026-10-13. "no degree" is a condition, not a search word: as a keyword it emptied
+    # every AND match ("tech degree" -> 0) and meant the opposite of what was typed.
+    check("'degree' is never sent as a keyword",
+          all("degree" not in a for a in attempts("tech jobs no degree")
+              + attempts("I want to get into tech but I have no degree")))
+    check("at most two attempts, ever",
+          all(len(attempts(q)) <= 2 for q in
+              ["a job where I help people all day", "paralegal position no prior experience",
+               "something creative I can do from my bedroom", ""]))
+    # The same rule for both sources, so there is one thing to defend.
+    check("Adzuna and Himalayas share the rule",
+          "_narrowed_attempts" in api_client._fetch_adzuna_raw.__code__.co_names
+          and "_narrowed_attempts" in api_client._fetch_himalayas_raw.__code__.co_names)
+
+
+class _FakeResponse:
+    """Minimal stand-in for requests.Response: a status code and a JSON body."""
+
+    def __init__(self, status, body=None):
+        self.status_code = status
+        self._body = body if body is not None else {}
+
+    def json(self):
+        """Return the canned body."""
+        return self._body
+
+
+def test_himalayas_fetch():
+    """Himalayas: failures, empty results, the country fallback and the retry, all offline."""
+    print("\nHimalayas fetch")
+    real_get = api_client.requests.get
+    calls = []
+
+    def serve(responses):
+        """Patch requests.get to return these responses in order and record the params."""
+        queue = list(responses)
+
+        def fake_get(url, params=None, timeout=None):
+            calls.append(dict(params or {}))
+            item = queue.pop(0)
+            if isinstance(item, Exception):
+                raise item
+            return item
+        api_client.requests.get = fake_get
+
+    job = {"title": "Customer Service Representative", "companyName": "A",
+           "locationRestrictions": ["Pakistan"]}
+    try:
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [job]})])
+        raw, ok = api_client._fetch_himalayas_raw("customer service", "pk")
+        check("a hit returns the jobs and ok", ok and len(raw) == 1)
+        check("the country is sent as an upper-case ISO code", calls[0].get("country") == "PK")
+        check("the variant is sent as keywords", calls[0].get("q") == "customer service")
+
+        # TC-018: a rate limit is a FAILED source, so the outage banner can show.
+        calls.clear()
+        serve([_FakeResponse(429), _FakeResponse(429)])
+        raw, ok = api_client._fetch_himalayas_raw("a job where I help people all day", "pk")
+        check("a 429 is reported as a failure, not as an empty result", not ok and raw == [])
+
+        # A 200 with nothing in it is an empty result, not an outage.
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": []})])
+        raw, ok = api_client._fetch_himalayas_raw("numbers but not boring", "pk")
+        check("an empty 200 is ok-but-empty", ok and raw == [])
+        check("and a query naming no field is NOT retried", len(calls) == 1)
+
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": []}), _FakeResponse(200, {"jobs": [job]})])
+        raw, ok = api_client._fetch_himalayas_raw(
+            "somewhere I can use my writing and actually get paid", "pk")
+        check("an empty first attempt retries on the field word",
+              len(calls) == 2 and calls[1]["q"] == "writing" and len(raw) == 1)
+
+        # A country Himalayas does not recognise falls back to worldwide jobs, which the user
+        # can still apply for, instead of failing the source.
+        calls.clear()
+        serve([_FakeResponse(400, {"ok": False, "errors": "Invalid country"}),
+               _FakeResponse(200, {"jobs": [job]})])
+        raw, ok = api_client._fetch_himalayas_raw("writing", "xx")
+        check("an unrecognised country falls back to worldwide-only",
+              ok and calls[1].get("worldwide") == "true" and "country" not in calls[1])
+
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [job]})])
+        api_client._fetch_himalayas_raw("writing", None)
+        check("a user with no country gets worldwide-only jobs",
+              calls[0].get("worldwide") == "true" and "country" not in calls[0])
+
+        calls.clear()
+        serve([ConnectionError("down"), ConnectionError("down")])
+        raw, ok = api_client._fetch_himalayas_raw("writing gigs", "pk")
+        check("a network error is a failure and never raises", not ok and raw == [])
+
+        # fetch_variant for a Pakistan user: Adzuna skipped (neither failed nor empty),
+        # Himalayas queried, and the country name reaches the eligibility rule.
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [job]})])
+        result = api_client.fetch_variant("customer service", "id", "key", country="pk")
+        check("a Pakistan search makes no Adzuna call", len(calls) == 1 and "q" in calls[0])
+        check("the skipped Adzuna is neither failed nor empty",
+              "Adzuna" not in result["failed_sources"] + result["empty_sources"])
+        check("a job naming Pakistan is badged for the user's country",
+              result["jobs"][0].eligibility == "country")
+
+        calls.clear()
+        serve([_FakeResponse(429), _FakeResponse(429)])
+        result = api_client.fetch_variant("customer service", "id", "key", country="pk")
+        check("a rate-limited Himalayas is a failed source", result["failed_sources"] == ["Himalayas"])
+
+        # The level filter applies to Himalayas the same as Adzuna.
+        calls.clear()
+        serve([_FakeResponse(200, {"jobs": [
+            {"title": "Senior Customer Service Lead", "companyName": "A"},
+            {"title": "Customer Service Representative", "companyName": "B"}]})])
+        result = api_client.fetch_variant("customer service", "id", "key",
+                                          experience="entry level", country="pk")
+        check("an entry-level search drops senior Himalayas titles",
+              [j.title for j in result["jobs"]] == ["Customer Service Representative"])
+    finally:
+        api_client.requests.get = real_get
+
+
+def test_level_filter_every_source():
+    """The level filter is one function applied to every source (2026-10-13)."""
+    print("\nLevel filter — every source")
+    feed = [{"title": t} for t in
+            ["Senior Golang Developer", "Junior Developer", "Software Developer",
+             "Graduate Engineer", "Tech Lead Rails Engineer"]]
+    kept = lambda exp: [j["title"] for j in api_client._filter_level(feed, "title", exp)]
+
+    entry = kept("entry level")
+    check("an entry-level query drops senior titles",
+          "Senior Golang Developer" not in entry and "Tech Lead Rails Engineer" not in entry)
+    check("it keeps the junior and unmarked ones",
+          entry == ["Junior Developer", "Software Developer", "Graduate Engineer"])
+    senior = kept("senior")
+    check("a senior query drops junior titles",
+          "Junior Developer" not in senior and "Graduate Engineer" not in senior)
+    check("with no level stated nothing is dropped for level", len(kept(None)) == len(feed))
+    check("fetch_variant uses the shared filter",
+          "_filter_level" in api_client.fetch_variant.__code__.co_names)
+
+
+def test_empty_source_is_not_failure():
+    """A source that returned nothing is reported separately from one that failed."""
+    print("\nempty_sources vs failed_sources")
+    empty = FetchRecorder(by_variant={"q": [card("Writer")]}, empty_sources=["Adzuna"])
+    install(empty, fixed_intent("q"))
+    result = JobSearchAgent(StubDB(), StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    # This is the distinction whose absence hid the bug: Adzuna answering "200, nothing
+    # here" is not an outage, so it must not raise TC-018's outage banner...
+    check("an empty source is not reported as a failure", result["warning"] is None)
+    check("the results it did find are still returned", len(result["jobs"]) == 1)
+
+
+def test_degraded_pool_is_not_cached():
+    """A pool built without Adzuna is never cached (the 2026-09-20 regression)."""
+    print("\nno cache write for a degraded pool")
+    # ...but it MUST stop the pool being cached. Adzuna is the only source that genuinely
+    # searches, so a pool without it is the weak state, and pinning it for 60 minutes is
+    # what made the senior-results bug survive every retry the user made.
+    # Restated 2026-09-25. These used to say "Adzuna empty means do not cache", from when
+    # Adzuna was the only source that really searched. The rule is now about whether ANY
+    # searching source contributed, so the fixtures say which jobs came back rather than
+    # only which source was empty.
+    db = StubDB()
+    empty = FetchRecorder(by_variant={"q": [card("Writer", source="Fixture")]},
+                          empty_sources=["Adzuna"])
+    install(empty, fixed_intent("q"))
+    JobSearchAgent(db, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("an Adzuna-empty pool with nothing else searching is NOT cached",
+          db.cache_writes == {})
+
+    # But an empty Adzuna is survivable: Himalayas also runs a real keyword search, so a
+    # pool it contributed to is worth keeping even when Adzuna found nothing.
+    db_j = StubDB()
+    himalayas_only = FetchRecorder(by_variant={"q": [card("Writer", source="Himalayas")]},
+                                empty_sources=["Adzuna"])
+    install(himalayas_only, fixed_intent("q"))
+    JobSearchAgent(db_j, StubEngine({"Writer": 0.5}), StubRAG()).run("laiba", "q")
+    check("an Adzuna-empty pool IS cached when Himalayas contributed",
+          len(db_j.cache_writes) == 1)
+
+
+
+def test_experience_override():
+    """A level stated in the query beats the one on the profile."""
+    print("\nexperience override")
+    profile = {"skills": ["Python"], "experience": "mid level"}
+    # Asserted on the VALUES rather than on the old "Level: ..." label, which no longer
+    # exists -- see test_enrich_query_does_not_swamp_the_query for why it was removed. The
+    # behaviour under test is unchanged; only how it is observed has moved.
+    stated = intent_parser.enrich_query("beginner software engineer", profile, "entry level")
+    check("the query's level is used", "entry level" in stated)
+    check("the profile's level is not also embedded", "mid level" not in stated)
+    unstated = intent_parser.enrich_query("software engineer", profile, None)
+    check("with no level in the query the profile is still used", "mid level" in unstated)
+    check("skills are unaffected either way", "Python" in stated)
+
+
+# --- TC-012 / TC-014: the For You feed ---------------------------------------------
+#
+# The feed is the only screen where the learned preference is the ENTIRE input, so these
+# cases are the ones that prove the save/reject loop does something rather than merely
+# writing to Atlas. All of it runs against doubles: no Adzuna quota, no Groq, no model load.
+
+
+def feed_agent(top_categories, context, by_variant, scores=None):
+    """Build a JobSearchAgent wired to doubles for one feed case, and return it with them."""
+    db = StubDB(context=context, top_categories=top_categories)
+    fetch = FetchRecorder(by_variant=by_variant)
+    engine = StubEngine(scores=scores or {})
+    rag = StubRAG()
+    install(monkey_fetch=fetch)
+    return agent_module.JobSearchAgent(db, engine, rag), db, fetch, rag
+
+
+def test_feed_personalised():
+    """TC-012: a user with writing=5 and tech=-2 sees writing jobs and no tech jobs."""
+    print("\nTC-012  For You feed is personalised, and rejected categories are absent")
+
+    # get_top_categories drops non-positive scores, so "technology" is not in the list even
+    # though the user has a score for it. That is the test's whole point.
+    context = {
+        "skills": ["copywriting"],
+        "experience": "entry",
+        "category_scores": {"writing": 5, "technology": -2},
+        "rejected_jobs": [JobCard.make_job_id("Content Writer", "Acme")],
+        # Shaped as get_user_context projects it: saved_jobs.job_id only.
+        "saved_jobs": [{"job_id": JobCard.make_job_id("Copy Editor", "Acme")}],
+    }
+    # The "writing" fetch returns a tech job too, which is exactly what happens in production:
+    # a keyword search for one category routinely returns jobs belonging to another.
+    by_variant = {
+        "writing": [
+            card("Technical Writer", description="writing documentation"),
+            card("Backend Developer", description="python software engineering"),
+            card("Content Writer", description="content and copywriting"),
+            card("Copy Editor", description="editing and copywriting"),
+        ]
+    }
+    ag, db, fetch, rag = feed_agent(["writing"], context, by_variant)
+    result = ag.build_feed("laiba")
+
+    titles = [job["title"] for job in result["feed_jobs"]]
+    categories = {job["category"] for job in result["feed_jobs"]}
+
+    check("feed fetches once per top category", fetch.calls == ["writing"])
+    check("writing jobs appear in the feed", "Technical Writer" in titles)
+    check("no technology job survives the filter", "technology" not in categories)
+    check("every card is in a top category", categories <= {"writing"})
+    # TC-012 says rejected jobs are absent, and this is the assertion that deviation 4 --
+    # storing job_id rather than title in rejected_jobs -- exists to make possible.
+    check("an already-rejected job is absent", "Content Writer" not in titles)
+    # Open item 3 from 09-23: the feed is for jobs the user has not seen yet. "Technical
+    # Writer" still being present (asserted above) shows the filter is not just emptying it.
+    check("an already-saved job is absent", "Copy Editor" not in titles)
+    check("top_categories is reported to the template", result["top_categories"] == ["writing"])
+    check("no error on a populated feed", result["error"] is None)
+    # The feed deliberately makes no Groq call: it is a browse surface, not a question.
+    check("the feed makes no RAG call", rag.received is None)
+    check("every card carries a match band",
+          all(job.get("match_band") for job in result["feed_jobs"]))
+
+
+def test_feed_two_users_differ():
+    """TC-014: two users with opposite preferences get feeds with no jobs in common."""
+    print("\nTC-014  Two users with different histories get different feeds")
+
+    writer_jobs = [card("Technical Writer", description="writing and editing")]
+    tech_jobs = [card("Backend Developer", description="python software developer")]
+    by_variant = {"writing": writer_jobs, "technology": tech_jobs}
+
+    a, _, _, _ = feed_agent(
+        ["writing"],
+        {"skills": [], "category_scores": {"writing": 5, "technology": -2}},
+        by_variant,
+    )
+    feed_a = a.build_feed("user_a")
+
+    b, _, _, _ = feed_agent(
+        ["technology"],
+        {"skills": [], "category_scores": {"technology": 5, "writing": -2}},
+        by_variant,
+    )
+    feed_b = b.build_feed("user_b")
+
+    ids_a = {job["job_id"] for job in feed_a["feed_jobs"]}
+    ids_b = {job["job_id"] for job in feed_b["feed_jobs"]}
+
+    check("user A's feed is not empty", bool(ids_a))
+    check("user B's feed is not empty", bool(ids_b))
+    # Disjointness is the claim TC-014 actually makes. Asserting only that the two lists
+    # differ would pass on a one-job overlap, which is not "completely different feeds".
+    check("the two feeds share no job at all", ids_a.isdisjoint(ids_b))
+    check("A sees the writing job",
+          "Technical Writer" in [j["title"] for j in feed_a["feed_jobs"]])
+    check("B sees the tech job",
+          "Backend Developer" in [j["title"] for j in feed_b["feed_jobs"]])
+
+
+def test_feed_no_scores():
+    """A user with no positive category scores gets the empty state and costs nothing."""
+    print("\nFeed  no positive scores -> empty state, and no external call is made")
+
+    ag, db, fetch, rag = feed_agent([], {"skills": [], "category_scores": {}}, {})
+    result = ag.build_feed("fresh_user")
+
+    check("feed is empty", result["feed_jobs"] == [])
+    check("top_categories is empty", result["top_categories"] == [])
+    check("the empty-state message is returned", result["error"] == agent_module.MSG_FEED_EMPTY)
+    # Proving a call did NOT happen needs a counter, not a return value -- the same technique
+    # the TC-017 case uses. This is what makes the quota claim in build_feed's comment true.
+    check("no API fetch was made", fetch.calls == [])
+    check("nothing was embedded", ag.semantic_engine.encoded == [])
+    check("no RAG call was made", rag.received is None)
+
+
+def test_feed_categories_return_nothing():
+    """A feed whose categories return no usable job says so, and does not say a source failed."""
+    print("\nFeed  categories return nothing -> the right message, not the outage one")
+
+    ag, _, _, _ = feed_agent(
+        ["writing"], {"skills": [], "category_scores": {"writing": 3}}, {"writing": []}
+    )
+    result = ag.build_feed("laiba")
+
+    # Same distinction TC-018 draws for search: "nothing matched" and "a source is down" are
+    # different events and must not share a message.
+    check("empty categories give the none-found message",
+          result["error"] == agent_module.MSG_FEED_NONE_FOUND)
+    check("top categories are still shown", result["top_categories"] == ["writing"])
+
+
+def test_feed_match_bands():
+    """The match-quality badge maps normalized scores onto the three FR-019 labels."""
+    print("\nFR-019  match band thresholds")
+
+    check("100 is a Top Match", agent_module.match_band(100.0) == "Top Match")
+    check("85 is a Top Match (inclusive)", agent_module.match_band(85.0) == "Top Match")
+    check("84.9 is a Great Match", agent_module.match_band(84.9) == "Great Match")
+    check("65 is a Great Match (inclusive)", agent_module.match_band(65.0) == "Great Match")
+    check("64.9 is Worth a Look", agent_module.match_band(64.9) == "Worth a Look")
+    check("0 is Worth a Look", agent_module.match_band(0.0) == "Worth a Look")
+
+
+def test_feed_ranking_uses_scores():
+    """Within the feed, a higher-scoring category outranks a lower one at equal similarity."""
+    print("\nFeed  the category score breaks ties between equally similar jobs")
+
+    context = {
+        "skills": [],
+        "category_scores": {"writing": 10, "design": 1},
+        "rejected_jobs": [],
+    }
+    by_variant = {
+        "writing": [card("Technical Writer", description="writing")],
+        "design": [card("Graphic Designer", company="Beta", description="design")],
+    }
+    # Identical similarity for both, so the ONLY thing that can separate them is the boost.
+    ag, _, fetch, _ = feed_agent(
+        ["writing", "design"], context, by_variant,
+        scores={"Technical Writer": 0.5, "Graphic Designer": 0.5},
+    )
+    result = ag.build_feed("laiba")
+
+    titles = [job["title"] for job in result["feed_jobs"]]
+    check("both categories were fetched", fetch.calls == ["writing", "design"])
+    check("both jobs survive the filter", len(titles) == 2)
+    check("the higher-scoring category ranks first", titles[0] == "Technical Writer")
+    # Since 2026-10-27 the band is read off an ABSOLUTE score, so the top card is no longer a
+    # Top Match by construction. The band must follow the score, whatever it is.
+    top = result["feed_jobs"][0]
+    check("the top card's band follows its absolute score",
+          top["match_band"] == agent_module.match_band(top["normalized_score"]))
+
+
+def test_placeholders():
+    """2026-10-29: "send us your CV" pages are dropped from search and feed, real jobs kept."""
+    print("\n[placeholder adverts]")
+    placeholder = card("Don't see what you're looking for? (Technology)", company="Acme")
+    real = [card("Pool Technician", company="Beta"), card("Customer Service Representative")]
+    scores = {"Pool Technician": 0.5, "Customer Service Representative": 0.6,
+              placeholder.title: 0.9}
+
+    install(FetchRecorder(by_variant={"x": [placeholder] + real}), fixed_intent("x"))
+    titles = [j["title"] for j in JobSearchAgent(StubDB(), StubEngine(scores), StubRAG())
+              .run("laiba", "x")["jobs"]]
+    check("search drops the placeholder", placeholder.title not in titles)
+    check("search keeps 'Pool Technician' (not a talent pool)", "Pool Technician" in titles)
+    check("search keeps an ordinary vacancy", "Customer Service Representative" in titles)
+
+    install(FetchRecorder(by_variant={"x": [placeholder]}), fixed_intent("x"))
+    only = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).run("laiba", "x")
+    check("a pool of only placeholders is 'no results', not a crash",
+          only["error"] == agent_module.MSG_NO_RESULTS and only["jobs"] == [])
+
+    context = {"skills": [], "category_scores": {"technology": 5}, "rejected_jobs": []}
+    tech = card("Software Engineer", company="Gamma", description="software engineer")
+    feed_placeholder = card("Join our Talent Pool", description="software engineer")
+    ag, _, _, _ = feed_agent(["technology"], context,
+                             {"technology": [feed_placeholder, tech]},
+                             scores={"Software Engineer": 0.5, "Join our Talent Pool": 0.9})
+    feed_titles = [j["title"] for j in ag.build_feed("laiba")["feed_jobs"]]
+    check("the feed drops the placeholder", "Join our Talent Pool" not in feed_titles)
+    check("the feed keeps the real job", "Software Engineer" in feed_titles)
+
+
+def test_absolute_scores_and_exclusions():
+    """2026-10-27: percentages are absolute, and an excluded term lowers a job's score."""
+    print("\n[match percentage and exclusions]")
+    strong = agent_module.STRONG_MATCH_SIMILARITY
+
+    # A weak result set must not show 100%. This is the bug the fresh queries surfaced.
+    jobs = [card("Accountant"), card("Warehouse Packer")]
+    weak = JobSearchAgent(StubDB(), StubEngine({"Accountant": 0.12, "Warehouse Packer": 0.05}),
+                          StubRAG()).rank("q", list(jobs_as_dicts(jobs)), {})
+    check("a weak top job is not shown as 100%", weak[0]["normalized_score"] < 25)
+    check("the percentage is similarity / STRONG_MATCH_SIMILARITY",
+          abs(weak[0]["normalized_score"] - 0.12 / strong * 100) < 1e-6)
+
+    # An excluded term in the title drops the job below a clean one of slightly lower similarity.
+    jobs = [card("Phone Support Agent"), card("Chat Support Agent")]
+    scores = {"Phone Support Agent": 0.55, "Chat Support Agent": 0.50}
+    ranked = JobSearchAgent(StubDB(), StubEngine(scores), StubRAG()).rank(
+        "q", list(jobs_as_dicts(jobs)), {}, exclude=["phone"])
+    check("a title naming an excluded term ranks below a clean job", ranked[0]["title"] == "Chat Support Agent")
+    check("the penalised job records why", ranked[1]["excluded_terms"] == ["phone"])
+    check("the penalised job's percentage drops",
+          ranked[1]["normalized_score"] < ranked[0]["normalized_score"])
+    check("without exclusions nothing is penalised",
+          all(j["excluded_terms"] == [] for j in JobSearchAgent(
+              StubDB(), StubEngine(scores), StubRAG()).rank("q", list(jobs_as_dicts(jobs)), {})))
+
+    # The keyword fallback and the embedded-text cleanup, on the fresh queries' wording.
+    k, p = intent_parser.keyword_exclusions, intent_parser.positive_query
+    check("'no phone calls' excludes phone", k("support immediate start no phone calls") == ["phone"])
+    check("'except crypto and web3' excludes both",
+          k("marketing jobs except crypto and web3") == ["crypto", "web3"])
+    check("'without phone calls or voice chats' excludes phone and voice",
+          k("support without phone calls or voice chats") == ["phone", "voice"])
+    check("'no experience' is a level, not an exclusion", k("no experience junior data analyst") == [])
+    check("'no degree' is a level, not an exclusion", k("marketing role no degree required") == [])
+    check("the negated phrase leaves the embedded text",
+          p("night shift customer support no phone calls", ["phone"]) == "night shift customer support")
+    check("a following non-excluded phrase is kept",
+          p("no phone customer support", ["phone"]) == "customer support")
+    check("a query with no exclusions is unchanged", p("data analyst", []) == "data analyst")
+    check("the LLM's exclude list is validated",
+          intent_parser._validate_exclude(["Phone", "experience", "$ne", 3, "phone"]) == ["phone"])
+
+
+def main():
+    """Run every case and exit non-zero if any assertion failed."""
+    print("=" * 70)
+    print("verify_agent.py — JobSearchAgent and JobCard (offline, no live calls)")
+    print("=" * 70)
+
+    original_fetch = agent_module.fetch_variant
+    original_parse = agent_module.parse_intent
+    try:
+        test_job_card()
+        test_empty_query()
+        test_source_failure()
+        test_query_expansion()
+        test_deduplication()
+        test_ranking()
+        test_absolute_scores_and_exclusions()
+        test_placeholders()
+        test_context_injection()
+        test_category_boost()
+        test_classification()
+        test_country_source_selection()
+        test_profile_fills_in_what_the_query_omits()
+        test_level_filter_titles()
+        test_cache_requires_a_searching_source()
+        test_adzuna_signal_terms()
+        test_model_fallback_chain()
+        test_rag_structured_picks()
+        test_rag_prompt_states_eligibility()
+        test_rag_prompt_allows_no_match()
+        test_rag_fallback()
+        test_cache()
+        test_enrich_query_does_not_swamp_the_query()
+        test_adzuna_keywords()
+        test_adzuna_work_type_params()
+        test_narrowed_retry_rule()
+        test_himalayas_fetch()
+        test_level_filter_every_source()
+        test_empty_source_is_not_failure()
+        test_degraded_pool_is_not_cached()
+        test_experience_override()
+        test_feed_personalised()
+        test_feed_two_users_differ()
+        test_feed_no_scores()
+        test_feed_categories_return_nothing()
+        test_feed_match_bands()
+        test_feed_ranking_uses_scores()
+    finally:
+        # Restore the real functions, so importing this module cannot leave the agent
+        # permanently stubbed for anything that imports it afterwards.
+        agent_module.fetch_variant = original_fetch
+        agent_module.parse_intent = original_parse
+
+    print("\n" + "=" * 70)
+    print(f"{len(PASSED)} passed, {len(FAILED)} failed  "
+          f"({len(PASSED)}/{len(PASSED) + len(FAILED)})")
+    if FAILED:
+        for label in FAILED:
+            print(f"  FAILED: {label}")
+    print("=" * 70)
+    return 1 if FAILED else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

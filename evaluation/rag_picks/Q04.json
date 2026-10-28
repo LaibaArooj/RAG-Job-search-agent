@@ -1,0 +1,69 @@
+{
+  "query_id": "Q04",
+  "query": "I want to get into tech but I have no degree",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "all": {
+      "candidates": [
+        "0ec92293bb2290c2",
+        "5a9ee101d1fe7c90",
+        "6b0e73d978654754",
+        "cf8622afbf310db6",
+        "b5236bf18d66b048"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "5a9ee101d1fe7c90",
+              "reason": "This role is listed with multiple seniority levels, so there may be entry\u2011level positions that do not require a formal degree. It is remote and open to applicants worldwide, making it easy to apply."
+            },
+            {
+              "job_id": "6b0e73d978654754",
+              "reason": "The Embedded Linux Field Engineer position focuses on hands\u2011on IoT work, which can be entered through self\u2011taught skills and certifications rather than a degree. It is also fully remote with no geographic restriction."
+            },
+            {
+              "job_id": "cf8622afbf310db6",
+              "reason": "A Software Engineer \u2013 Solutions Engineering role can be obtained by demonstrating strong coding projects and open\u2011source contributions, even without a degree. The job is remote and open to candidates from any location."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "5a9ee101d1fe7c90",
+              "reason": "The Technical Author positions are listed with multiple roles and seniority levels, so there are likely entry\u2011level openings that don\u2019t require a formal degree. Canonical\u2019s remote\u2011first policy means you can apply from anywhere without geographic limits."
+            },
+            {
+              "job_id": "6b0e73d978654754",
+              "reason": "The Embedded Linux Field Engineer role focuses on hands\u2011on IoT work, which often values proven technical projects over a diploma. It is fully remote, so location is not a barrier."
+            },
+            {
+              "job_id": "cf8622afbf310db6",
+              "reason": "The Software Engineer \u2013 Solutions Engineering position is a core engineering role that can be entered with a strong portfolio of self\u2011taught code. Canonical hires globally, so you can apply regardless of where you live."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "5a9ee101d1fe7c90",
+              "reason": "The Technical Author positions are offered at multiple seniority levels, so there may be entry\u2011level openings that accept candidates without a formal degree. The role is remote with no geographic restriction, allowing you to apply from anywhere."
+            },
+            {
+              "job_id": "6b0e73d978654754",
+              "reason": "The Embedded Linux Field Engineer role focuses on practical IoT and device work, which can be learned through self\u2011study and hands\u2011on projects rather than a degree. It is fully remote, so location is not a barrier to applying."
+            },
+            {
+              "job_id": "cf8622afbf310db6",
+              "reason": "The Software Engineer \u2013 Solutions Engineering position provides a pathway into core software development, and many employers value demonstrable coding skills over formal credentials. This job is also remote with no geographic limitation, making it accessible to you."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

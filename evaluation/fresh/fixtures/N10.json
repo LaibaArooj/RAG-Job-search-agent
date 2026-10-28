@@ -1,0 +1,16 @@
+{
+  "query_id": "N10",
+  "query": "remote senior product manager minimum 150k USD",
+  "profile": {
+    "country": "pk",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Himalayas"
+  ],
+  "jobs": []
+}

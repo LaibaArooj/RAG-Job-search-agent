@@ -1,0 +1,75 @@
+{
+  "query_id": "Q03",
+  "query": "work with numbers but not boring",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "58bb64c8b66450dc"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "58bb64c8b66450dc",
+              "reason": "This role is limited to candidates who can already work in the UK, so it may not be suitable if you need a location\u2011free position. It involves managing operational metrics and data\u2011driven decisions, offering plenty of number\u2011focused work without being monotonous."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "58bb64c8b66450dc",
+              "reason": "This role is limited to candidates who can work in the UK, so you must already have the right to work there. As an Operations Manager you will analyse performance metrics, optimise processes and lead cross\u2011functional projects, offering plenty of quantitative work without being repetitive."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "58bb64c8b66450dc",
+              "reason": "This role is limited to candidates who can work in the UK, so you must be eligible to work there. As an Operations Manager you will regularly analyse metrics, optimise processes, and make data\u2011driven decisions, which aligns with a love of working with numbers without being monotonous."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "58bb64c8b66450dc"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "58bb64c8b66450dc",
+              "reason": "This role is limited to candidates who can work in the UK, so you must already have the right to work there. As an Operations Manager you will analyse performance data, optimise processes and lead cross\u2011functional projects, offering plenty of quantitative work without being confined to repetitive tasks."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "58bb64c8b66450dc",
+              "reason": "This role is limited to candidates who can already work in the UK, so you must meet that location requirement. As an Operations Manager you will handle data-driven decision\u2011making, process optimisation and performance metrics, offering plenty of number\u2011focused work without being monotonous."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "58bb64c8b66450dc",
+              "reason": "This role is limited to candidates who can work in the UK, so it may not be suitable if you need a location\u2011flexible position. It involves overseeing operational metrics and financial performance, offering plenty of number\u2011driven work without being monotonous."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

@@ -94,6 +94,31 @@ limit hit), and don't gold-plate anything else.
 - Sort dropdown: Relevance (default) / Date posted
 - **Done when:** TC-015 passes
 
+### Test cases from SRS v1.0 §4 (extracted 2026-09-13, verbatim)
+
+Recorded here so the SRS document does not have to be opened to check one.
+
+| TC ID | Test case | Input | Expected output |
+|---|---|---|---|
+| TC-001 | User Registration — Valid | Valid username, strong password | Account created, profile setup page shown, document stored in MongoDB |
+| TC-002 | Registration — Duplicate Username | Existing username | Error: "Username taken", no account created |
+| TC-003 | Login — Correct Credentials | Valid username and password | Session created, redirect to home feed |
+| TC-004 | Login — Incorrect Password | Valid username, wrong password | Error: "Invalid username or password" displayed |
+| TC-005 | Unauthenticated Access | Visit `/feed` without login | Redirect to `/login` page |
+| TC-006 | Semantic Search — Intent Match | "remote job writing no experience" | Results ranked by semantic similarity — writing/remote jobs ranked highest |
+| TC-007 | Autocomplete — Partial Match | Type "tec" in search bar | Dropdown shows "Technology", "Tech Support" |
+| TC-008 | RAG LLM Response | Complete semantic search results | AI Recommendations section displays top 3 picks with plain-English explanation |
+| TC-009 | LLM API Unavailable Fallback | Groq API down (mocked) | Raw ranked results shown, no crash, AI section hidden gracefully |
+| TC-010 | Save Job — Score Update | Click Save on a writing job | `writing` score in MongoDB incremented by +1 |
+| TC-011 | Reject Job — Score Update | Click Reject on a tech job | `tech` score in MongoDB decremented by −1 |
+| TC-012 | For You Feed — Personalized | User with writing=5, tech=−2 | For You feed shows writing jobs prominently, tech jobs absent |
+| TC-013 | Same Job Saved Twice | Save same job card twice | Score only incremented once, no duplicate in `saved_jobs` |
+| TC-014 | Two Users — Different Feeds | User A likes writing; User B likes tech | A and B see completely different For You feeds |
+| TC-015 | Filter by Remote | Apply Remote filter on results | Only remote-tagged jobs shown |
+| TC-016 | Context Injection | User profile has "Python" skill | Results for "developer job" rank Python roles higher |
+| TC-017 | Empty Search | Submit empty search bar | "Please enter a search term" — no API call made |
+| TC-018 | API Rate Limit Reached | Adzuna returns 429 | Friendly banner: "Job data temporarily unavailable" |
+
 ### New test cases (not in SRS v1.0 — add to the final test table)
 
 | TC ID | Test case | Input | Expected output |
@@ -165,7 +190,7 @@ everything that has a test case and defers the Medium-priority items.
 - Write up the Known Limitations section below in the final report
 - README, requirements.txt pinned, demo script rehearsed
 - **Done when:** the demo runs start to finish without you touching the terminal, and you
-  have a precision@5 number for both ranking methods
+  have a precision@5 number for both ranking methods. *(Second half met 2026-09-30.)*
 
 ### Cut list — drop these first if time runs short
 
@@ -212,15 +237,89 @@ parsed keywords. A production system with its own crawled corpus would use a rea
 
 ## Deviations from the SRS — declare these in the final report
 
-The SRS is v1.0 and authoritative. Three intentional changes have been made since. Each needs
-a one-line justification in the report; supervisors generally accept documented deviations and
-penalise undocumented ones.
+The SRS is v1.0 and authoritative. Nine changes have been made since — seven intentional, two
+forced. Each needs a one-line justification in the report; supervisors generally accept
+documented deviations and penalise undocumented ones.
 
 | Change | SRS said | Now | Why |
 |---|---|---|---|
 | Intent parsing | `parse_intent` matches keywords with if-statements (SDD §5.1) | Groq call returning structured JSON, keyword matching as fallback | The SRS defines an Agent as something that "autonomously decides what steps to take". Keyword matching doesn't meet that definition. This makes the claim true. |
-| Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped | Directly addresses the recall ceiling described below |
-| Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claims semantic ranking is better; that claim needs evidence |
+| Query strategy | One API call per search on the parsed keywords | 2–3 LLM-generated query variants, results unioned and deduped. **Since 2026-10-13 the variants are job titles**, and conditions such as "no degree" go in the level/work-type keys | Directly addresses the recall ceiling described below. The job-title change was made after Q01–Q05 failed live as a Pakistan user ("tech jobs no degree" found 3 jobs, "junior developer" / "IT support" find 27), so it was tuned on evaluation queries and the fresh N01–N15 run is its fair test |
+| Evaluation | Not specified | precision@5 over 20 queries, semantic vs raw | The project claimed semantic ranking is better; that claim needed evidence. **Measured 2026-09-30: it is not, on ranking alone** (0.32 vs 0.31, `evaluation/results.md`) |
+| **LLM model** | **Llama 3 8B-instant via Groq** | **`openai/gpt-oss-120b` via Groq** | **Forced TWICE, not chosen — see below** |
+| **Job sources** | Adzuna + Remotive (SRS §2.4) | Adzuna + **Himalayas** (since 2026-10-13; Adzuna + Remotive + Jobicy from 09-23) | Neither original source can answer "will this employer hire a candidate in my country?". Jobicy was added for that on 09-23, then shrank from 100 eligible jobs to 11. Remotive returned 16 fixed jobs for every query, and its API notice allows at most 4 calls a day, which one call per variant broke. Himalayas filters by the user's country server-side, states eligibility as a structured list, and had 3,947 jobs open to Pakistan (measured 10-13). Free, no key, no card, so the SRS cost constraint holds; its terms require a credit and link back. See § Geographic eligibility below. |
+| **Source selection** | All sources queried for every user | **Only sources that can serve the user's country** | Adzuna is a country-market API with no `jobs/pk/search` endpoint (404, measured 2026-09-23). Querying it for a user it cannot serve spends quota to fetch jobs that reject them. Requires a `country` field on the user document. |
+| **AI panel selection** | Top 5 ranked jobs → LLM (FR-016) | Top 5 **the seeker can apply for** → LLM | Measured: all five top-ranked jobs were UK-local for a non-UK user, so every AI pick was unreachable. Ranking itself is unchanged — only which five reach the prompt. Widened 2026-10-13: jobs open to the user's country count, and so do local jobs for a user whose profile has a country (sources are chosen per country, so those are in the user's own country). The evaluation scripts keep the old rule by default. |
+| **AI panel size** | Three top picks (FR-016) | **Up to three, or an explicit "no strong match"** | Added 2026-10-11. All 9 failed runs in the RAG-stage evaluation were the model declining (`{"picks": []}`), which the panel treated as an outage. Forcing three also made it fill the slots with jobs it said did not fit ("This is a recruitment-focused role, which does not meet the requirement"). A decline now shows a message; a Groq failure still hides the band (TC-009 unchanged). |
+| `rejected_jobs` contents | `Array<String>` of job **titles** (§ Data model) | `Array<String>` of **`job_id`** | Titles are not unique across employers. TC-012 requires rejected jobs to be *absent* from the feed; keyed on title, rejecting one "Software Engineer" hides every job with that title from every company. `saved_jobs` already keys on `job_id` for the same reason (TC-013). Field type is unchanged — still an array of strings. |
+
+### Geographic eligibility — added 2026-09-23
+
+Found by using the app as a real user. The SRS assumes a job listing is a result; for a
+candidate outside the source's market it may be an advert they are not allowed to answer.
+Three changes follow, and none of them hardcodes a country — eligibility is derived per
+user, so the product stays general:
+
+- `JobCard` now separates `location` (where the job IS) from `candidate_location` (where the
+  candidate MAY LIVE), which the SRS's single "location" field conflated.
+- `eligibility` buckets as `open` / `regional` / `local` / `unknown`. **`unknown` is a real
+  state and is never guessed at** — deciding whether "APAC" includes a given user would cost
+  that user a wasted application.
+- Jobicy is queried with `geo=anywhere`, so unrestricted roles are filtered server-side.
+
+Measured on "junior software engineer": jobs applicable from anywhere went from 1 to 5 of 28.
+
+**Still open, and both belong in the report:** Adzuna is not yet skipped for users outside
+its markets (the profile's location field defaults to "remote" and cannot drive the rule),
+and Remotive is labelled rather than filtered, so a user still sees region-restricted
+listings — clearly badged, but present. *(Both since resolved: Adzuna is skipped per country
+from 09-23, and Remotive was removed on 10-13.)*
+
+**Updated 2026-10-13 — Himalayas and the `country` bucket.** Jobicy and Remotive are gone.
+Himalayas is queried with `country=<ISO code>`, so eligibility is filtered server-side, and
+it states eligibility as a **structured list of country names** (an empty list = worldwide).
+That is what allows a fifth bucket, `country` ("✅ Open to your country"): set only when the
+list names the user's country exactly. The rule against guessing is unchanged — free text
+such as "APAC" is never matched to a country — but a list either contains "Pakistan" or it
+does not, so no judgement is involved. Measured as a Pakistan user on Q01–Q05: 27–43 jobs
+each, against near-empty or unrelated results before.
+
+### The LLM substitution is forced, not a preference — and it has now happened TWICE
+
+**Second substitution, 2026-09-23.** `groq/compound-mini` — itself the replacement for
+Llama 3 — began returning `404 ... does not exist or you do not have access to it`. No
+`groq/compound-*` and no Llama chat model remains on the account's model list. The model is
+now `openai/gpt-oss-120b`.
+
+This one carried a hazard worth writing up. gpt-oss models are **reasoning models**: they
+spend hidden reasoning tokens before emitting content, and `max_tokens` covers both. At the
+original budget of 300, `parse_intent`'s JSON was truncated, no object could be parsed, and
+the module fell back to keyword matching — so query expansion silently stopped happening
+and TC-019 and TC-021 were both broken **while the app still appeared to work**. Both token
+budgets were raised (intent 300 → 600, RAG 700 → 1200). The intent budget rose again to
+1000 on 2026-10-27, when the `exclude` key was added: replies used 305-553 of 600 and one was
+cut off.
+
+It also went undetected for two days because `verify_intent.py` reported the dead model as
+"Groq unreachable", which reads like a network fault. A test's own wording can hide a
+diagnosis.
+
+**First substitution, verified against the live Groq model list on 2026-09-13:**
+
+- `llama3-8b-8192` → `400 ... has been decommissioned and is no longer supported`
+- `llama-3.1-8b-instant` → `404 ... does not exist or you do not have access to it`
+- No Llama **chat** model remains on the account's model list at all. The only `llama` entries
+  are `llama-prompt-guard-2-22m/86m`, which are safety classifiers, not generative models.
+
+Everything else about the design is unchanged: same provider (Groq), same free tier, no credit
+card, same two-calls-per-search pattern, same try/except and fallback. The model id lives in a
+single constant `GROQ_MODEL` in `rag_pipeline.py`, so if a Llama model returns to Groq this is
+a one-line revert.
+
+**Action required:** tell the supervisor. The honest viva answer is "the SRS named a model the
+provider retired during implementation; the architecture isolates that choice to one constant,
+so the substitution cost one line." Do **not** claim the system runs Llama 3 anywhere in the
+report, the code comments or the demo.
 
 Both new Groq calls sit behind the same try/except and fallback pattern as the RAG call, so
 FR-018's "never crash if the LLM is unavailable" still holds.
@@ -237,6 +336,12 @@ either get it or keep the current model and name the mismatch as a limitation.
 An FYP that names its own weaknesses scores better than one that pretends it has none. These
 are the ones an examiner is most likely to find.
 
+0. **Semantic re-ranking did not measurably beat keyword order.** Added 2026-09-30. On the
+   Adzuna-only headline, precision@5 was 0.32 vs 0.31 (3 wins, 3 losses, 13 ties). Across all
+   sources it was 0.30 vs 0.32. The evaluation itself is limited: AI-proposed verdicts from one model, adopted by the developer, with no human validation yet (disclosed 2026-10-13, `evaluation/queries.md` § 10),
+   20 queries, only 13 of which can discriminate on the headline, and relevance judged only
+   on the pooled top 5s. Full detail in `evaluation/results.md` and `evaluation/queries.md` § 7.
+
 1. **Recall is bounded by keyword search.** The system re-ranks whatever Adzuna and Remotive
    return for the parsed keywords. If keyword search misses a relevant job, embeddings cannot
    recover it. This is semantic *re-ranking*, not semantic *retrieval*. Query expansion widens
@@ -248,8 +353,9 @@ are the ones an examiner is most likely to find.
    description is embedded.
 4. **The 0.02 boost coefficient is unjustified.** It was chosen by hand, not tuned. Cosine
    similarities cluster in a narrow band, so a category score of 5 shifts ranking materially.
-   Either tune it during evaluation or state plainly that it is a heuristic.
-5. **LLM explanations are unverifiable.** Llama 3 will produce a fluent, confident rationale
+   **Ablated 2026-09-30:** under a declared synthetic profile it changed 3 of 20 queries,
+   helping 1 and hurting 2. That is evidence it barely matters, not a justification of 0.02.
+5. **LLM explanations are unverifiable.** The LLM will produce a fluent, confident rationale
    whether or not the match is real, and may reference requirements the listing never stated.
    The UI labels the section as AI-generated; that is a mitigation, not a fix.
 6. **Preference learning is shallow.** A single integer per category, ±1 per interaction, with
@@ -259,6 +365,50 @@ are the ones an examiner is most likely to find.
    they have saved or rejected several jobs.
 8. **No evaluation of the LLM stage.** precision@5 measures the ranking. Whether the three AI
    picks are better than the top three by similarity alone is untested.
+9. **Categories are assigned by keyword matching.** Added 2026-09-21, **rewritten 2026-09-22**.
+   A job's category — which is what the whole save/reject preference loop scores — comes from
+   matching the job's title, then its description, against a hand-written hint table. It is not
+   classification by meaning and the report must not describe it as such. It still misfiles a
+   job whose text names no category word (those fall back to the query's category, or `"other"`)
+   and it cannot tell a job that *mentions* design from a job that *is* design.
+
+   The first version matched hints as bare substrings, first key winning in table order, and
+   that was measurably wrong on live data: four of the five jobs real users had saved were
+   filed as `design`, because `"ui"` matched inside "suited" and "built" and `design` is listed
+   before `technology`. Three rules replaced it — title first, word-boundary matching, and most
+   hint matches wins with table order only as the tie-break. **This is worth writing up rather
+   than hiding: it is a concrete example of a plausible-looking heuristic silently corrupting
+   user data, caught only by reading the database.** A learned classifier, or the embedding
+   model itself, remains the upgrade; both were weighed and rejected as harder to justify in a
+   viva than a table you can read.
+
+10. **Geographic eligibility is read from free text** — *now only partly true.* Added
+    2026-09-23, when it came from prose fields (Remotive's `candidate_required_location`,
+    Jobicy's `jobGeo`). Since 2026-10-13 the remote source is Himalayas, whose eligibility is
+    a structured country list, so the limitation becomes: **the system is only as right as
+    the source's tags** — a "…Work From Home – Canada" job came back tagged unrestricted.
+    The original rule still governs any free text:
+    Anything not positively unrestricted is classed `regional` and shown verbatim for the user
+    to judge. The system deliberately does **not** decide whether "APAC" or "EMEA" includes a
+    particular user; that is stated as unknown rather than guessed, because a confident wrong
+    answer costs the seeker a wasted application.
+
+11. **~~Adzuna results are still shown to users who cannot apply for them.~~** Resolved
+    2026-09-23: the profile now collects a country and Adzuna is skipped for users in the 177
+    countries it has no market for. What remains is narrower and still worth stating — for
+    such a user **every job the system can offer is remote**, so the product is a search engine
+    for remote roles rather than the general job search the SRS describes.
+
+12. **Region-restricted listings are shown, not filtered.** Listings restricted to named
+    regions are badged and kept (with Himalayas' country filter these should be rare). Filtering them would need the "does APAC
+    include Pakistan?" judgement this system deliberately refuses to make, and would drop
+    Europe/UK listings for a UK user.
+
+13. **The job sources drift, and the evaluation predates the current ones.** Added
+    2026-10-13. Remotive stopped searching and Jobicy shrank from 100 eligible jobs to 11,
+    each noticed only by using the app. Every evaluation number was produced with the old
+    sources and a UK profile; it stays a valid record of that system, and the report must say
+    the live sources changed afterwards. Groq's job-title variants also vary between runs.
 
 ## Data model — MongoDB `users` collection
 
@@ -333,11 +483,20 @@ job_search_agent/
 
 ## Open questions
 
-- [ ] How is a job's `category` determined? The API responses don't share a category taxonomy —
-      Adzuna has categories, Remotive has its own. Needs a mapping function, or derive from
-      keyword matching against the same category set `parse_intent` uses. **Decide before M3**,
-      because the whole save/reject scoring loop depends on it.
+- [x] **How is a job's `category` determined?** — settled 2026-09-21. Neither taxonomy is
+      mapped. Every job, whichever source returned it, is classified locally from its own title
+      and description against `config.CATEGORY_HINTS` by `core.intent_parser.classify_category`
+      — the same table and matcher the `parse_intent` keyword fallback uses on a query. One
+      rule for both sources, so a category score cannot fragment by source, and no per-source
+      mapping table has to be defended or kept current. Cost, to be stated in the report: it is
+      substring keyword matching over job text, first match wins, and a job whose text names no
+      category word falls back to the parsed intent's category or `"other"`.
 - [ ] Where does the autocomplete category list come from — hardcoded constant, or built from
       `search_history`? SRS says both.
-- [ ] Does the For You feed call the live APIs (costing Adzuna quota on every visit) or reuse
-      the last search's results?
+- [x] Does the For You feed call the live APIs (costing Adzuna quota on every visit) or reuse
+      the last search's results? **Settled 2026-09-21: live, through the existing 60-minute
+      cache, keyed on the category NAME.** The quota objection does not survive inspection —
+      `CATEGORIES` is a closed set of 13 strings, so every user and every feed visit shares the
+      same cache keys and all feed traffic in the app costs at most ~13 Adzuna calls per hour
+      against a 250/day budget. A user with no positive category scores returns before any
+      fetch at all. See `docs/ARCHITECTURE.md` § For You feed request flow.

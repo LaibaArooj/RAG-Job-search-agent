@@ -1,0 +1,137 @@
+{
+  "query_id": "N04",
+  "query": "lowkey looking for a side hustle in tech that pays quick",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "03fdc735d669981e",
+        "bacaadfb241cbeb7",
+        "fafc042c88567122",
+        "bfc9474f64aca499",
+        "7364ef31cea3a2c4"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "03fdc735d669981e",
+              "reason": "It\u2019s a remote contract role with a pay\u2011per\u2011task model, which matches a quick\u2011pay side hustle. No geographic restriction means you can apply from anywhere."
+            },
+            {
+              "job_id": "bfc9474f64aca499",
+              "reason": "This freelance Web/WordPress developer gig is remote and project\u2011based, ideal for earning money on the side. The lack of location limits lets you start immediately."
+            },
+            {
+              "job_id": "fafc042c88567122",
+              "reason": "The backend security engineer position is a remote contract with flexible hours, allowing you to work only when you want. Although it may require more expertise, it still offers a side\u2011hustle\u2011friendly arrangement with no geographic limits."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "03fdc735d669981e",
+              "reason": "It\u2019s a remote contract role with a pay\u2011per\u2011task model, ideal for a quick\u2011pay side hustle. No geographic restriction means you can apply from anywhere."
+            },
+            {
+              "job_id": "bfc9474f64aca499",
+              "reason": "A freelance Web/WordPress developer gig is inherently project\u2011based and can be done part\u2011time as a side hustle. The position is remote with no location limits, allowing fast start and payment."
+            },
+            {
+              "job_id": "fafc042c88567122",
+              "reason": "This contract backend security engineer role offers flexible hours you can pick, suitable for side\u2011hustle work. It\u2019s remote and open to worldwide applicants, though payment terms aren\u2019t specified as \u201cquick\u201d."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "03fdc735d669981e",
+              "reason": "This role is a contract position with a pay\u2011per\u2011task model, which lets you earn quickly for each completed assignment. It\u2019s fully remote with no geographic restriction, making it easy to treat as a side hustle."
+            },
+            {
+              "job_id": "bfc9474f64aca499",
+              "reason": "Freelance Web and WordPress development is typically billed per project or hour, allowing fast payouts. The job is remote and open to anyone worldwide, fitting a low\u2011key side gig."
+            },
+            {
+              "job_id": "fafc042c88567122",
+              "reason": "The Backend Security Engineer contract offers flexible hours you can pick, so you can work only when you have spare time. It\u2019s remote with no location limits, and contract work usually provides quicker payment than salaried roles."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "03fdc735d669981e",
+        "bacaadfb241cbeb7",
+        "fafc042c88567122",
+        "bfc9474f64aca499",
+        "7364ef31cea3a2c4",
+        "4ae1d0d0a55d42c0",
+        "bef1751556f13ba5",
+        "1099f1d0bdf512d1",
+        "10341ed0529e6114",
+        "eaffe5d260833253"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "03fdc735d669981e",
+              "reason": "This contract role uses a pay\u2011per\u2011task model, which is ideal for a quick\u2011pay side hustle. It is fully remote with no geographic restrictions, so you can apply from anywhere."
+            },
+            {
+              "job_id": "bfc9474f64aca499",
+              "reason": "A freelance web and WordPress developer gig lets you take on projects on your own schedule and get paid per assignment. The position is remote with no location limits, making it a flexible side hustle."
+            },
+            {
+              "job_id": "fafc042c88567122",
+              "reason": "The backend security engineer contract offers flexible hours and project\u2011based work, suitable for earning extra income on the side. It is remote and open to candidates worldwide, so you can apply without location constraints."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "03fdc735d669981e",
+              "reason": "This contract role has a pay\u2011per\u2011task model, which is ideal for quick earnings on a side hustle. It is fully remote with no geographic restriction, so you can apply from anywhere."
+            },
+            {
+              "job_id": "bfc9474f64aca499",
+              "reason": "Freelance web and WordPress development lets you take on projects as needed and get paid soon after delivery. The position is remote and open to candidates worldwide, making it easy to start."
+            },
+            {
+              "job_id": "fafc042c88567122",
+              "reason": "The backend security engineer contract offers flexible hours and a remote setup, suitable for side\u2011gig work. It has no geographic limitation, so you can apply regardless of location."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "03fdc735d669981e",
+              "reason": "This contract role pays per task, which aligns with a side\u2011hustle that can generate quick earnings. It is fully remote with no geographic restrictions, so you can apply from anywhere."
+            },
+            {
+              "job_id": "fafc042c88567122",
+              "reason": "The contract position offers flexible hours and a pay\u2011per\u2011task model, suitable for earning money fast on the side. It is remote and open to candidates worldwide, removing location barriers."
+            },
+            {
+              "job_id": "bfc9474f64aca499",
+              "reason": "Freelance web and WordPress development lets you take on projects as needed, providing fast, project\u2011based income. The role is remote with no geographic limits, making it easy to start immediately."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

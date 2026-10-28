@@ -1,0 +1,100 @@
+{
+  "query_id": "N05",
+  "query": "Senior DevOps Engineer AWS Terraform Kubernetes CI/CD",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "600700daefdb626d",
+        "f4a8c26aab1fd229",
+        "68f5c8dc5fe44161",
+        "4b405f5dd8b06116",
+        "561c4d1bcae356bb"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "4b405f5dd8b06116",
+              "reason": "The role requires strong hands\u2011on experience with AWS and Kubernetes, which matches the seeker\u2019s focus on cloud and container orchestration. It is a fully remote position with no geographic restrictions, so the seeker can apply from Pakistan."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "4b405f5dd8b06116",
+              "reason": "This role has no geographic restriction, allowing the seeker to apply from anywhere. It specifically calls for strong hands\u2011on experience with AWS and Kubernetes, which are core components of the search query."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "4b405f5dd8b06116",
+              "reason": "The role explicitly requires strong hands\u2011on experience with Kubernetes and AWS, matching the core technologies in the seeker\u2019s query. It also has no geographic restriction, so the seeker can apply from any location."
+            },
+            {
+              "job_id": "600700daefdb626d",
+              "reason": "This position is limited to candidates from specific countries, including Pakistan, so the seeker is eligible but must note the geographic restriction. It is a senior DevOps role focused on AWS, aligning with part of the search criteria."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "600700daefdb626d",
+        "f4a8c26aab1fd229",
+        "68f5c8dc5fe44161",
+        "4b405f5dd8b06116",
+        "561c4d1bcae356bb",
+        "81610574d570967f",
+        "e90d41b48d7d22d6",
+        "23ffb0d1f497a63a",
+        "307993e3bf04453f",
+        "7dbedaca406b3cea"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "4b405f5dd8b06116",
+              "reason": "This role is open to candidates worldwide, so there is no geographic limitation. It explicitly requires hands\u2011on experience with AWS and Kubernetes, which aligns with the seeker\u2019s focus on cloud and container orchestration."
+            },
+            {
+              "job_id": "23ffb0d1f497a63a",
+              "reason": "Hiring is limited to candidates in Pakistan, so the seeker must be aware of the geographic restriction. The description highlights infrastructure\u2011as\u2011code and modern deployment tools, indicating work with Terraform and CI/CD pipelines."
+            },
+            {
+              "job_id": "f4a8c26aab1fd229",
+              "reason": "There is no geographic restriction for this position, allowing the seeker to apply freely. The senior DevOps title matches the desired level, and while the brief description is generic, it implies responsibilities that typically include AWS, Terraform, Kubernetes, and CI/CD."
+            }
+          ]
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "4b405f5dd8b06116",
+              "reason": "This role explicitly requires strong hands\u2011on experience with AWS and Kubernetes, which matches the core technologies in the search. It has no geographic restriction, so the seeker can apply from any location."
+            },
+            {
+              "job_id": "23ffb0d1f497a63a",
+              "reason": "The position calls for expertise in infrastructure\u2011as\u2011code and modern deployment tools, covering Terraform and CI/CD pipelines, though it is limited to candidates from certain countries including Pakistan. The seeker is eligible to apply because Pakistan is among the allowed locations."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "query_id": "Q11",
+  "query": "entry level marketing role no degree required",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "848e92616163ce0b",
+        "1b5bc0ac188b8ca2",
+        "4e329677b8f98daa",
+        "b6357f92e6c0a9bc",
+        "b0b82e7ec016f2bd"
+      ],
+      "runs": [
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [
+            {
+              "job_id": "848e92616163ce0b",
+              "reason": "This role is limited to candidates who can work on\u2011site in Speenhamland, Newbury, so you would need to be local or willing to relocate. It is a managerial position, which typically requires experience and may expect a degree, making it less suitable for an entry\u2011level, no\u2011degree seeker."
+            },
+            {
+              "job_id": "1b5bc0ac188b8ca2",
+              "reason": "The Head of Marketing role is restricted to candidates able to work in Omagh, Northern Ireland, and is a senior leadership position that normally demands extensive experience and qualifications, so it does not align with an entry\u2011level, no\u2011degree profile."
+            },
+            {
+              "job_id": "4e329677b8f98daa",
+              "reason": "This Trade Marketing Manager position is limited to on\u2011site candidates in Low Hill, Liverpool, and involves managing campaigns across multiple channels, a responsibility usually reserved for experienced marketers rather than entry\u2011level applicants without a degree."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "848e92616163ce0b",
+              "reason": "This position is limited to candidates who can work on\u2011site in Speenhamland, Newbury. It is a Marketing Manager role, which typically requires several years of experience and is not an entry\u2011level position."
+            },
+            {
+              "job_id": "1b5bc0ac188b8ca2",
+              "reason": "Applicants must already be able to work in Omagh, Northern Ireland. The Head of Marketing title indicates a senior leadership role, far beyond entry\u2011level expectations."
+            },
+            {
+              "job_id": "4e329677b8f98daa",
+              "reason": "The role is restricted to candidates based in Low Hill, Liverpool. As a Trade Marketing Manager, it expects substantial prior experience and is not suitable for someone seeking an entry\u2011level, no\u2011degree opportunity."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "a6999a4da4b1dc93",
+        "bd25a3ecb3b60dd0",
+        "4af1d794d1b02fd9",
+        "4c394bd43ea5f22e",
+        "8a0655af28e5fe94"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "This role focuses on copywriting and campaign creation, which are core marketing tasks and could be suitable for someone starting out. It is remote with no geographic restriction, making it accessible worldwide."
+            },
+            {
+              "job_id": "8a0655af28e5fe94",
+              "reason": "Although titled Senior Performance Marketer, the position involves hands\u2011on campaign execution that often welcomes talent without a formal degree. It is fully remote, so location is not a barrier."
+            },
+            {
+              "job_id": "4af1d794d1b02fd9",
+              "reason": "The Enterprise Account Executive role includes revenue\u2011generating activities that overlap with marketing functions and may accept candidates without a degree. It also offers worldwide remote work, removing geographic limits."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The role is a Conceptual Copywriter focused on creating marketing copy, which aligns with an entry\u2011level marketing path. It is remote with no geographic restriction, making it accessible to anyone without a degree."
+            },
+            {
+              "job_id": "8a0655af28e5fe94",
+              "reason": "This Senior Performance Marketer position is in the marketing field but is clearly a senior role that will likely require significant experience and possibly a degree. It is remote worldwide, so location is not a barrier, but it may not meet the entry\u2011level, no\u2011degree criteria."
+            },
+            {
+              "job_id": "a6999a4da4b1dc93",
+              "reason": "The Account Director role involves managing enterprise customers and includes marketing\u2011related responsibilities, yet it is a senior leadership position. It is fully remote with no geographic limits, but it is unlikely to be suitable for an entry\u2011level candidate without a degree."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The Conceptual Copywriter role focuses on creating marketing copy for digital campaigns, aligning well with an entry\u2011level marketing interest. It is remote with no geographic restriction, though the description suggests a need for strong creative skills that may be beyond a typical entry\u2011level candidate."
+            },
+            {
+              "job_id": "4af1d794d1b02fd9",
+              "reason": "The Enterprise Account Executive position involves revenue generation and customer engagement, which are core components of marketing and sales. It is fully remote, but the role appears senior and likely expects significant prior experience."
+            },
+            {
+              "job_id": "8a0655af28e5fe94",
+              "reason": "The Senior Performance Marketer role centers on data\u2011driven marketing initiatives, matching the seeker\u2019s marketing focus. It is worldwide remote, yet the title indicates a senior level that may not be suitable for an entry\u2011level applicant without a degree."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

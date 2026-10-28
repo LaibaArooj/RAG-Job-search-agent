@@ -11,7 +11,7 @@
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-body p-4">
-                    <h3 class="mb-4 text-center">🔍 Job Search AI</h3>
+                    <h3 class="mb-4 text-center">Job Search AI</h3>
                     <h5 class="mb-3">Create Account</h5>
 
                     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -23,13 +23,16 @@
                     {% endwith %}
 
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
                             <input type="text" name="username" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <input type="password" name="password" class="form-control"
+                                   minlength="8" required>
+                            <small class="text-muted">At least 8 characters.</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Your Skills
@@ -46,10 +49,38 @@
                                 <option value="senior">Senior</option>
                             </select>
                         </div>
+                        {# The country decides which job sources can serve this user at all --
+                           Adzuna has no endpoint for a country it does not cover, so for those
+                           users it is skipped rather than queried. The two groups say so
+                           before the user searches, rather than leaving the difference
+                           silent. Required: guessing someone's country would show them jobs
+                           that reject them. #}
                         <div class="mb-3">
-                            <label class="form-label">Preferred Location</label>
+                            <label class="form-label">Country you are based in</label>
+                            <select name="country" class="form-select" required>
+                                <option value="" selected disabled>Choose your country…</option>
+                                <optgroup label="Local + remote jobs available">
+                                    {% for code, name in countries.items() if code in adzuna_countries %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Remote jobs only">
+                                    {% for code, name in countries.items() if code not in adzuna_countries %}
+                                    <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                            <small class="text-muted">
+                                We only show jobs whose employer will hire someone based here.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Preferred Location
+                                <small class="text-muted">(optional)</small>
+                            </label>
                             <input type="text" name="location" class="form-control"
-                                   placeholder="e.g. Remote, Pakistan, London">
+                                   placeholder="e.g. Remote, Lahore, London">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Work Type</label>
@@ -81,7 +112,7 @@
                     <hr>
                     <p class="text-center mb-0">
                         Already have an account?
-                        <a href="{{ url_for('login') }}">Login</a>
+                        <a href="{{ url_for('auth.login') }}">Login</a>
                     </p>
                 </div>
             </div>

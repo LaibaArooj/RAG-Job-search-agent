@@ -1,0 +1,137 @@
+{
+  "query_id": "N09",
+  "query": "No experience entry level junior data analyst",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "e375a42d5afb8de5",
+        "455557f857d8a178",
+        "6c7a3d761b6200c6",
+        "c94007dc2b6aa217",
+        "26e3668961abce7c"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "The role is listed as a Data Analyst with a remote, worldwide hiring policy, making it accessible to the seeker. The description is generic and does not mention experience requirements, suggesting it could be suitable for an entry\u2011level candidate."
+            },
+            {
+              "job_id": "6c7a3d761b6200c6",
+              "reason": "This position is a remote contractor role open to candidates worldwide, so location is not a barrier. The brief description does not specify prior experience, indicating it may accept junior analysts with little or no experience."
+            },
+            {
+              "job_id": "c94007dc2b6aa217",
+              "reason": "The posting offers a remote Data Analyst contractor role with no geographic restrictions, allowing the seeker to apply. Its wording is similar to entry\u2011level listings and lacks explicit experience demands, fitting a junior candidate."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It is a remote Data Analyst position that appears entry\u2011level and does not specify prior experience, matching your search for a junior role."
+            },
+            {
+              "job_id": "6c7a3d761b6200c6",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It is a remote contractor Data Analyst position that seems suitable for entry\u2011level candidates without required experience."
+            },
+            {
+              "job_id": "c94007dc2b6aa217",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It is a remote contractor Data Analyst role that does not list experience requirements, fitting an entry\u2011level junior search."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "The posting has no geographic restriction, so you can apply from anywhere, and the wording suggests a general data analyst role that often welcomes entry\u2011level candidates."
+            },
+            {
+              "job_id": "6c7a3d761b6200c6",
+              "reason": "It is a remote contractor position with no location limits, and the description targets contributors to a project, which typically includes junior analysts without prior experience."
+            },
+            {
+              "job_id": "26e3668961abce7c",
+              "reason": "This role is open worldwide and focuses on turning data into decisions, a common entry\u2011level responsibility for new data analysts."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "e375a42d5afb8de5",
+        "455557f857d8a178",
+        "6c7a3d761b6200c6",
+        "c94007dc2b6aa217",
+        "26e3668961abce7c",
+        "6b95f4532adf0f4e",
+        "10b0d3bd622833b5",
+        "683208309c6609e1",
+        "8112ab3b28e6a72b",
+        "6bb5cbc0731ce73e"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "The role has no geographic restriction, allowing the seeker to apply from anywhere, and the generic description suggests it could be open to entry\u2011level or junior candidates."
+            },
+            {
+              "job_id": "6c7a3d761b6200c6",
+              "reason": "This contractor position is remote with no location limits, and such project\u2011based analyst work often welcomes candidates with little or no prior experience."
+            },
+            {
+              "job_id": "c94007dc2b6aa217",
+              "reason": "Also remote with unrestricted hiring, this data analyst contract is likely to consider junior applicants looking to gain their first professional experience."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere. The description is generic and does not require prior experience, making it suitable for an entry\u2011level or junior data analyst."
+            },
+            {
+              "job_id": "6c7a3d761b6200c6",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere. It is listed as a contractor data analyst position with a broad scope, which often welcomes candidates without prior experience."
+            },
+            {
+              "job_id": "c94007dc2b6aa217",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere. The posting seeks data analysts for a high\u2011impact project and does not specify experience requirements, fitting an entry\u2011level candidate."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "455557f857d8a178",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. The description is generic and does not list experience requirements, indicating it may be suitable for an entry\u2011level or junior data analyst with little or no experience."
+            },
+            {
+              "job_id": "6c7a3d761b6200c6",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. It is listed as a contractor position with a broad description, suggesting it could accommodate candidates without extensive prior experience."
+            },
+            {
+              "job_id": "c94007dc2b6aa217",
+              "reason": "This role has no geographic restriction, so you can apply from Pakistan. The posting is for a remote data analyst contractor and does not specify seniority, making it a potential fit for an entry\u2011level candidate."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "query_id": "N06",
+  "query": "Staff Software Engineer distributed systems remote",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "bdefec05f2ef1fce",
+        "c2db2649c15449f3",
+        "f22c892db765b460",
+        "9bcc6bbb3977d40c",
+        "99b193307f593899"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdefec05f2ef1fce",
+              "reason": "This role is a Staff Software Engineer position that is fully remote with hiring open worldwide. It aligns with the seeker\u2019s interest in senior engineering roles, even though the description does not explicitly mention distributed systems."
+            },
+            {
+              "job_id": "99b193307f593899",
+              "reason": "This is a Staff Software Engineer role that is remote and accepts applicants from any location. While the posting emphasizes craftsmanship rather than distributed systems, it still matches the senior remote engineering criteria."
+            }
+          ]
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdefec05f2ef1fce",
+              "reason": "This is a Staff Software Engineer role that is fully remote with no geographic restriction, matching the seniority and location criteria."
+            },
+            {
+              "job_id": "f22c892db765b460",
+              "reason": "The position is a Staff Software Engineer, remote worldwide, aligning with the desired senior level and remote work preference."
+            },
+            {
+              "job_id": "99b193307f593899",
+              "reason": "It is a Staff Software Engineer role offering fully remote work without geographic limits, fitting the senior remote criteria."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "bdefec05f2ef1fce",
+        "c2db2649c15449f3",
+        "f22c892db765b460",
+        "9bcc6bbb3977d40c",
+        "99b193307f593899",
+        "c22d352aa36621ec",
+        "518a590bfc0e8d04",
+        "d4ea27e18a7b908e",
+        "afcdbc100ed9811c",
+        "5582b24bcdc97405"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "c2db2649c15449f3",
+              "reason": "This role is a remote Senior Distributed Systems Engineer with no geographic hiring restrictions, directly matching the distributed systems focus. It aligns with the seeker\u2019s interest in senior\u2011level engineering work on distributed systems."
+            },
+            {
+              "job_id": "518a590bfc0e8d04",
+              "reason": "The Founding Software Engineer position works on backend, cloud infrastructure, and distributed systems and is fully remote with worldwide hiring. It offers the senior\u2011level responsibilities the seeker is looking for in a distributed systems role."
+            }
+          ]
+        },
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "declined",
+          "picks": []
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "query_id": "N15",
+  "query": "customer support position without phone calls or voice chats",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "bdfacaaeab9fe74f",
+        "a3e4717b981d3c98",
+        "76e02790222b8283",
+        "322691668d08b29c",
+        "a8e6c11d7c745a33"
+      ],
+      "runs": [
+        {
+          "state": "declined",
+          "picks": []
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdfacaaeab9fe74f",
+              "reason": "The remote Customer Service Representative role does not mention phone or voice interaction, suggesting support is handled through written channels. It also has no geographic hiring restriction, making it accessible to the seeker."
+            },
+            {
+              "job_id": "a3e4717b981d3c98",
+              "reason": "The Client Support Specialist position focuses on answering incoming inquiries and solving issues, without specifying phone calls, implying a chat/email based workflow. It is open to candidates worldwide."
+            },
+            {
+              "job_id": "a8e6c11d7c745a33",
+              "reason": "The Customer Care Specialist role emphasizes empathy and detail orientation but does not reference voice communication, indicating likely support via text. It also accepts applicants from any location."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdfacaaeab9fe74f",
+              "reason": "This role is open to candidates worldwide, so you can apply regardless of location. The description focuses on supporting order fulfillment, which is typically handled via email or chat rather than phone calls."
+            },
+            {
+              "job_id": "a3e4717b981d3c98",
+              "reason": "This position accepts applicants from anywhere in the world, giving you full geographic flexibility. The responsibilities involve answering incoming inquiries and escalating cases, which are commonly performed through written channels."
+            },
+            {
+              "job_id": "a8e6c11d7c745a33",
+              "reason": "The job is globally open with no geographic limits, allowing you to apply from any country. As a Customer Care Specialist, the role emphasizes empathy and detail\u2011orientation, traits suited to text\u2011based support rather than voice interactions."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "bdfacaaeab9fe74f",
+        "a3e4717b981d3c98",
+        "76e02790222b8283",
+        "322691668d08b29c",
+        "a8e6c11d7c745a33",
+        "a70c14535a92d0fe",
+        "6b70b1036181262c",
+        "34f6fb3101e35f10",
+        "c7edc44dbe577cab",
+        "9295bfcadd4de905"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdfacaaeab9fe74f",
+              "reason": "The position has no geographic restriction, so you can apply from anywhere. The role focuses on supporting order fulfillment, which is typically handled through email or chat rather than phone calls."
+            },
+            {
+              "job_id": "a8e6c11d7c745a33",
+              "reason": "This job is open to candidates worldwide, allowing you to apply regardless of location. The description emphasizes empathy and detail\u2011orientation, suggesting a focus on written support rather than voice interactions."
+            },
+            {
+              "job_id": "34f6fb3101e35f10",
+              "reason": "There are no geographic limits for this remote role, so it\u2019s accessible globally. The responsibilities highlight friendly, detail\u2011oriented service, which is commonly delivered via chat or email without phone calls."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdfacaaeab9fe74f",
+              "reason": "The role focuses on supporting customer accounts throughout order fulfillment, which is typically handled via email or chat. No mention of phone or voice interactions suggests it fits a non\u2011voice support position."
+            },
+            {
+              "job_id": "a8e6c11d7c745a33",
+              "reason": "The Customer Care Specialist description emphasizes empathy, detail\u2011orientation, and proactive assistance, common for written support channels. It does not reference handling calls, making it suitable for a voice\u2011free role."
+            },
+            {
+              "job_id": "34f6fb3101e35f10",
+              "reason": "This Customer Service Representative role highlights friendliness and detail\u2011orientation, traits valued in chat or email support. The lack of any reference to phone calls indicates it aligns with a non\u2011voice support position."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "bdfacaaeab9fe74f",
+              "reason": "The role is fully remote with no geographic restriction and focuses on supporting customers through the order fulfillment process, which typically relies on email or chat rather than phone calls."
+            },
+            {
+              "job_id": "a8e6c11d7c745a33",
+              "reason": "This remote position has no location limits and emphasizes empathetic, detail\u2011oriented support, suggesting a non\u2011voice, written\u2011communication focus."
+            },
+            {
+              "job_id": "34f6fb3101e35f10",
+              "reason": "The job is remote worldwide and describes a friendly, detail\u2011oriented representative role, implying support via written channels without requiring phone or voice interactions."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

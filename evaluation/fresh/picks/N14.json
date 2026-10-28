@@ -1,0 +1,137 @@
+{
+  "query_id": "N14",
+  "query": "remote digital marketing specialist jobs except crypto and web3",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "5d23a539de2e20ae",
+        "9bb577d37a2f83f7",
+        "ab25dfb34a11d848",
+        "c695c9563e3891c8",
+        "a24538121ba5185a"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5d23a539de2e20ae",
+              "reason": "This role is fully remote with no geographic restriction, allowing you to apply from anywhere. It matches the search for a Digital Marketing Specialist position."
+            },
+            {
+              "job_id": "ab25dfb34a11d848",
+              "reason": "The position is remote and open to candidates worldwide, so location is not a barrier. It combines marketing coordination with digital marketing specialist duties, fitting the search criteria."
+            },
+            {
+              "job_id": "c695c9563e3891c8",
+              "reason": "The job is remote with no geographic limits, making it accessible globally. It focuses on recruitment marketing, which still involves core digital marketing skills relevant to the seeker."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5d23a539de2e20ae",
+              "reason": "This role is fully remote with no geographic restriction, allowing you to apply from anywhere. It matches your search for a Digital Marketing Specialist position focused on creative and results\u2011driven marketing."
+            },
+            {
+              "job_id": "ab25dfb34a11d848",
+              "reason": "The job is remote with no location limits, so you can apply regardless of where you live. It combines marketing coordination with digital marketing specialist duties, aligning with your desired responsibilities."
+            },
+            {
+              "job_id": "9bb577d37a2f83f7",
+              "reason": "This position is remote but limited to candidates in Pakistan, which matches your location. It offers a Digital Marketing Manager role covering content, SEO, and brand growth, fitting your digital marketing specialist criteria."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5d23a539de2e20ae",
+              "reason": "This role has no geographic restriction, so you can apply from anywhere. It is a remote Digital Marketing Specialist position that matches your search criteria."
+            },
+            {
+              "job_id": "ab25dfb34a11d848",
+              "reason": "The hiring is open worldwide, allowing you to apply regardless of location. It combines marketing coordination with digital marketing specialist duties, fitting your request."
+            },
+            {
+              "job_id": "c695c9563e3891c8",
+              "reason": "There are no location limits, so you can apply from any country. The role focuses on recruitment marketing, which still falls under digital marketing specialist work and excludes crypto/web3."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "5d23a539de2e20ae",
+        "9bb577d37a2f83f7",
+        "ab25dfb34a11d848",
+        "c695c9563e3891c8",
+        "a24538121ba5185a",
+        "b8b08f3b0282b1f4",
+        "d5c03686f0432932",
+        "64ba91535e219f0e",
+        "72e1b8e0e5c350c9",
+        "7e77aa2f0083c4e8"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5d23a539de2e20ae",
+              "reason": "This role has no geographic restriction, allowing you to apply from anywhere. It is a remote Digital Marketing Specialist position that matches your search criteria and does not involve crypto or web3."
+            },
+            {
+              "job_id": "ab25dfb34a11d848",
+              "reason": "This role has no geographic restriction, allowing you to apply from anywhere. It combines marketing coordination with digital marketing specialist duties, fitting your remote digital marketing focus without crypto or web3 involvement."
+            },
+            {
+              "job_id": "64ba91535e219f0e",
+              "reason": "This role has no geographic restriction, allowing you to apply from anywhere. It is a remote GHL Marketing Specialist position that aligns with digital marketing expertise and excludes crypto or web3 topics."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5d23a539de2e20ae",
+              "reason": "This role is a Digital Marketing Specialist, fully remote with no geographic restriction, matching the seeker\u2019s criteria."
+            },
+            {
+              "job_id": "ab25dfb34a11d848",
+              "reason": "The position combines Marketing Coordinator and Digital Marketing Specialist duties, remote worldwide, aligning with the search."
+            },
+            {
+              "job_id": "64ba91535e219f0e",
+              "reason": "It is a remote GHL Marketing Specialist role with no location limits, fitting the digital marketing specialist requirement."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "5d23a539de2e20ae",
+              "reason": "This role is a remote Digital Marketing Specialist with no geographic restriction, matching the seeker\u2019s desire for a specialist position that can be done from anywhere."
+            },
+            {
+              "job_id": "ab25dfb34a11d848",
+              "reason": "The position combines marketing coordination with Digital Marketing Specialist duties, is fully remote and open worldwide, fitting the specialist focus without location limits."
+            },
+            {
+              "job_id": "64ba91535e219f0e",
+              "reason": "It is a remote Marketing Specialist role with no geographic constraints, aligning with the seeker\u2019s requirement for a specialist position that can be performed from any location."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "query_id": "Q09",
+  "query": "financial analyst excel modelling",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "40987b6c4b4c4a7b"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "40987b6c4b4c4a7b",
+              "reason": "This role is restricted to candidates who can already work in Leicester, Leicestershire. It matches the search for a financial analyst position and likely involves Excel modelling within the finance team."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "40987b6c4b4c4a7b",
+              "reason": "This role is limited to candidates who can already work in Leicester, Leicestershire, so it may not be suitable if you are not locally based. It matches the search for a Financial Analyst position that likely involves Excel modelling within a finance team."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "40987b6c4b4c4a7b",
+              "reason": "This role is limited to candidates who can already work in Leicester, Leicestershire, so it may not be suitable if you are not locally based. It matches the search for a Financial Analyst position that likely involves Excel modelling within a finance team."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "c1ac85c62517dd3d",
+        "8a6e95e2a76d3e9a",
+        "329a8041a4a6ba65",
+        "796de72b87a2fcec",
+        "40987b6c4b4c4a7b"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "40987b6c4b4c4a7b",
+              "reason": "This role is limited to candidates who can work in Leicester, Leicestershire. It is a Financial Analyst position where Excel modelling skills are likely required, matching the seeker\u2019s focus."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "40987b6c4b4c4a7b",
+              "reason": "This role is limited to candidates who can work in Leicester, Leicestershire, so you must be locally based or able to relocate. It is a Financial Analyst position where Excel modelling and financial analysis are core responsibilities, matching your search."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "40987b6c4b4c4a7b",
+              "reason": "This role is limited to candidates who can work in Leicester, Leicestershire, so it has a geographic restriction. It is a Financial Analyst position, which is directly aligned with the seeker\u2019s interest in financial analysis and likely involves Excel modelling tasks."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

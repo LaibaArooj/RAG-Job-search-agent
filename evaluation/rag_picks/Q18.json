@@ -1,0 +1,92 @@
+{
+  "query_id": "Q18",
+  "query": "something in HR that isn't recruitment",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "5345c91de5e04983",
+        "d39a2d6c161e2634",
+        "b73e42326ae9f864",
+        "5e3a7fb4eca3c264",
+        "90f4542b4bf56ba8"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "5345c91de5e04983",
+              "reason": "This position is a Recruitment Resourcer role, which does not meet the seeker\u2019s request for an HR job that isn\u2019t recruitment. It is restricted to candidates who can work on\u2011site in Lofthouse Gate, Wakefield, so the seeker must be local or willing to relocate."
+            },
+            {
+              "job_id": "d39a2d6c161e2634",
+              "reason": "This job is also a Recruitment Resourcer role, so it does not satisfy the desire for a non\u2011recruitment HR position. It is limited to candidates able to work in Newport, Wales, meaning geographic constraints apply."
+            },
+            {
+              "job_id": "b73e42326ae9f864",
+              "reason": "The role is a Recruitment Consultant position, which again does not align with the seeker\u2019s interest in HR work outside of recruitment. It requires candidates to be able to work on\u2011site in Thorpe Astley, Braunstone, imposing a location restriction."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "90f4542b4bf56ba8",
+              "reason": "This role is limited to candidates who can work in Manchester Science Park, so it has a geographic restriction. It is a recruitment consultant position, which does not match the seeker\u2019s desire for HR work outside of recruitment, but it may offer a hybrid schedule that provides some flexibility."
+            },
+            {
+              "job_id": "5345c91de5e04983",
+              "reason": "The position requires candidates to be able to work on\u2011site in Lofthouse Gate, Wakefield, so it is geographically restricted. While it is a recruitment resourcer role rather than a non\u2011recruitment HR function, it could serve as a foothold in the broader HR field."
+            },
+            {
+              "job_id": "d39a2d6c161e2634",
+              "reason": "Applicants must already be able to work in Newport, Wales, making this a location\u2011specific opportunity. It is also a recruitment resourcer role, which does not align with the seeker\u2019s preference for HR work that isn\u2019t recruitment, but it may provide relevant experience."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "5345c91de5e04983",
+              "reason": "This role is limited to candidates who can work on\u2011site in Lofthouse Gate, Wakefield. It is a recruitment\u2011focused HR position, which aligns with the seeker\u2019s interest in HR work even though it involves recruitment activities."
+            },
+            {
+              "job_id": "d39a2d6c161e2634",
+              "reason": "This role is limited to candidates who can work on\u2011site in Newport, Wales. It offers experience in HR recruitment processes, providing a foothold in HR functions despite being a recruitment\u2011oriented role."
+            },
+            {
+              "job_id": "b73e42326ae9f864",
+              "reason": "This role is limited to candidates who can work on\u2011site in Thorpe Astley, Braunstone. It involves HR recruitment consulting, giving exposure to HR responsibilities while still centered on recruitment."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "6824d077d7adbea8",
+        "0d61f42780f3a42d",
+        "5345c91de5e04983",
+        "d39a2d6c161e2634",
+        "b73e42326ae9f864"
+      ],
+      "runs": [
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [],
+          "failed": true
+        },
+        {
+          "picks": [],
+          "failed": true
+        }
+      ]
+    }
+  }
+}

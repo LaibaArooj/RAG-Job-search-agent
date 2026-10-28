@@ -1,0 +1,137 @@
+{
+  "query_id": "N10",
+  "query": "remote senior product manager minimum 150k USD",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "2db96822858b8622",
+        "3722f1b37da130f4",
+        "160620c08e0ac258",
+        "a3683da4deee7eb2",
+        "9140c9158151b405"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2db96822858b8622",
+              "reason": "This role is a remote Senior Product Manager position, matching the seeker\u2019s requirement for a senior-level remote role. SE Ranking is a well\u2011funded SaaS company, and senior product roles there typically meet or exceed a $150k compensation target."
+            },
+            {
+              "job_id": "160620c08e0ac258",
+              "reason": "Automattic offers a remote Senior Product Manager role focused on payments, aligning perfectly with the senior remote criteria. As a large, profitable tech firm, Automattic\u2019s senior product salaries are generally at or above the $150k minimum."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The Senior Technical Product Manager position is remote and senior, fitting the seeker\u2019s job level and location preferences. Cambium Learning Group\u2019s senior technical product roles are known to offer compensation packages that meet the $150k threshold."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "160620c08e0ac258",
+              "reason": "The role is fully remote with no geographic hiring restrictions, allowing you to apply from anywhere. It is a senior, hands\u2011on product manager position at a large, well\u2011funded company, making a $150k+ salary realistic."
+            },
+            {
+              "job_id": "2db96822858b8622",
+              "reason": "This senior product manager position is remote and open to candidates worldwide. It involves scaling a data product at a growing SaaS firm, a level of responsibility that typically commands at least $150k USD."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "The job is remote with unrestricted hiring locations, so you can apply from any country. As a senior technical product manager for a learning\u2011intelligence platform, the compensation is expected to meet or exceed the $150k threshold."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2db96822858b8622",
+              "reason": "The role is a Senior Product Manager position that is fully remote with no geographic restriction, matching the seeker\u2019s location requirement. Senior product management roles at tech companies typically offer compensation at or above $150k USD."
+            },
+            {
+              "job_id": "160620c08e0ac258",
+              "reason": "Automattic is known for competitive salaries, and this senior, hands\u2011on Product Manager role is remote with no geographic limits. The senior level and company reputation make a $150k+ salary realistic."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "This Senior Technical Product Manager position is remote and open to candidates worldwide, satisfying the remote requirement. Senior technical product roles generally command salaries of $150k USD or more."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "2db96822858b8622",
+        "3722f1b37da130f4",
+        "160620c08e0ac258",
+        "a3683da4deee7eb2",
+        "9140c9158151b405",
+        "aeb9233c38b5d7be",
+        "3e8a2ca11c95b9b9",
+        "81dbfaa53cbfb0ec",
+        "9eea9f4698567d60",
+        "c0f04cb2751efa38"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "160620c08e0ac258",
+              "reason": "The role is a remote senior product manager position, matching the seeker\u2019s location and seniority preferences. Automattic is a well-funded tech company, making a $150k+ salary plausible."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "This remote senior technical product manager role aligns with the seniority and remote work criteria. Cambium Learning Group\u2019s scale and market position suggest compensation at or above $150k USD."
+            },
+            {
+              "job_id": "81dbfaa53cbfb0ec",
+              "reason": "The position is a remote senior technical product manager role, fitting the seeker\u2019s remote senior-level requirement. Tether Operations operates in the high\u2011growth digital finance sector, where salaries of $150k USD or more are common."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "2db96822858b8622",
+              "reason": "This is a senior product manager role that is fully remote with no geographic restriction. Senior product manager positions at this level typically offer compensation at or above $150k USD."
+            },
+            {
+              "job_id": "160620c08e0ac258",
+              "reason": "The role is a senior product manager position for payments, 100% remote and open to candidates worldwide. Senior PM roles in payments at large tech companies usually meet the $150k minimum salary requirement."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "This is a senior technical product manager position, remote with no location limits. Senior technical product managers generally receive salaries of $150k USD or more."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "160620c08e0ac258",
+              "reason": "The role is a senior-level product manager position that is fully remote with no geographic restrictions. Automattic is a well-funded tech company, so the compensation is likely to meet or exceed the $150k minimum."
+            },
+            {
+              "job_id": "a3683da4deee7eb2",
+              "reason": "This senior technical product manager role is remote and unrestricted by location. Cambium Learning Group is a large education\u2011technology firm that typically offers senior salaries at or above $150k."
+            },
+            {
+              "job_id": "81dbfaa53cbfb0ec",
+              "reason": "The position is a senior technical product manager role, 100% remote with worldwide eligibility. Tether Operations operates in the high\u2011growth digital finance space, where senior roles commonly pay $150k or more."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,721 @@
+{
+  "queries": {
+    "N01": {
+      "query": "i used to be a waiter but want an office job now",
+      "cards": {
+        "1": {
+          "job_id": "7efd881a0aa9a478",
+          "title": "Virtual Assistant",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "2": {
+          "job_id": "28dea309ba72e801",
+          "title": "Executive Assistant / Operations Virtual Assistant",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "3": {
+          "job_id": "3c281926390ba06d",
+          "title": "Sales Assistant",
+          "eligibility": "country",
+          "systems": [
+            "K"
+          ]
+        },
+        "4": {
+          "job_id": "2f8705f836820ea2",
+          "title": "\ud83c\udf0d Virtual Assistant, Remote- Full Time",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "6cd4fe0a48ad5c94",
+          "title": "Administrative Assistant",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        },
+        "6": {
+          "job_id": "1839d35517ada631",
+          "title": "Data Entry Specialist",
+          "eligibility": "country",
+          "systems": [
+            "L5"
+          ]
+        },
+        "7": {
+          "job_id": "d5359ec84fab5ef6",
+          "title": "Executive Assistant",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        },
+        "8": {
+          "job_id": "5cc8211deca65994",
+          "title": "\ud83c\udfd6\ufe0fExecutive Assistant - Job Code: 1790882488656",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        }
+      }
+    },
+    "N02": {
+      "query": "jobs for introverts who are good at math",
+      "cards": {
+        "1": {
+          "job_id": "e375a42d5afb8de5",
+          "title": "Financial & Data Analyst",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        },
+        "2": {
+          "job_id": "455557f857d8a178",
+          "title": "Data Analyst",
+          "eligibility": "open",
+          "systems": [
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "10b0d3bd622833b5",
+          "title": "E-commerce Operations & Data Analyst",
+          "eligibility": "country",
+          "systems": [
+            "K"
+          ]
+        },
+        "4": {
+          "job_id": "26e3668961abce7c",
+          "title": "Data Analyst",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "7302b34929c60ceb",
+          "title": "Junior Data Scientist | Remote - Contract",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "6": {
+          "job_id": "e49a534a30321b49",
+          "title": "BI Analyst",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        }
+      }
+    },
+    "N03": {
+      "query": "remote work that lets you travel the world",
+      "cards": {
+        "1": {
+          "job_id": "4d08985b93b7d1f4",
+          "title": "Copywriter",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "2": {
+          "job_id": "c8e5817886a48fdb",
+          "title": "Senior Technical Writer (Pakistan | Remote | PKR)",
+          "eligibility": "country",
+          "systems": [
+            "K"
+          ]
+        },
+        "3": {
+          "job_id": "b40bdb9104a654aa",
+          "title": "Polygon High-Performance Writer (Entertainment & Gaming)",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "4": {
+          "job_id": "bb9387bcf338af8d",
+          "title": "Journalist/Writer",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "41ab0dc4207a201b",
+          "title": "Senior Customer Success Manager*in (50-100%) Remote / Freelance",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        }
+      }
+    },
+    "N04": {
+      "query": "lowkey looking for a side hustle in tech that pays quick",
+      "cards": {
+        "1": {
+          "job_id": "bacaadfb241cbeb7",
+          "title": "Front-End Developer",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "2": {
+          "job_id": "fafc042c88567122",
+          "title": "\ud83c\udf0d Backend Security Engineer, Remote - Contract",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "bfc9474f64aca499",
+          "title": "Freelance Web and WordPress developer",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "4": {
+          "job_id": "03fdc735d669981e",
+          "title": "\ud83c\udf0f Gameplay Data Capture Specialist | Remote - Contract",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        }
+      }
+    },
+    "N05": {
+      "query": "Senior DevOps Engineer AWS Terraform Kubernetes CI/CD",
+      "cards": {
+        "1": {
+          "job_id": "68f5c8dc5fe44161",
+          "title": "DevOps Engineer (AWS)",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "2": {
+          "job_id": "600700daefdb626d",
+          "title": "Senior DevOps Engineer (AWS)",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "23ffb0d1f497a63a",
+          "title": "DevOps Engineer",
+          "eligibility": "country",
+          "systems": [
+            "L10"
+          ]
+        },
+        "4": {
+          "job_id": "4b405f5dd8b06116",
+          "title": "Devops Engineer",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "f4a8c26aab1fd229",
+          "title": "Senior DevOps Engineer",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10"
+          ]
+        }
+      }
+    },
+    "N06": {
+      "query": "Staff Software Engineer distributed systems remote",
+      "cards": {
+        "1": {
+          "job_id": "99b193307f593899",
+          "title": "Staff Software Engineer",
+          "eligibility": "open",
+          "systems": [
+            "L5"
+          ]
+        },
+        "2": {
+          "job_id": "518a590bfc0e8d04",
+          "title": "Founding Software Engineer \u2013 Backend & Cloud Infrastructure",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "3": {
+          "job_id": "f22c892db765b460",
+          "title": "Staff Software Engineer, Product",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        },
+        "4": {
+          "job_id": "c2db2649c15449f3",
+          "title": "Senior Distributed Systems Engineer",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10"
+          ]
+        },
+        "5": {
+          "job_id": "bdefec05f2ef1fce",
+          "title": "Staff Software Engineer",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        }
+      }
+    },
+    "N07": {
+      "query": "Figma design systems UI prototyping",
+      "cards": {
+        "1": {
+          "job_id": "da9d87587dc10894",
+          "title": "Product Designer",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "2": {
+          "job_id": "f302fb2523b413bd",
+          "title": "UI/UX Designer",
+          "eligibility": "open",
+          "systems": [
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "24ef5bbec3002882",
+          "title": "UX/UI Designer",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "4": {
+          "job_id": "60a4ad1d216c6965",
+          "title": "Product Designer",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        }
+      }
+    },
+    "N08": {
+      "query": "Quantitative Developer Python C++ high frequency trading",
+      "cards": {
+        "1": {
+          "job_id": "9ad2831b8f7c8bcf",
+          "title": "Senior Backend Engineer (Python) - Full-Stack Mindset",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "2": {
+          "job_id": "5c70aa01a4dfcc8b",
+          "title": "Fullstack Developer (Python + React)",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "3": {
+          "job_id": "b3c078461b4b5198",
+          "title": "Python Developer",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        }
+      }
+    },
+    "N09": {
+      "query": "No experience entry level junior data analyst",
+      "cards": {
+        "1": {
+          "job_id": "e375a42d5afb8de5",
+          "title": "Financial & Data Analyst",
+          "eligibility": "country",
+          "systems": [
+            "K"
+          ]
+        },
+        "2": {
+          "job_id": "455557f857d8a178",
+          "title": "Data Analyst",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "26e3668961abce7c",
+          "title": "Data Analyst",
+          "eligibility": "open",
+          "systems": [
+            "L5"
+          ]
+        },
+        "4": {
+          "job_id": "c94007dc2b6aa217",
+          "title": "\ud83c\udf0e Data Analyst - Remote, Contact",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "6c7a3d761b6200c6",
+          "title": "Data Analyst",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        }
+      }
+    },
+    "N10": {
+      "query": "remote senior product manager minimum 150k USD",
+      "cards": {
+        "1": {
+          "job_id": "2db96822858b8622",
+          "title": "Senior Product Manager - Data Product (API & MCP)",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "2": {
+          "job_id": "160620c08e0ac258",
+          "title": "Senior Product Manager, Payments",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "3722f1b37da130f4",
+          "title": "Senior Product Manager Claims",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "4": {
+          "job_id": "81dbfaa53cbfb0ec",
+          "title": "Senior Technical Product Manager - Keet (100% Remote)",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "5": {
+          "job_id": "a3683da4deee7eb2",
+          "title": "Senior Technical Product Manager (Sr TPM), Learning Intelligence",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        }
+      }
+    },
+    "N11": {
+      "query": "software engineer visa sponsorship provided H1B",
+      "cards": {
+        "1": {
+          "job_id": "aa9161608374501c",
+          "title": "Business Title IT Dev Senior (Software Engineer) - Contractor",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "2": {
+          "job_id": "54ecabcf38414b2f",
+          "title": "Software Engineer",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "3": {
+          "job_id": "60146b7ddd9d7f4c",
+          "title": "Software Engineer - Open Source Contributions",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        }
+      }
+    },
+    "N12": {
+      "query": "night shift customer support immediate start no phone calls",
+      "cards": {
+        "1": {
+          "job_id": "76e02790222b8283",
+          "title": "Customer Service Manager",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "2": {
+          "job_id": "34f6fb3101e35f10",
+          "title": "Customer Service Representative",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "3": {
+          "job_id": "097d63a204e25911",
+          "title": "Customer Success Associate",
+          "eligibility": "country",
+          "systems": [
+            "K"
+          ]
+        },
+        "4": {
+          "job_id": "c7edc44dbe577cab",
+          "title": "Customer Success Manager",
+          "eligibility": "country",
+          "systems": [
+            "K"
+          ]
+        },
+        "5": {
+          "job_id": "bdfacaaeab9fe74f",
+          "title": "Customer Service Representative",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10"
+          ]
+        }
+      }
+    },
+    "N13": {
+      "query": "technical product manager role with no coding",
+      "cards": {
+        "1": {
+          "job_id": "a3683da4deee7eb2",
+          "title": "Senior Technical Product Manager (Sr TPM), Learning Intelligence",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "2": {
+          "job_id": "69d6aba1b262ed2e",
+          "title": "Product Manager -- Remote",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "3": {
+          "job_id": "b3fd0909355d138b",
+          "title": "Product Manager/Product Owner | Remote - Contract",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "4": {
+          "job_id": "1315d8df3dd24ae0",
+          "title": "Technical Product Manager",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "5": {
+          "job_id": "5bc8453b4d16236c",
+          "title": "Technical Product Manager",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "6": {
+          "job_id": "6b381e687cc73725",
+          "title": "Technical Product Owner",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        }
+      }
+    },
+    "N14": {
+      "query": "remote digital marketing specialist jobs except crypto and web3",
+      "cards": {
+        "1": {
+          "job_id": "64ba91535e219f0e",
+          "title": "\ud83c\udfd6\ufe0fGHL Marketing Specialist - Job Code: 1785194674180",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "2": {
+          "job_id": "9bb577d37a2f83f7",
+          "title": "Digital Marketing Manager",
+          "eligibility": "country",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "ab25dfb34a11d848",
+          "title": "Marketing Coordinator & Digital Marketing Specialist",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "4": {
+          "job_id": "c695c9563e3891c8",
+          "title": "Recruitment Marketing Specialist",
+          "eligibility": "open",
+          "systems": [
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "5d23a539de2e20ae",
+          "title": "Digital Marketing Specialist",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        }
+      }
+    },
+    "N15": {
+      "query": "customer support position without phone calls or voice chats",
+      "cards": {
+        "1": {
+          "job_id": "76e02790222b8283",
+          "title": "Customer Service Manager",
+          "eligibility": "open",
+          "systems": [
+            "K"
+          ]
+        },
+        "2": {
+          "job_id": "a8e6c11d7c745a33",
+          "title": "Customer Care Specialist",
+          "eligibility": "open",
+          "systems": [
+            "L10",
+            "L5"
+          ]
+        },
+        "3": {
+          "job_id": "34f6fb3101e35f10",
+          "title": "Customer Service Representative",
+          "eligibility": "open",
+          "systems": [
+            "L10"
+          ]
+        },
+        "4": {
+          "job_id": "bdfacaaeab9fe74f",
+          "title": "Customer Service Representative",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L10",
+            "L5"
+          ]
+        },
+        "5": {
+          "job_id": "a3e4717b981d3c98",
+          "title": "Client Support Specialist",
+          "eligibility": "open",
+          "systems": [
+            "K",
+            "L5"
+          ]
+        }
+      }
+    }
+  }
+}

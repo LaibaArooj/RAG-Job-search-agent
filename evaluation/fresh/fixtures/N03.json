@@ -1,0 +1,16 @@
+{
+  "query_id": "N03",
+  "query": "remote work that lets you travel the world",
+  "profile": {
+    "country": "pk",
+    "skills": [],
+    "experience": null,
+    "category_scores": {}
+  },
+  "expansion": false,
+  "failed_sources": [],
+  "empty_sources": [
+    "Himalayas"
+  ],
+  "jobs": []
+}

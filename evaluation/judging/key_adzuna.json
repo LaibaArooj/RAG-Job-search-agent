@@ -1,0 +1,1170 @@
+{
+  "boost": 0.02,
+  "scores": {
+    "technology": 3,
+    "writing": 2,
+    "design": -1
+  },
+  "queries": {
+    "Q01": {
+      "query": "something creative I can do from my bedroom",
+      "adzuna_pool_unique": 3,
+      "candidates": {
+        "dab178e6a22560f1": {
+          "title": "Creative Media Design Advisor (Edgewing)",
+          "ranks": {
+            "A": 1,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c0171758175d6667": {
+          "title": "Creative Lead",
+          "ranks": {
+            "A": 2,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b54e498d3da9a74e": {
+          "title": "Creative Lead",
+          "ranks": {
+            "A": 3,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q02": {
+      "query": "a job where I help people all day",
+      "adzuna_pool_unique": 8,
+      "candidates": {
+        "3c671be25ade023e": {
+          "title": "Social Worker - Family Help Pilot Team",
+          "ranks": {
+            "A": 1,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "e92682d51f91631b": {
+          "title": "Help to Grow Project Coordinator",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "f4a3e5c3ab9d56f7": {
+          "title": "Social Worker - Family Help",
+          "ranks": {
+            "A": 3,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "3bc21514a3970c01": {
+          "title": "Director of Technology, Innovation and Insight",
+          "ranks": {
+            "A": 4,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "f1f6092f5d4c5429": {
+          "title": "Early Help & Assessment Social Worker",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "e2007c275e0c50ce": {
+          "title": "Help Desk Administrator",
+          "ranks": {
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "2364b96e72049842": {
+          "title": "Family Help Practitioner",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 1
+        }
+      }
+    },
+    "Q03": {
+      "query": "work with numbers but not boring",
+      "adzuna_pool_unique": 1,
+      "candidates": {
+        "58bb64c8b66450dc": {
+          "title": "Operations Manager",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q05": {
+      "query": "somewhere I can use my writing and actually get paid",
+      "adzuna_pool_unique": 10,
+      "candidates": {
+        "81e6b9d9466f65e6": {
+          "title": "Live-In Care Assistant to a Creative Writing University Student",
+          "ranks": {
+            "A": 1,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "208c57f0dbd3594f": {
+          "title": "Writing in the Sciences",
+          "ranks": {
+            "A": 2,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "26e3d9afa06b80e5": {
+          "title": "Care Assistant to a recent Creative Writing Uni Graduate at Home",
+          "ranks": {
+            "A": 3,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b708022d9f765779": {
+          "title": "Manager Proposal Writing",
+          "ranks": {
+            "A": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "d6e45d71549322a5": {
+          "title": "Grant Writing Professionals",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "98162b028bc28b29": {
+          "title": "Creative Writing Expert - Published Author",
+          "ranks": {
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c42a241f375f28d9": {
+          "title": "Manager Proposal Writing",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q06": {
+      "query": "junior frontend developer react remote",
+      "adzuna_pool_unique": 8,
+      "candidates": {
+        "e74d1b10545d7b37": {
+          "title": "Development & Applications Chef II",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 1
+        },
+        "974f11479f1e4286": {
+          "title": "Business Development Executive (Sussex/Kent)",
+          "ranks": {
+            "A": 2,
+            "B": 5,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 5
+        },
+        "fe598bc67d5432ca": {
+          "title": "Technical Assurance Lead",
+          "ranks": {
+            "A": 3,
+            "B": 3,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 4
+        },
+        "ee8e028037d1e725": {
+          "title": "Senior Systems Developer",
+          "ranks": {
+            "A": 4,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 7
+        },
+        "4d7dc1f82f71f9c6": {
+          "title": "Sales Engineer",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 2
+        },
+        "122d094d7de1d6db": {
+          "title": "Kerry Internship Programme 2027 - Research, Development & Application (RDA)",
+          "ranks": {
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 3
+        },
+        "36ee77403bfd7f00": {
+          "title": "Coupa Configuration Consultant",
+          "ranks": {
+            "B": 4,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 6
+        }
+      }
+    },
+    "Q07": {
+      "query": "registered nurse night shift",
+      "adzuna_pool_unique": 8,
+      "candidates": {
+        "69dc8e118527f628": {
+          "title": "Senior Senior Registered Nurse, night shifts",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "9f2ba867091b3a7b": {
+          "title": "Female Registered Nurse Night Shift \u2013 BN41 | \u00a341.82/hr | \u00a3400 Bonus",
+          "ranks": {
+            "A": 2,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "0bd0746532f656a0": {
+          "title": "Senior Registered Mental Nurse, Night shifts with sponsorship",
+          "ranks": {
+            "A": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "4bdf80e0f0435bce": {
+          "title": "Registered Nurse",
+          "ranks": {
+            "A": 4,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b1a025b6520e080a": {
+          "title": "Senior Registered nurse, 36 hrs per week",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "2bdc6a522d0afbcb": {
+          "title": "Night Nurse",
+          "ranks": {
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "7c200756907a1da4": {
+          "title": "Registered General Nurse",
+          "ranks": {
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "0b4700da1dce7961": {
+          "title": "Night Registered General Nurse",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q08": {
+      "query": "graphic designer figma branding",
+      "adzuna_pool_unique": 10,
+      "candidates": {
+        "0278522ffe832ce2": {
+          "title": "Graphic Designer (Brand & Digital)",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "0543d778d1659834": {
+          "title": "Graphic Designer Brand & Digital",
+          "ranks": {
+            "A": 2,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "8f159c4cfbab1135": {
+          "title": "Midweight Graphic Designer - Luxury Brand",
+          "ranks": {
+            "A": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "8e395b59407b1007": {
+          "title": "Graphic Designer - Retail & Brand Experience",
+          "ranks": {
+            "A": 4,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "64d341eb26e814b6": {
+          "title": "Graphic Designer for Luxury Med Spa Branding",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "094bf856bb167474": {
+          "title": "Graphic Designer & Character Animator for Children\u2019s Brand",
+          "ranks": {
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "bd84aad16f911087": {
+          "title": "Design Lead Brand & Studio",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q09": {
+      "query": "financial analyst excel modelling",
+      "adzuna_pool_unique": 1,
+      "candidates": {
+        "40987b6c4b4c4a7b": {
+          "title": "Financial Analyst",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q10": {
+      "query": "primary school teaching assistant",
+      "adzuna_pool_unique": 6,
+      "candidates": {
+        "0bd1306944ac803d": {
+          "title": "Aspiring Primary Teacher - Primary SEN Teaching Assistant",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "1c261af38e933ef9": {
+          "title": "Primary Teachers & TA's - (PR8 / PR9)",
+          "ranks": {
+            "A": 2,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "58d8e4d4fff8834b": {
+          "title": "Primary Teacher & Teaching Assistant Opportunities",
+          "ranks": {
+            "A": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "24483b0b2cbaac65": {
+          "title": "Primary Supply Teachers and Teaching Assistants",
+          "ranks": {
+            "A": 4,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "212417c761b9cc74": {
+          "title": "Primary Supply Teachers and Teaching Assistants",
+          "ranks": {
+            "A": 5,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "fee8787ba1b4d9d9": {
+          "title": "Oxbridge Graduates - Aspiring Primary Teacher",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 1
+        }
+      }
+    },
+    "Q11": {
+      "query": "entry level marketing role no degree required",
+      "adzuna_pool_unique": 10,
+      "candidates": {
+        "f16cc8a1ec5b1b51": {
+          "title": "Shopper Marketing Manager",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "0388b8d90d0ae6d4": {
+          "title": "Marketing Specialist",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b0b82e7ec016f2bd": {
+          "title": "Head of Marketing",
+          "ranks": {
+            "A": 3,
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "1b5bc0ac188b8ca2": {
+          "title": "Head of Marketing",
+          "ranks": {
+            "A": 4,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b6357f92e6c0a9bc": {
+          "title": "Marketing Manager",
+          "ranks": {
+            "A": 5,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "848e92616163ce0b": {
+          "title": "Marketing Manager",
+          "ranks": {
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "4e329677b8f98daa": {
+          "title": "Trade Marketing Manager",
+          "ranks": {
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q12": {
+      "query": "part time customer support work from home",
+      "adzuna_pool_unique": 5,
+      "candidates": {
+        "363afa788ba972a4": {
+          "title": "Customer Support Coordinator",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c23935fe0886dcc8": {
+          "title": "Customer Support Coordinator",
+          "ranks": {
+            "A": 2,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b21c93e3f1173a2b": {
+          "title": "Customer Support Administrator",
+          "ranks": {
+            "A": 3,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "f268b03a6c6ae8d0": {
+          "title": "Customer Support Technician",
+          "ranks": {
+            "A": 4,
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "49aa5bca53134cff": {
+          "title": "Customer Support Agent",
+          "ranks": {
+            "A": 5,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q13": {
+      "query": "paralegal position no prior experience",
+      "adzuna_pool_unique": 10,
+      "candidates": {
+        "659abc6f134fb2a0": {
+          "title": "Conveyancing Paralegal",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "9a6ac04debb9e425": {
+          "title": "Family Paralegal",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "25205cef562c6053": {
+          "title": "Senior Paralegal",
+          "ranks": {
+            "A": 3,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "aef5750a3208d41a": {
+          "title": "Senior Conveyancing Paralegal",
+          "ranks": {
+            "A": 4,
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "62861b6e29930e8c": {
+          "title": "Conveyancing paralegal",
+          "ranks": {
+            "A": 5,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "6955e3b3998bed0a": {
+          "title": "Litigation Paralegal",
+          "ranks": {
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "e101c3e7f3579cf5": {
+          "title": "Private Client Paralegal",
+          "ranks": {
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q14": {
+      "query": "remote data entry job that hires worldwide",
+      "adzuna_pool_unique": 9,
+      "candidates": {
+        "7f8d7e6a96c85582": {
+          "title": "Route Surveyor",
+          "ranks": {
+            "A": 1,
+            "B": 5,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "8a4dba96bdecdabc": {
+          "title": "Structural Engineer",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c3d613cf4c5f54af": {
+          "title": "Delivery Manager",
+          "ranks": {
+            "A": 3,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c74634739dfa1a5e": {
+          "title": "Voice Engineer",
+          "ranks": {
+            "A": 4,
+            "B": 4,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "af92ae26fc4642c7": {
+          "title": "Head of Financial Planning & Analysis",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 1
+        },
+        "32ffd8ace1f09d21": {
+          "title": "Data Engineer (Cloud Architecture)",
+          "ranks": {
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "cbac2d5f9fa2fd14": {
+          "title": "Data Architect",
+          "ranks": {
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q15": {
+      "query": "freelance copywriting contract short term",
+      "adzuna_pool_unique": 10,
+      "candidates": {
+        "74c78ca928d370f3": {
+          "title": "Amazon SEO & Copywriting Specialist",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "a7c4b5313b310f86": {
+          "title": "Copywriter",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "1d25c9e5bce44c65": {
+          "title": "Copywriter",
+          "ranks": {
+            "A": 3,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "2a89736409dbb140": {
+          "title": "Copywriter",
+          "ranks": {
+            "A": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "afcd20005157bd97": {
+          "title": "Copywriter",
+          "ranks": {
+            "A": 5,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "48a4b91ba50e1e2a": {
+          "title": "Copywriters",
+          "ranks": {
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "35ff2fe1648539da": {
+          "title": "Copywriting",
+          "ranks": {
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "7f6341a3fcec09fd": {
+          "title": "Copywriter",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q16": {
+      "query": "job where I write stuff but not journalism",
+      "adzuna_pool_unique": 10,
+      "candidates": {
+        "dc694be5a5b6cb17": {
+          "title": "English Teacher | Camden (Independent Secondary)",
+          "ranks": {
+            "A": 1,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "827eb03b6c05e18d": {
+          "title": "Aspiring English Teacher Program - \u00a328,000",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "01e19f630983089e": {
+          "title": "Associate Lecturer: BA English & Creative Writing",
+          "ranks": {
+            "A": 3,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c6901544b9c130b0": {
+          "title": "Inbound Marketing Manager",
+          "ranks": {
+            "A": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "d279f1d129da6d53": {
+          "title": "English Teacher \u2013 Outstanding Secondary School in Watford",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "98162b028bc28b29": {
+          "title": "Creative Writing Expert - Published Author",
+          "ranks": {
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "790cf018551ddc92": {
+          "title": "Technical Writer with Active Secret Security Clearance - Onsite in Portsmouth, VA",
+          "ranks": {
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "4c87d844b94fb1fa": {
+          "title": "English Graduate Teacher",
+          "ranks": {
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q17": {
+      "query": "not sales but still talking to customers",
+      "adzuna_pool_unique": 4,
+      "candidates": {
+        "0019571df9464729": {
+          "title": "Sales Operator",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "cb9e8e830c628674": {
+          "title": "Sales Advisor",
+          "ranks": {
+            "A": 2,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "dc15da7ceed9a369": {
+          "title": "Sales Associate",
+          "ranks": {
+            "A": 3,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "73cebd1564c3d7c2": {
+          "title": "Sales Representative",
+          "ranks": {
+            "A": 4,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q18": {
+      "query": "something in HR that isn't recruitment",
+      "adzuna_pool_unique": 9,
+      "candidates": {
+        "82c3064b813e39a4": {
+          "title": "Recruiter",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "5af2540e7508f94c": {
+          "title": "Driver Recruiter - 360 Recruitment",
+          "ranks": {
+            "A": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "90f4542b4bf56ba8": {
+          "title": "Recruitment Consultant",
+          "ranks": {
+            "A": 3,
+            "B": 5,
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "5e3a7fb4eca3c264": {
+          "title": "Recruitment Resourcer",
+          "ranks": {
+            "A": 4,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "5345c91de5e04983": {
+          "title": "Recruitment Resourcer",
+          "ranks": {
+            "A": 5,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "d39a2d6c161e2634": {
+          "title": "Recruitment Resourcer",
+          "ranks": {
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "b73e42326ae9f864": {
+          "title": "Recruitment Consultant",
+          "ranks": {
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    },
+    "Q19": {
+      "query": "coding job that isn't web development",
+      "adzuna_pool_unique": 9,
+      "candidates": {
+        "eec629c25950ebf6": {
+          "title": "Computer Science Teacher \u2013 Herefordshire \u2013 January 2026",
+          "ranks": {
+            "A": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "00d0d5a32160579b": {
+          "title": "Software Developer Trainee",
+          "ranks": {
+            "A": 2,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "62e418073ba50812": {
+          "title": "Front End Developer",
+          "ranks": {
+            "A": 3,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c562d175798faa72": {
+          "title": "Website Design & Programming Work Experience",
+          "ranks": {
+            "A": 4,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "a1e018909b987690": {
+          "title": "UX Visual Designer, Amazon Advertising - Brand Innovation Lab",
+          "ranks": {
+            "A": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 3
+        },
+        "37822344507b5f73": {
+          "title": "Build, Host & Manage WordPress Websites using AI [10Web]",
+          "ranks": {
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "277225ca3f5e14c4": {
+          "title": "AS400 Lead",
+          "ranks": {
+            "B": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 1
+        },
+        "9173f304ce4d462d": {
+          "title": "Consultant - Forensics - National - ASU - Forensics - Investigations & Compliance - Gurgaon",
+          "ranks": {
+            "C": 5
+          },
+          "eligibility": "local",
+          "judged_on": "supplement",
+          "supplement_n": 2
+        }
+      }
+    },
+    "Q20": {
+      "query": "design work that doesn't need a portfolio",
+      "adzuna_pool_unique": 4,
+      "candidates": {
+        "ef7b8ab60f36452a": {
+          "title": "Wastewater Designer",
+          "ranks": {
+            "A": 1,
+            "B": 1,
+            "C": 1
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "e75d6600854be926": {
+          "title": "Design Engineer",
+          "ranks": {
+            "A": 2,
+            "B": 4,
+            "C": 4
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "33d691e57ea0eee5": {
+          "title": "Expression of Interest - Design Manager",
+          "ranks": {
+            "A": 3,
+            "B": 2,
+            "C": 2
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        },
+        "c1b0249a2635b879": {
+          "title": "Gas Design Manager",
+          "ranks": {
+            "A": 4,
+            "B": 3,
+            "C": 3
+          },
+          "eligibility": "local",
+          "judged_on": "main"
+        }
+      }
+    }
+  }
+}

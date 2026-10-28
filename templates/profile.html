@@ -8,16 +8,24 @@
 <body class="bg-light">
 
 <nav class="navbar navbar-dark bg-dark px-4">
-    <span class="navbar-brand fw-bold">🔍 Job Search AI</span>
+    <span class="navbar-brand fw-bold">Job Search AI</span>
     <div class="d-flex gap-3 align-items-center">
-        <a href="{{ url_for('home') }}" class="text-white text-decoration-none">Search</a>
-        <a href="{{ url_for('feed') }}"  class="text-white text-decoration-none">For You</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
+        <a href="{{ url_for('ui.search') }}" class="text-white text-decoration-none">Search</a>
+        <a href="{{ url_for('ui.feed') }}"  class="text-white text-decoration-none">For You</a>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
     </div>
 </nav>
 
 <div class="container py-4">
-    <h4 class="mb-4">👤 Your Profile</h4>
+    <h4 class="mb-4">Your Profile</h4>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
 
     <div class="row">
         <div class="col-md-6">
@@ -25,16 +33,80 @@
                 <div class="card-body">
                     <h6 class="fw-bold mb-3">Account Info</h6>
                     <p><strong>Username:</strong> {{ user.username }}</p>
-                    <p><strong>Experience:</strong> {{ user.experience }}</p>
-                    <p><strong>Location:</strong> {{ user.location }}</p>
-                    <p><strong>Work Type:</strong>
-                        {{ user.preferred_work | join(', ') if user.preferred_work else 'Not set' }}
-                    </p>
-                    <p><strong>Skills:</strong>
-                        {% for skill in user.skills %}
-                        <span class="badge bg-secondary me-1">{{ skill }}</span>
-                        {% endfor %}
-                    </p>
+
+                    <form method="POST" action="{{ url_for('ui.profile') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label class="form-label">Your Skills
+                                <small class="text-muted">(comma separated)</small>
+                            </label>
+                            <input type="text" name="skills" class="form-control"
+                                   value="{{ user.skills | join(', ') if user.skills else '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Experience Level</label>
+                            <select name="experience" class="form-select">
+                                {% for level in experience_levels %}
+                                <option value="{{ level }}"
+                                        {% if user.experience == level %}selected{% endif %}>
+                                    {{ level | title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {# Same grouped select as register.html. Changing it changes which
+                           sources are queried, so the two groups name the consequence. #}
+                        <div class="mb-3">
+                            <label class="form-label">Country you are based in</label>
+                            <select name="country" class="form-select" required>
+                                <option value="" {% if not user.country %}selected{% endif %} disabled>
+                                    Choose your country…
+                                </option>
+                                <optgroup label="Local + remote jobs available">
+                                    {% for code, name in countries.items() if code in adzuna_countries %}
+                                    <option value="{{ code }}"
+                                            {% if user.country == code %}selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="Remote jobs only">
+                                    {% for code, name in countries.items() if code not in adzuna_countries %}
+                                    <option value="{{ code }}"
+                                            {% if user.country == code %}selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                            <small class="text-muted">
+                                We only show jobs whose employer will hire someone based here.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Preferred Location
+                                <small class="text-muted">(optional)</small>
+                            </label>
+                            <input type="text" name="location" class="form-control"
+                                   value="{{ user.location or '' }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Work Type</label>
+                            <div>
+                                {% for work in work_types %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="preferred_work" value="{{ work }}"
+                                           {% if work in (user.preferred_work or []) %}checked{% endif %}>
+                                    <label class="form-check-label">{{ work | title }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -75,7 +147,13 @@
                     <strong>{{ job.title }}</strong>
                     <span class="text-muted ms-2">{{ job.company }}</span>
                 </div>
-                <a href="{{ job.url }}" target="_blank"
+                {# source_url, NOT url. A stored saved_jobs entry is not a live JobCard:
+                   DatabaseManager._record_decision renames the card's `url` to `source_url`
+                   on the way in, so index.html and feed.html read job.url and this page must
+                   read job.source_url. Asking for job.url here rendered href="" -- an empty
+                   URI reference resolves to the current document, so "View" reloaded
+                   /profile instead of opening the advert. #}
+                <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer"
                    class="btn btn-outline-primary btn-sm">View</a>
             </div>
             {% endfor %}

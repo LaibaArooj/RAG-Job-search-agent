@@ -1,0 +1,125 @@
+{
+  "query_id": "N07",
+  "query": "Figma design systems UI prototyping",
+  "model": "openai/gpt-oss-120b",
+  "budget": 1200,
+  "arms": {
+    "L5": {
+      "candidates": [
+        "da9d87587dc10894",
+        "60a4ad1d216c6965",
+        "24ef5bbec3002882",
+        "f302fb2523b413bd",
+        "93bf7617a98dc47e"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "da9d87587dc10894",
+              "reason": "This role explicitly requires Figma and design systems experience, matching the search terms, but it is limited to candidates from certain countries, including Pakistan."
+            },
+            {
+              "job_id": "24ef5bbec3002882",
+              "reason": "The position calls for Figma and product design skills, aligning with the seeker\u2019s focus, yet it is restricted to candidates in specific countries, which includes Pakistan."
+            },
+            {
+              "job_id": "f302fb2523b413bd",
+              "reason": "It seeks a systems\u2011minded UI/UX designer who can turn complex requirements into scalable products, fitting the design\u2011systems and prototyping interest, and it has no geographic restriction."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "da9d87587dc10894",
+              "reason": "This role is limited to candidates in specific countries, including Pakistan. It focuses on Product Design using Figma and design systems, matching the seeker\u2019s interest in UI prototyping."
+            },
+            {
+              "job_id": "24ef5bbec3002882",
+              "reason": "This position is restricted to candidates in certain countries, which includes Pakistan. It requires UX/UI design skills with Figma and experience building design systems, aligning with the search terms."
+            },
+            {
+              "job_id": "f302fb2523b413bd",
+              "reason": "There is no geographic restriction for this remote UI/UX Designer role. The description emphasizes a systems\u2011minded approach to turning requirements into scalable digital products, which aligns with design\u2011system and prototyping work."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "24ef5bbec3002882",
+              "reason": "This role explicitly lists Figma in the title and focuses on UX/UI design, matching the seeker\u2019s interest in Figma and design systems. It is limited to candidates in certain countries, but Pakistan is included, so the seeker can apply."
+            },
+            {
+              "job_id": "da9d87587dc10894",
+              "reason": "The position mentions Figma and design systems, directly aligning with the search terms. It is restricted to specific countries, though Pakistan is among them, so the seeker is eligible."
+            },
+            {
+              "job_id": "f302fb2523b413bd",
+              "reason": "The job calls for a systems\u2011minded UI/UX designer, which aligns with design\u2011system and prototyping work. It has no geographic restriction, allowing the seeker to apply from anywhere."
+            }
+          ]
+        }
+      ]
+    },
+    "L10": {
+      "candidates": [
+        "da9d87587dc10894",
+        "60a4ad1d216c6965",
+        "24ef5bbec3002882",
+        "f302fb2523b413bd",
+        "93bf7617a98dc47e",
+        "684a37280daa8754",
+        "aa9b5425c52c6736",
+        "6f60c483993a9684",
+        "44361b011bf87fb3",
+        "129eaed824589f99"
+      ],
+      "runs": [
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "da9d87587dc10894",
+              "reason": "This role is limited to candidates from specific countries, including Pakistan. It directly calls for expertise in Figma, design systems, and UI prototyping, matching the seeker\u2019s search."
+            },
+            {
+              "job_id": "24ef5bbec3002882",
+              "reason": "This position is also limited to candidates from certain countries, which includes Pakistan. It explicitly requires Figma skills and experience in product design and user experience, aligning with the search terms."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "da9d87587dc10894",
+              "reason": "This role is limited to candidates in certain countries, including Pakistan, so you can apply. It explicitly requires Figma, design systems, and UI prototyping experience, matching your search."
+            },
+            {
+              "job_id": "24ef5bbec3002882",
+              "reason": "This position is also restricted to candidates in specific countries, including Pakistan, so you are eligible. It calls for Figma expertise and product design skills, aligning directly with your interest in design systems and UI prototyping."
+            }
+          ]
+        },
+        {
+          "state": "picked",
+          "picks": [
+            {
+              "job_id": "da9d87587dc10894",
+              "reason": "This role is limited to candidates in certain countries, including Pakistan, so you can apply. It explicitly requires Figma, design systems experience and UI design, matching your search."
+            },
+            {
+              "job_id": "24ef5bbec3002882",
+              "reason": "This position is also restricted to candidates in specific countries, including Pakistan. It calls for Figma expertise and product design skills, aligning with your interest in UI prototyping and design systems."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "query_id": "Q01",
+  "query": "something creative I can do from my bedroom",
+  "model": "openai/gpt-oss-120b",
+  "pools": {
+    "adzuna": {
+      "candidates": [
+        "b54e498d3da9a74e",
+        "c0171758175d6667",
+        "dab178e6a22560f1"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "b54e498d3da9a74e",
+              "reason": "This role is a Creative Lead focused on Meta advertising and content strategy, which aligns with creative interests. However, it explicitly requires candidates to be able to work on\u2011site in Magherafelt, Northern Ireland, so it cannot be done from your bedroom."
+            },
+            {
+              "job_id": "c0171758175d6667",
+              "reason": "The Creative Lead position at Bloc blinds involves campaign strategy and collaboration with a marketing team, matching a creative skill set. It is limited to candidates who can work locally in Magherafelt, Northern Ireland, so remote work from your bedroom is not possible."
+            },
+            {
+              "job_id": "dab178e6a22560f1",
+              "reason": "The Creative Media Design Advisor role offers creative design work within a defense contractor environment, which could be appealing. It is restricted to candidates able to work on\u2011site in the Artington/Guildford area, so it does not meet a bedroom\u2011based remote requirement."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "b54e498d3da9a74e",
+              "reason": "This role is limited to candidates who can work on\u2011site in Magherafelt, Northern Ireland, so it is not a remote bedroom option. It involves leading creative Meta advertising strategies, which matches a desire for creative work."
+            },
+            {
+              "job_id": "c0171758175d6667",
+              "reason": "The position also requires on\u2011site presence in Magherafelt, Northern Ireland, so it cannot be done from a bedroom. It focuses on creative lead responsibilities for Meta ads, aligning with creative interests."
+            },
+            {
+              "job_id": "dab178e6a22560f1",
+              "reason": "This job requires the ability to work on\u2011site in Artington, Guildford (or another BAE Systems site), making it unsuitable for remote work. It centers on creative media design, which fits a creative skill set."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "b54e498d3da9a74e",
+              "reason": "This role is limited to candidates who can work on\u2011site in Magherafelt, Northern Ireland, so it is not remote. It involves leading creative strategy for Meta advertising, which aligns with a desire for creative work."
+            },
+            {
+              "job_id": "c0171758175d6667",
+              "reason": "This position also requires on\u2011site presence in Magherafelt, Northern Ireland, making it unsuitable for remote work. It focuses on creative lead responsibilities for Meta ads and campaign strategy, offering a creative outlet."
+            },
+            {
+              "job_id": "dab178e6a22560f1",
+              "reason": "This job is restricted to candidates able to work in the Reading/Artington area, so it cannot be done from a bedroom. It centers on creative media design for Edgewing, providing a creative role within a technical environment."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    },
+    "all": {
+      "candidates": [
+        "4c394bd43ea5f22e",
+        "f44bedc905322e3c",
+        "503de9a24c4cf269",
+        "416746f92d2f021b",
+        "4a6607d527b4e4f7"
+      ],
+      "runs": [
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "This role focuses on generating original copy and ideas, which is a highly creative task you can perform entirely from your bedroom. The remote, worldwide hiring policy means you can apply without geographic constraints."
+            },
+            {
+              "job_id": "f44bedc905322e3c",
+              "reason": "As a Conceptual Art Director you\u2019ll lead visual concepts and work with generative AI, offering a strong creative outlet that can be done remotely. The position has no geographic restriction, so you can apply from anywhere."
+            },
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "The Creative (Motion Design) role lets you craft motion graphics and animated content, a hands\u2011on creative job suited to a home studio. It is fully remote with worldwide eligibility, matching your bedroom\u2011based work preference."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The Conceptual Copywriter role is fully remote and lets you craft creative copy from anywhere, matching the desire to work from your bedroom. It involves collaborating on digital campaigns, offering a blend of creativity and measurable impact."
+            },
+            {
+              "job_id": "f44bedc905322e3c",
+              "reason": "The Conceptual Art Director position is also remote with no geographic limits, allowing you to lead visual concepts and experiment with generative AI from home. It focuses on high\u2011impact digital campaign art direction, which is a highly creative pursuit."
+            },
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "The Creative (Motion Design) job is a remote, worldwide opportunity that lets you design motion graphics and animated ads without leaving your bedroom. It emphasizes innovative visual storytelling, perfect for a creative professional seeking a home\u2011based role."
+            }
+          ],
+          "failed": false
+        },
+        {
+          "picks": [
+            {
+              "job_id": "4c394bd43ea5f22e",
+              "reason": "The role is fully remote with no geographic restriction, so you can work from your bedroom. It focuses on generating creative copy, which matches a desire for a creative, desk\u2011based job."
+            },
+            {
+              "job_id": "f44bedc905322e3c",
+              "reason": "This position is also remote and unrestricted, allowing you to work from anywhere. It involves conceptual art direction and generative AI, offering a highly creative outlet that can be done from a home studio."
+            },
+            {
+              "job_id": "503de9a24c4cf269",
+              "reason": "The motion design job is remote with no location limits, so it fits a bedroom\u2011based workflow. It requires creative and technical skills to produce animated content, aligning with a desire for a creative, hands\u2011on role."
+            }
+          ],
+          "failed": false
+        }
+      ]
+    }
+  }
+}

@@ -5,13 +5,15 @@ Final Year Project — Laiba Arooj, Dept. of Computer Science. Supervisor: Dr Al
 ## Goal
 
 A Flask web app that lets job seekers search in plain English instead of keywords. It fetches
-live listings from Adzuna and Remotive, ranks them by semantic similarity using a local
-sentence-transformer, and passes the top 5 to Llama 3 via Groq to produce three explained
-picks. Saving and rejecting jobs updates per-category preference scores that personalise
-future rankings and a "For You" feed.
+live listings from Adzuna and Himalayas, ranks them by semantic similarity using a
+local sentence-transformer, and passes five to an LLM via Groq to produce three explained
+picks. Every card states whether the employer will hire a candidate in the user's location.
+Saving and rejecting jobs updates per-category preference scores that personalise future
+rankings and a "For You" feed.
 
 Project type: **academic deliverable — must be demonstrable and defensible in a viva**
-Current milestone: **M1 — Auth, profile and database**
+Current milestone: **M4 — evaluation (precision@5), filters, autocomplete, demo** (M3 closed
+2026-09-21: categorisation, the save/reject loop and the For You feed all shipped)
 
 This is graded work. Correctness and my ability to explain the design matter more than speed
 or cleverness. When you make a design decision, tell me why, so I can defend it.
@@ -37,9 +39,9 @@ or cleverness. When you make a design decision, tell me why, so I can defend it.
 | Frontend | HTML5 + CSS + Bootstrap 5.3 — **no React, Vue or any JS framework** |
 | Database | MongoDB Atlas 7.0+ (free tier) via PyMongo 4.6+ |
 | Embeddings | sentence-transformers 2.7+, model `all-MiniLM-L6-v2`, runs locally, 384-dim |
-| LLM | Llama 3 8B-instant via **Groq** API (not Grok) |
+| LLM | **Groq** API (not Grok), a FALLBACK CHAIN in `GROQ_MODELS` (`openai/gpt-oss-120b` → `qwen/qwen3.8-27b` → `openai/gpt-oss-20b`), because Groq has retired this project's model twice — Groq decommissioned Llama 3 *and then* `groq/compound-mini`, see `docs/PROJECT_SPEC.md` § Deviations. Model id lives only in `GROQ_MODEL` in `rag_pipeline.py`. **It is a reasoning model: hidden reasoning tokens count against `max_tokens`, so changing it means rechecking the budget at both call sites** |
 | Auth | Werkzeug password hashing (ships with Flask) |
-| Job data | Adzuna API (250 req/day free) + Remotive API (no auth, no limit) |
+| Job data | Adzuna API (250 req/day free, 19 country markets) + Himalayas API (no auth; `country=` filters candidate eligibility server-side; credit and link back required). Remotive and Jobicy were removed 2026-10-13. Careerjet was considered and dropped 2026-10-25 |
 | Env | pip + venv, dependencies pinned in `requirements.txt` |
 
 Hard constraint from the SRS: **every tool, API and service must be free with no credit card.**
@@ -52,7 +54,32 @@ in memory per request and discarded by design.
 python -m venv venv && venv\Scripts\activate    # Windows
 pip install -r requirements.txt
 python app.py                                    # dev server
+python verify_db.py                              # prove the data layer against Atlas
+python verify_auth.py                            # prove the auth routes, TC-001 to TC-005
+python verify_routes.py                          # prove save/reject, categorisation and /feed, TC-010/011/012/013
+python verify_intent.py                          # prove intent parsing, TC-019/TC-020 (live Groq call)
+python verify_agent.py                           # prove the pipeline and the feed, TC-006/012/014/016/017/018/021/022 (offline)
+python verify_live.py                            # prove it against the REAL Adzuna/Himalayas/Groq + rendered pages
+python verify_all.py                             # run all six, one summary. --offline skips the quota-spending one
+python evaluation/score.py                       # re-score the judged sheets into evaluation/results.md (--check: validate only)
+python evaluation/build_rag_supplement.py        # RAG stage: blind sheet of candidates no earlier sheet showed (refuses to overwrite)
+python evaluation/generate_rag_picks.py          # RAG stage: freeze 3 LLM runs per query (~117 Groq calls, ~45 min; refuses to overwrite)
+python evaluation/score_rag.py                   # RAG stage: precision@3 into evaluation/rag_results.md (--check: validate only)
+python evaluation/build_second_judge.py          # second judge: draw 6 queries (seed in queries.md § 9), write evaluation/second_judge/ (refuses to overwrite)
+python evaluation/score_agreement.py             # second judge: Cohen's kappa into evaluation/agreement_results.md (--check: validate only)
+python evaluation/fresh/fetch_fresh_expanded.py  # fresh N01-N15: freeze pools with Groq expansion, Pakistan profile (F7; refuses to overwrite)
+python evaluation/fresh/picks_fresh.py           # fresh: freeze L5/L10 picks, 3 runs each (~40 min; refuses to overwrite)
+python evaluation/fresh/sheet_fresh.py           # fresh: blind sheet for hand judging (refuses to overwrite)
+python evaluation/fresh/score_fresh.py           # fresh: precision@3, L10 vs L5, into evaluation/fresh/results.md
 ```
+
+`verify_*.py` are standalone pass/fail scripts, not pytest — pytest is not a dependency.
+
+**`python verify_all.py` is the pre-demo check.** 577 assertions, about 290 seconds --
+538 of them offline, measured 2026-10-13; verify_live.py contributes the other 39. Use
+`--offline` while iterating — it skips `verify_live.py`, the only one that spends Adzuna quota.
+Everything except `verify_agent.py` touches a live service, so a failure can mean an outage
+rather than a regression; read which check failed before assuming the code broke.
 
 ## Constraints
 
@@ -66,16 +93,32 @@ python app.py                                    # dev server
 - No emails, no notifications, no direct job applications, no employer features, no mobile app.
 - Ask before adding a dependency or changing the MongoDB schema.
 
-## Deviations from the SRS — three, all deliberate
+## Deviations from the SRS — nine
 
-The SRS is v1.0 and authoritative, but three changes have been agreed since. They're recorded
-in `docs/PROJECT_SPEC.md` § Deviations with justifications. Don't revert to the SRS behaviour
+The SRS is v1.0 and authoritative, but nine changes have been made since — seven deliberate,
+two forced by Groq retiring models mid-implementation. All are recorded in
+`docs/PROJECT_SPEC.md` § Deviations with justifications. Don't revert to the SRS behaviour
 without asking:
 
-1. `parse_intent` calls Groq for structured intent plus 2–3 query variants; keyword matching
-   is the fallback path, not the primary one.
+1. `parse_intent` calls Groq for structured intent plus 2–3 query variants, which since
+   2026-10-13 are **job titles** ("no degree" = entry level, never a search word); keyword
+   matching is the fallback path, not the primary one.
 2. The APIs are called once per query variant, results unioned and deduplicated on `job_id`.
 3. Evaluation (precision@5) is a deliverable, not optional.
+4. **Forced:** the LLM is `openai/gpt-oss-120b`, not Llama 3 — Groq decommissioned Llama 3
+   and then decommissioned its replacement too.
+5. `rejected_jobs` stores `job_id`, not job titles.
+6. **Remotive and Jobicy are replaced by Himalayas** (2026-10-13). Remotive is named in the
+   SRS, so this is a deviation: it returned 16 fixed jobs and its terms allow 4 calls a day;
+   Jobicy (the earlier third source) shrank to 11 eligible jobs. Himalayas filters by country
+   and states eligibility as a structured list.
+7. The AI panel explains the top five jobs the seeker **can apply for**, not the top five by
+   score — open, open-to-your-country, unknown, and (for a user with a country) local jobs.
+   Ranking itself is unchanged.
+8. Only sources that can serve the user's country are queried (Adzuna has no market for most
+   countries). Requires the `country` field on the user document.
+9. The AI panel gives **up to three** picks, or an explicit "no strong match", not always
+   three (FR-016). Forcing three produced anti-recommendations; see 2026-10-11 in the changelog.
 
 Groq is therefore called **twice per search**. Both calls need try/except with a working
 fallback — FR-018 says the app never crashes when the LLM is unavailable, and that now applies
@@ -84,7 +127,20 @@ to intent parsing too.
 ## Honesty about limitations
 
 This system re-ranks what keyword search returns; it cannot retrieve what keyword search
-missed. Don't write comments, docstrings or report text implying otherwise. If I ask you to
+missed. And **measured on 2026-09-30, the re-ranking did not beat keyword order**
+(`evaluation/results.md`), so never write that semantic ranking gives better results.
+The LLM stage measured differently (2026-10-11, `evaluation/rag_results.md`). Its three
+picks beat the first three of the same five by a small margin and never lost a query, but
+the headline is **not significant** (p = 0.25). Never write "the LLM improves results"
+without that qualifier. And the human second judge (2026-10-27, kappa 0.26,
+`evaluation/agreement_results.md`) erased the LLM's all-sources lead on its 6-query sample.
+On the fresh N01–N15 (2026-10-27, `evaluation/fresh/results.md`), K beat both LLM arms
+(p = 0.016) and 10 candidates did no better than 5. Always say why: the judge accepted 73 of
+74 cards, so the LLM lost only by declining or picking fewer than three. **The relevance verdicts were proposed by Claude (Claude Sonnet 5.5,
+claude.ai) and adopted by the developer**, not judged by hand (disclosed 2026-10-13,
+`evaluation/queries.md` § 10, `evaluation/provenance/`). Never write "judged by the developer"
+or describe the judging as human. For the RAG stage, always state the LLM-judging-LLM
+circularity. From 2026-10-13, any remaining judging is human, with no AI. Don't write comments, docstrings or report text implying otherwise. If I ask you to
 describe what the system does, describe it accurately — overclaiming in the code or the write-up
 is what gets picked apart in a viva.
 
